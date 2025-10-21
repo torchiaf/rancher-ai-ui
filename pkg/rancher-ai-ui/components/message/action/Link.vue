@@ -2,15 +2,15 @@
 import { onMounted, ref, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { MessageAction } from '../../types';
-import { ActionType } from '../../types';
+import { MessageActionLink } from '../../../types';
+import { ActionType } from '../../../types';
 
 const store = useStore();
 
 const props = defineProps({
   value: {
-    type:    Object as PropType<MessageAction>,
-    default: () => ({} as MessageAction),
+    type:    Object as PropType<MessageActionLink>,
+    default: () => ({} as MessageActionLink),
   }
 });
 

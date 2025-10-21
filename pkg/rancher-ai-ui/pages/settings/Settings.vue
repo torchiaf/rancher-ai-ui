@@ -148,7 +148,7 @@ const updateValue = (key: Settings, val: string | undefined) => {
  *
  * @param btnCB Callback function to notify the result of the save operation.
  */
-const save = async(btnCB: (arg: boolean) => void) => {
+const save = async(btnCB: () => void) => {
   try {
     const formDataToSave: { [key: string]: string } = {};
     const formDataObject = toValue(formData.value);
@@ -165,6 +165,7 @@ const save = async(btnCB: (arg: boolean) => void) => {
     await resource.value.data.save();
     btnCB(true);
   } catch (err) {
+    console.error('Error saving AI settings:', err); // eslint-disable-line no-console
     btnCB(false);
   }
 };

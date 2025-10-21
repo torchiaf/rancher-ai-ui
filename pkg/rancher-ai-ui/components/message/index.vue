@@ -5,7 +5,8 @@ import {
 import { useStore } from 'vuex';
 import { FormattedMessage, Role as RoleEnum } from '../../types';
 import Thinking from './Thinking.vue';
-import Action from './Action.vue';
+import Link from './action/Link.vue';
+import Confirmation from './action/Confirmation.vue';
 import UserAvatar from './avatar/UserAvatar.vue';
 import SystemAvatar from './avatar/SystemAvatar.vue';
 import RcButton from '@components/RcButton/RcButton.vue';
@@ -24,7 +25,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:message', 'enable:autoscroll']);
+const emit = defineEmits(['update:message', 'confirm:message', 'enable:autoscroll']);
 
 const isThinking = computed(() => props.message.role === RoleEnum.Assistant &&
   !props.message.completed &&
@@ -108,7 +109,7 @@ onBeforeUnmount(() => {
           class="chat-msg-bubble-actions"
         >
           <button
-            v-if="props.message.role === RoleEnum.Assistant"
+            v-if="props.message.role === RoleEnum.Assistant && !!props.message.thinkingContent"
             v-clean-tooltip="props.message.showThinking ? t('ai.message.actions.tooltip.hideThinking') : t('ai.message.actions.tooltip.showThinking')"
             class="bubble-action-btn btn header-btn role-tertiary"
             type="button"
@@ -149,8 +150,14 @@ onBeforeUnmount(() => {
             v-clean-html="props.message.formattedMessageContent"
           />
         </div>
+        <div v-if="props.message.confirmationAction">
+          <Confirmation
+            :value="props.message.confirmationAction"
+            @confirm="emit('confirm:message', $event)"
+          />
+        </div>
         <RcButton
-          v-if="props.message.role === RoleEnum.Assistant && props.message.thinkingContent && props.message.showThinking"
+          v-if="props.message.role === RoleEnum.Assistant && !!props.message.thinkingContent && props.message.showThinking"
           class="button-hide-thinking"
           small
           ghost
@@ -174,7 +181,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div
-        v-if="props.message.actions?.length"
+        v-if="props.message.linkActions?.length"
         class="chat-msg-section"
       >
         <div class="chat-msg-section-title chat-msg-section-title-actions">
@@ -183,13 +190,11 @@ onBeforeUnmount(() => {
         </div>
         <div class="chat-msg-tags chat-msg-section-tags-actions">
           <div
-            v-for="(action, index) in props.message.actions"
+            v-for="(action, index) in props.message.linkActions"
             :key="index"
             class="mt-2 chat-msg-actions"
           >
-            <Action
-              :value="action"
-            />
+            <Link :value="action" />
           </div>
         </div>
       </div>

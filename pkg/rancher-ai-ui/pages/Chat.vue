@@ -22,6 +22,7 @@ const {
   onmessage,
   sendMessage,
   updateMessage,
+  confirmMessage,
   selectContext,
   resetChatError,
   error: messageError
@@ -97,6 +98,7 @@ function unmount() {
         :messages="messages"
         :errors="errors"
         @update:message="updateMessage"
+        @confirm:message="confirmMessage($event, ws)"
       />
       <Context
         :value="context"

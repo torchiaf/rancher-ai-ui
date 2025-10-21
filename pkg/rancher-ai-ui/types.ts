@@ -3,7 +3,7 @@
 export interface ChatError {
   key?:     string;
   message?: string;
-  action?:  MessageAction;
+  action?:  MessageActionLink;
 }
 
 export interface ConnectionError extends ChatError {
@@ -36,6 +36,8 @@ export const enum Tag {
   ThinkingEnd = '</think>',
   McpResultStart = '<mcp-response>',
   McpResultEnd = '</mcp-response>',
+  ConfirmationStart = '<confirmation-response>',
+  ConfirmationEnd = '</confirmation-response>',
 }
 
 export const enum Role {
@@ -59,7 +61,26 @@ export interface ActionResource {
   detailLocation?: object;
 }
 
-export interface MessageAction {
+export interface OperationPayload {
+  op: string; // add, update, remove, etc.
+  path: string;
+  value?: any;
+};
+
+export const enum ConfirmationType {
+  Patch = 'patch',
+  Create = 'create',
+  Update = 'update',
+  Delete = 'delete',
+}
+
+export interface MessageActionConfirmation {
+  type: ConfirmationType | string;
+  payload?: OperationPayload[];
+  resource: ActionResource;
+}
+
+export interface MessageActionLink {
   type: ActionType | string;
   label: string;
   description?: string;
@@ -75,7 +96,8 @@ export interface Message {
   completed?: boolean;
   timestamp?: Date;
   showThinking?: boolean;
-  actions?: MessageAction[];
+  linkActions?: MessageActionLink[];
+  confirmationAction?: MessageActionConfirmation | null;
   source?: object;
 }
 
@@ -88,8 +110,7 @@ export interface FormattedMessage extends Message {
 export interface Agent {
   id?: string;
   name: string;
-  model: string;
-  version: string;
+  model: string; // model + version
 }
 
 export interface Context {
