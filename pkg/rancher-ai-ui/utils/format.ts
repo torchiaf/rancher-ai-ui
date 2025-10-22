@@ -1,5 +1,17 @@
-import { ActionType, MessageActionLink, MessageActionConfirmation, Tag } from '../types';
+import { ActionType, MessageActionLink, MessageActionConfirmation, Tag, Context } from '../types';
 import { validateActionResource } from './validator';
+
+export function formatMessageWithContext(prompt: string, selectedContext: Context[]) {
+  const context = selectedContext.reduce((acc, ctx) => ({
+    ...acc,
+    [ctx.tag]: ctx.value
+  }), {});
+
+  return JSON.stringify({
+    prompt,
+    context
+  });
+}
 
 export function formatMessageLinkActions(value: string, actionType = ActionType.Button): MessageActionLink[] {
   value = value.replaceAll(Tag.McpResultStart, '').replaceAll(Tag.McpResultEnd, '').replace(/'/g, '"');

@@ -1,8 +1,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useContextComposable } from './useContextComposable';
-import { Message, Role, Tag, Context } from '../types';
-import { formatMessageLinkActions, formatConfirmationAction } from '../utils/format';
+import { Message, Role, Tag } from '../types';
+import { formatMessageWithContext, formatMessageLinkActions, formatConfirmationAction } from '../utils/format';
 
 const CHAT_ID = 'default';
 const EXPAND_THINKING = false;
@@ -19,25 +19,13 @@ export function useChatMessageComposable() {
 
   function sendMessage(prompt: string, ws: WebSocket) {
     if (prompt) {
-      ws.send(formatMessage(prompt, selectedContext.value));
+      ws.send(formatMessageWithContext(prompt, selectedContext.value));
 
       addMessage({
         role:           Role.User,
         messageContent: prompt,
       });
     }
-  }
-
-  function formatMessage(prompt: string, selectedContext: Context[]) {
-    const context = selectedContext.reduce((acc, ctx) => ({
-      ...acc,
-      [ctx.tag]: ctx.value
-    }), {});
-
-    return JSON.stringify({
-      prompt,
-      context
-    });
   }
 
   async function addMessage(message: Message) {

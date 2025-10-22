@@ -93,10 +93,12 @@ export interface Message {
   role: Role;
   thinkingContent?: string;
   messageContent?: string;
+  summaryContent?: string;
   thinking?: boolean;
   completed?: boolean;
   timestamp?: Date;
   showThinking?: boolean;
+  showCompleteMessage?: boolean;
   linkActions?: MessageActionLink[];
   confirmationAction?: MessageActionConfirmation | null;
   source?: object;

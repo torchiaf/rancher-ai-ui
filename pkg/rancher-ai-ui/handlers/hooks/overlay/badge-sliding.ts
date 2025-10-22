@@ -1,10 +1,10 @@
+import { waitFor } from '@shell/utils/async';
 import { Context } from '../../../types';
 import { Store } from 'vuex';
 import { nextTick } from 'vue';
-// @ts-expect-error missing icon
-import chatIcon from '../../../assets/chat-icon.svg';
-import MenuFactory from '../menu';
 import { HooksOverlay } from './index';
+import Chat from '../../chat';
+import TemplateMessage from '../template-message';
 
 const enum Theme {
   Light = 'light', // eslint-disable-line no-unused-vars
@@ -83,19 +83,28 @@ class BadgeSlidingOverlay extends HooksOverlay {
     overlay.style.justifyContent = 'flex-end';
     overlay.style.whiteSpace = 'nowrap';
     overlay.style.overflow = 'hidden';
+    overlay.style.boxSizing = 'border-box'; // ensure padding is included in size
 
     badge.style.zIndex = '1000';
     badge.style.background = badgeProps.background;
 
-    const icon = document.createElement('img');
+    const icon = document.createElement('i');
 
-    icon.src = chatIcon;
-    icon.alt = 'SUSE';
-    icon.style.height = `${ badgeRect.height - 5 }px`;
-    icon.style.width = '15px';
-    icon.style.verticalAlign = 'middle';
-    icon.style.marginLeft = '8px';
-    icon.style.marginRight = '4px';
+    icon.classList.add('icon-ai');
+    icon.classList.add(badgeRect.height < 20 ? 'icon-lg' : 'icon');
+    icon.style.display = 'inline-flex';
+    icon.style.alignItems = 'center';
+    icon.style.justifyContent = 'center';
+    icon.style.flex = '0 0 auto';
+    icon.style.width = `${ Math.max(16, Math.round(badgeRect.height * 0.6)) }px`;
+    icon.style.height = `${ Math.max(16, Math.round(badgeRect.height * 0.6)) }px`;
+    icon.style.marginTop = '0';
+    icon.style.marginBottom = '1px';
+    icon.style.marginRight = `4px`;
+    icon.style.marginLeft = `8px`;
+    icon.style.lineHeight = '1';
+    icon.style.color = overlayProps.color;
+    icon.style.boxSizing = 'content-box';
 
     overlay.appendChild(icon);
 
@@ -127,29 +136,31 @@ class BadgeSlidingOverlay extends HooksOverlay {
   action(store: Store<any>, e: Event, overlay: HTMLElement, ctx: Context) {
     e.stopPropagation();
 
-    const menu = MenuFactory.build(store, ctx);
+    const { message, chatMessage } = TemplateMessage.fill(store, ctx);
 
-    const btnRect = overlay.getBoundingClientRect();
+    store.dispatch('rancher-ai-ui/chat/init', {
+      chatId:   'default',
+      messages: [chatMessage]
+    });
 
-    menu.style.position = 'absolute';
-    menu.style.top = `${ btnRect.top }px`;
-    menu.style.left = `${ btnRect.left }px`;
-    menu.style.display = 'block';
+    // store.commit('rancher-ai-ui/context/reset');
+    // if (ctx && ctx.length) {
+    //   store.commit('rancher-ai-ui/context/add', ctx);
+    // }
 
-    document.body.appendChild(menu);
+    nextTick(async () => {
+      Chat.open(store);
 
-    const hideMenu = (ev: MouseEvent) => {
-      if (menu && !menu.contains(ev.target as Node) && ev.target !== overlay) {
-        menu.style.display = 'none';
-        document.body.removeEventListener('mousedown', hideMenu);
-        if (menu.parentElement) {
-          menu.parentElement.removeChild(menu);
-        }
+      // TODO remove hacky waitFor
+      await waitFor(() => !!store.getters['rancher-ai-ui/connection/ws'], '', 2000, 100, false);
+
+      const ws = store.getters['rancher-ai-ui/connection/ws'];
+
+      if (!!ws) {
+        ws.send(message);
       }
-    };
 
-    nextTick(() => {
-      document.body.addEventListener('mousedown', hideMenu);
+      overlay.remove();
     });
   }
 

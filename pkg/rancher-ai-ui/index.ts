@@ -54,7 +54,7 @@ export default function(plugin: IPlugin, { store }: any): void {
     {
       tooltipKey: 'ai.action.openChat',
       shortcut: 'i',
-      svg: require('./assets/chat-icon.svg'),
+      icon: 'icon-ai',
       invoke: () => Chat.open(store),
     }
   );
