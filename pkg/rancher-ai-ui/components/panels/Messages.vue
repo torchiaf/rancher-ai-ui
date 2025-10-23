@@ -22,14 +22,18 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:message', 'confirm:message']);
+const emit = defineEmits(['update:message', 'confirm:message', 'send:message']);
 
 const messagesView = ref<HTMLDivElement | null>(null);
 const autoScrollEnabled = ref(true);
 
 const formattedMessages = computed<FormattedMessage[]>(() => {
   return [...props.messages]
-    .filter((m) => m.messageContent || m.thinkingContent || m.confirmationAction)
+    .filter((m) => m.messageContent ||
+      m.thinkingContent ||
+      m.confirmationAction ||
+      m.suggestionActions?.length
+    )
     .map((m) => ({
       ...m,
       formattedMessageContent:  m.role === Role.Assistant || !!m.summaryContent ? formatMessageContent(m.messageContent || '') : m.messageContent,
@@ -117,6 +121,7 @@ onBeforeUnmount(() => {
       :disabled="disabled"
       @update:message="emit('update:message', message)"
       @confirm:message="emit('confirm:message', $event)"
+      @send:message="emit('send:message', $event)"
       @enable:autoscroll="autoScrollEnabled = $event"
     />
     <MessageComponent

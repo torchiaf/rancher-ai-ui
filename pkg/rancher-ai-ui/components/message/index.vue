@@ -8,6 +8,7 @@ import Thinking from './Thinking.vue';
 import Actions from './action/index.vue';
 import Source from './source/index.vue';
 import Confirmation from './confirmation/index.vue';
+import Suggestions from './suggestion/index.vue';
 import UserAvatar from './avatar/UserAvatar.vue';
 import SystemAvatar from './avatar/SystemAvatar.vue';
 import RcButton from '@components/RcButton/RcButton.vue';
@@ -26,7 +27,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:message', 'confirm:message', 'enable:autoscroll']);
+const emit = defineEmits(['update:message', 'confirm:message', 'send:message', 'enable:autoscroll']);
 
 const isThinking = computed(() => props.message.role === RoleEnum.Assistant &&
   !props.message.completed &&
@@ -166,7 +167,19 @@ onBeforeUnmount(() => {
             }"
           />
         </div>
-        <div v-if="props.message.confirmationAction">
+        <div
+          v-if="props.message.suggestionActions?.length"
+          class="chat-msg-section-footer"
+        >
+          <Suggestions
+            :suggestions="props.message.suggestionActions"
+            @select="(suggestion) => emit('send:message', suggestion)"
+          />
+        </div>
+        <div
+          v-if="props.message.confirmationAction"
+          class="chat-msg-section-footer"
+        >
           <Confirmation
             :value="props.message.confirmationAction"
             @confirm="emit('confirm:message', $event)"
@@ -334,6 +347,10 @@ onBeforeUnmount(() => {
 }
 
 .chat-msg-section {
+  margin-top: 8px;
+}
+
+.chat-msg-section-footer {
   margin-top: 8px;
 }
 

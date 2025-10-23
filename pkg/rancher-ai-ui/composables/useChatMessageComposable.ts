@@ -2,7 +2,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useContextComposable } from './useContextComposable';
 import { Message, Role, Tag } from '../types';
-import { formatMessageWithContext, formatMessageLinkActions, formatConfirmationAction } from '../utils/format';
+import { formatMessageWithContext, formatMessageLinkActions, formatConfirmationAction, formatSuggestionActions } from '../utils/format';
 
 const CHAT_ID = 'default';
 const EXPAND_THINKING = false;
@@ -122,6 +122,15 @@ export function useChatMessageComposable() {
           }
 
           currentMsg.value.messageContent += data;
+
+          if (currentMsg.value.messageContent?.includes(Tag.SuggestionsStart) && currentMsg.value.messageContent?.includes(Tag.SuggestionsEnd)) {
+            const { suggestionActions, cleanMessageContent } = formatSuggestionActions(currentMsg.value.messageContent);
+
+            currentMsg.value.suggestionActions = suggestionActions;
+            currentMsg.value.messageContent = cleanMessageContent;
+            break;
+          }
+
           break;
         }
         break;
