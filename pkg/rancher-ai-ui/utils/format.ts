@@ -1,5 +1,22 @@
-import { ActionType, MessageActionLink, MessageActionConfirmation, Tag, Context } from '../types';
+import MarkdownIt from 'markdown-it';
+import {
+  ActionType, MessageActionLink, MessageActionConfirmation, Tag, Context
+} from '../types';
 import { validateActionResource } from './validator';
+
+const md = new MarkdownIt({
+  html:        true,
+  breaks:      true,
+  linkify:     true,
+  typographer: true,
+});
+
+export function formatMessageContent(message: string) {
+  const raw = md.render(message ?? '');
+
+  // remove trailing <br> tags and trailing whitespace/newlines
+  return raw.replace(/(?:(?:<br\s*\/?>)|\r?\n|\s)+$/gi, '');
+}
 
 export function formatMessageWithContext(prompt: string, selectedContext: Context[]) {
   const context = selectedContext.reduce((acc, ctx) => ({

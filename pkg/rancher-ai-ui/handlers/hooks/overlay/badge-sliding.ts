@@ -1,4 +1,5 @@
 import { waitFor } from '@shell/utils/async';
+import { warn } from '../../../utils/log';
 import { Context } from '../../../types';
 import { Store } from 'vuex';
 import { nextTick } from 'vue';
@@ -133,31 +134,44 @@ class BadgeSlidingOverlay extends HooksOverlay {
     });
   }
 
-  action(store: Store<any>, e: Event, overlay: HTMLElement, ctx: Context) {
+  action(store: Store<any>, e: Event, overlay: HTMLElement, context: Context) {
     e.stopPropagation();
 
-    const { message, chatMessage } = TemplateMessage.fill(store, ctx);
+    // const obj = context.value as any;
 
-    store.dispatch('rancher-ai-ui/chat/init', {
-      chatId:   'default',
-      messages: [chatMessage]
-    });
+    // const ctx: Context[] = [{
+    //   tag:         obj?.kind?.toLowerCase(),
+    //   description: obj?.kind,
+    //   icon:        context.icon,
+    //   value:       obj?.name
+    // }];
 
     // store.commit('rancher-ai-ui/context/reset');
-    // if (ctx && ctx.length) {
+    // if (ctx) {
     //   store.commit('rancher-ai-ui/context/add', ctx);
     // }
 
-    nextTick(async () => {
+    const filledMsg = TemplateMessage.fill(store, context);
+
+    store.dispatch('rancher-ai-ui/chat/init', {
+      chatId:   'default',
+      messages: [filledMsg.message]
+    });
+
+    nextTick(async() => {
       Chat.open(store);
 
-      // TODO remove hacky waitFor
-      await waitFor(() => !!store.getters['rancher-ai-ui/connection/ws'], '', 2000, 100, false);
+      // TODO remove hacky waitFor, the WS should be already available or opened by now
+      try {
+        await waitFor(() => !!store.getters['rancher-ai-ui/connection/ws'], 'Wait for ws open', 2000, 100, false);
+      } catch (err) {
+        warn('WebSocket not available, cannot send message', err);
+      }
 
       const ws = store.getters['rancher-ai-ui/connection/ws'];
 
       if (!!ws) {
-        ws.send(message);
+        ws.send(filledMsg.payload);
       }
 
       overlay.remove();

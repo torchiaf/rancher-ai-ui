@@ -59,6 +59,14 @@ function handleCopy() {
   }, 1000);
 }
 
+function handleShowCompleteMessage() {
+  props.message.showCompleteMessage = !props.message.showCompleteMessage;
+
+  nextTick(() => {
+    emit('update:message', props.message);
+  });
+}
+
 function handleShowThinking() {
   props.message.showThinking = !props.message.showThinking;
 
@@ -147,8 +155,15 @@ onBeforeUnmount(() => {
             <br>
           </span>
           <span
-            v-if="props.message.formattedMessageContent"
+            v-if="!!props.message.summaryContent"
+            v-clean-html="props.message.summaryContent"
+          />
+          <span
+            v-if="props.message.formattedMessageContent && (!props.message.summaryContent || props.message.showCompleteMessage)"
             v-clean-html="props.message.formattedMessageContent"
+            :class="{
+              'chat-msg-user-expanded': !!props.message.summaryContent && props.message.showCompleteMessage
+            }"
           />
         </div>
         <div v-if="props.message.confirmationAction">
@@ -159,12 +174,21 @@ onBeforeUnmount(() => {
         </div>
         <RcButton
           v-if="props.message.role === RoleEnum.Assistant && !!props.message.thinkingContent && props.message.showThinking"
-          class="button-hide-thinking"
+          class="inline-button"
           small
           ghost
           @click="handleShowThinking"
         >
           <a>{{ t('ai.message.actions.hideThinking') }}</a>
+        </RcButton>
+        <RcButton
+          v-if="!!props.message.summaryContent"
+          class="inline-button"
+          small
+          ghost
+          @click="handleShowCompleteMessage"
+        >
+          <a>{{ props.message.showCompleteMessage ? t('ai.message.actions.hideCompleteMessage') : t('ai.message.actions.showCompleteMessage') }}</a>
         </RcButton>
       </div>
       <!-- TODO: replace with actual source when available -->
@@ -213,13 +237,13 @@ onBeforeUnmount(() => {
   }
 
   .chat-msg-text {
-    color: #fff;
+    color: var(--on-tertiary);
   }
 }
 
 .chat-msg-bubble {
   position: relative;
-  max-width: 450px;
+  max-width: 455px;
   background: var(--body-bg);
   color: var(--body-text);
   border: 1px solid var(--border);
@@ -239,8 +263,8 @@ onBeforeUnmount(() => {
 }
 
 .chat-msg-bubble-user {
-  background: var(--primary);
-  border: 1px solid var(--primary);
+  background: var(--tertiary-hover);
+  align-items: flex-end;
 }
 
 .chat-msg-bubble-error {
@@ -330,9 +354,20 @@ onBeforeUnmount(() => {
   vertical-align: middle;
 }
 
-.button-hide-thinking {
+.inline-button {
   margin-left: auto;
   height: 15px;
   min-height: 15px;
+}
+
+.chat-msg-user-expanded {
+  display: block;
+  margin-top: 16px;
+
+  :deep() ul {
+    padding: 0 0 0 8px;
+    margin: 0;
+    margin-top: -10px;
+  }
 }
 </style>
