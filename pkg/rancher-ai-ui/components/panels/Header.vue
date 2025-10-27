@@ -3,6 +3,7 @@ import { defineEmits, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { Agent } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
+import HooksHandler from '../../handlers/hooks';
 
 const store = useStore();
 const t = store.getters['i18n/t'];
@@ -14,18 +15,25 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits([
-  'close',
-]);
+const emit = defineEmits(['close']);
+
+function onIconHover(value: boolean) {
+  HooksHandler.toggleAllHooksOverlay(store, value);
+}
 </script>
 
 <template>
   <div class="chat-header">
     <div class="chat-title">
       <div class="chat-name">
-        <i class="icon icon-ai icon-lg" />
+        <i
+          v-clean-tooltip="t('ai.header.icon.easterEgg')"
+          class="icon icon-ai icon-lg"
+          @mouseenter="onIconHover(true)"
+          @mouseleave="onIconHover(false)"
+        />
         <span class="label">
-          {{ t('ai.title') }}
+          {{ t('ai.header.title') }}
         </span>
       </div>
       <span class="chat-model">

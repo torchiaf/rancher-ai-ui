@@ -117,17 +117,13 @@ class HooksHandler {
 
     window.addEventListener('keydown', (e) => {
       if (this.isShowAllHooksKey(e)) {
-        HooksHandler.allHooksKeyPressed = true;
-        HooksOverlay.setAllHooksKeyPressed(true);
-        this.targets.forEach(({ target, ctx }) => this.toggleOverlays(store, target, ctx, true));
+        this.toggleAllHooksOverlay(store, true);
       }
     });
 
     window.addEventListener('keyup', (e) => {
       if (this.isShowAllHooksKey(e)) {
-        HooksHandler.allHooksKeyPressed = false;
-        HooksOverlay.setAllHooksKeyPressed(false);
-        this.targets.forEach(({ target, ctx }) => this.toggleOverlays(store, target, ctx, false));
+        this.toggleAllHooksOverlay(store, false);
       }
     });
   }
@@ -144,6 +140,12 @@ class HooksHandler {
 
     this.overlays.push(overlay);
   };
+
+  public toggleAllHooksOverlay(store: Store<any>, value: boolean) {
+    HooksHandler.allHooksKeyPressed = value;
+    HooksOverlay.setAllHooksKeyPressed(value);
+    this.targets.forEach(({ target, ctx }) => this.toggleOverlays(store, target, ctx, value));
+  }
 }
 
 export default new HooksHandler();
