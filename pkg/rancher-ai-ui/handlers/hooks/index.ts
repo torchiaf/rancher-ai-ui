@@ -21,7 +21,7 @@ class HooksHandler {
   private static allHooksKeyPressed = false;
 
   // Key chain: Ctrl + Alt + L
-  public isShowAllHooksKey(e: KeyboardEvent) {
+  private isShowAllHooksKey(e: KeyboardEvent) {
     if (HooksHandler.allHooksKeyPressed) {
       return e.type === 'keyup' && (e.key === 'Control' || e.key === 'Alt' || e.key?.toLowerCase() === 'l');
     } else {
