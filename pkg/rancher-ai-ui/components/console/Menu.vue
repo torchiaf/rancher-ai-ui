@@ -59,7 +59,30 @@ const options = ref([
   // }
 ]);
 
+async function handleMenuOpen(open: boolean) {
+  if (open) {
+    const chatsData = await fetch('/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-chat:80/proxy/chats');
+
+    const dataChatsJson = await chatsData.json();
+
+    console.log('Fetched chats on menu open:', dataChatsJson);
+
+    chats.value = dataChatsJson;
+
+    for (const chat of dataChatsJson) {
+      const messagesData = await fetch(`/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-chat:80/proxy/chats/${ chat.chat_id }/messages`);
+
+      const dataMessagesJson = await messagesData.json();
+
+      console.log('Fetched messages on menu open:', dataMessagesJson);
+    }
+  }
+
+  isOpen.value = open;
+}
+
 const isOpen = ref(false);
+const chats = ref<Array<any>>([]);
 </script>
 
 <template>
@@ -67,7 +90,7 @@ const isOpen = ref(false);
     <rc-dropdown
       class="menu-dropdown"
       placement="top-end"
-      @update:open="isOpen = $event"
+      @update:open="handleMenuOpen"
     >
       <rc-dropdown-trigger
         ghost
@@ -93,6 +116,14 @@ const isOpen = ref(false);
               :class="opt.icon"
             />
           </template>
+        </rc-dropdown-item>
+        <rc-dropdown-item
+          v-for="chat in chats"
+          :key="chat.id"
+        >
+          <div>
+            chat: {{ chat.name || chat.id }}
+          </div>
         </rc-dropdown-item>
       </template>
     </rc-dropdown>

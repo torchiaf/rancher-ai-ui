@@ -1,0 +1,12 @@
+{
+    "prompt": "Give me the list of pods in ca",
+    "chatPayload": [
+        {
+            "role": "user",
+            "content": "Give me the list of pods in cattle-ai-pippo namespace"
+        }
+    ],
+    "context": {
+        "cluster": "local"
+    }
+}
