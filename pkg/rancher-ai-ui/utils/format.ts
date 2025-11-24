@@ -21,16 +21,108 @@ export function formatMessageContent(message: string) {
   return raw.replace(/(?:(?:<br\s*\/?>)|\r?\n|\s)+$/gi, '');
 }
 
-export function formatMessagePromptWithContext(prompt: string, selectedContext: Context[]) {
-  const context = selectedContext.reduce((acc, ctx) => ({
-    ...acc,
-    [ctx.tag]: ctx.value
-  }), {});
+// TODO: Remove calculated keys with index, backend change needed to accept array of contexts
+export function formatMessagePromptWithContext(prompt: string, selectedContext: Context[]): string {
+  const keys: Record<string, number> = {};
+  const context: Record<string, string | object | null> = {};
+
+  for (const ctx of selectedContext) {
+    if (!keys[ctx.tag]) {
+      keys[ctx.tag] = 0;
+    }
+
+    const key = context[ctx.tag] !== undefined ? `${ ctx.tag } ${ ++keys[ctx.tag] }` : ctx.tag;
+
+    context[key] = ctx.value;
+  }
 
   return JSON.stringify({
     prompt,
     context
   });
+}
+
+export function formatAutocompleteMessage(
+  prompt: string,
+  selectedContext: Context[],
+  hooksContext: Context[],
+  previousMessages: Message[],
+  t: any
+): string {
+  const keys: Record<string, number> = {};
+  const context: Record<string, string | object | null> = {};
+
+  // Feed context from both selectedContext and hooksContext, unique by tag+value
+  const all = [
+    ...selectedContext,
+    ...formatContextFromHook(hooksContext, t),
+  ].filter((item, index, self) => index === self.findIndex((c) => c.tag === item.tag && c.value === item.value));
+
+  for (const ctx of all) {
+    if (!keys[ctx.tag]) {
+      keys[ctx.tag] = 0;
+    }
+
+    const key = context[ctx.tag] !== undefined ? `${ ctx.tag } ${ ++keys[ctx.tag] }` : ctx.tag;
+
+    context[key] = ctx.value;
+  }
+
+  const chatPayload = (previousMessages || [])
+    .slice(-5)
+    .filter((msg) => msg?.role !== Role.System)
+    .map((msg) => {
+      let content = msg.messageContent || '';
+
+      if (msg.relatedResourcesActions?.length) {
+        content += `\n  Resources: ${ JSON.stringify((msg.relatedResourcesActions || []).map((action) => action.resource)) }`;
+      }
+
+      return {
+        role: msg.role,
+        content
+      };
+    });
+
+  return JSON.stringify({
+    prompt,
+    context,
+    chatPayload
+  });
+}
+
+export function formatContextFromHook(context: Context[], t: any): Context[] {
+  const out: Context[] = [];
+
+  for (const ctx of context) {
+    const resource = ctx.value as any;
+
+    if (resource) {
+      // Add hooked resource as context
+      const resourceCtx = {
+        tag:         resource?.kind?.toLowerCase(),
+        description: resource?.kind,
+        icon:        ctx.icon,
+        value:       resource?.name
+      };
+
+      out.push(resourceCtx);
+
+      if (resource?.namespace && out.findIndex((c) => c.tag === 'namespace' && c.value === resource.namespace) === -1) {
+        // Add resource's namespace as context if available
+        const resourceNamespaceCtx = {
+          tag:         'namespace',
+          description: t('ai.message.template.namespace'),
+          icon:        'icon-namespace',
+          value:       resource?.namespace
+        };
+
+        out.push(resourceNamespaceCtx);
+      }
+    }
+  }
+
+  return out;
 }
 
 export function formatMessageRelatedResourcesActions(value: string, actionType = ActionType.Button): MessageAction[] {

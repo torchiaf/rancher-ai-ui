@@ -6,12 +6,15 @@ import type { Context } from '../types';
  * Composable for managing the AI context state.
  * @returns Composable for managing the AI context state.
  */
+
+const selectedContext = ref<Context[]>([]);
+
 export function useContextComposable() {
   const store = useStore();
 
-  const context = computed(() => store.getters['rancher-ai-ui/context/all']);
+  const chatContext = computed(() => store.getters['rancher-ai-ui/context/all']);
 
-  const selectedContext = ref<Context[]>([]);
+  const hooksContext = computed(() => store.getters['rancher-ai-ui/context/hooks']);
 
   function selectContext(context: Context[]) {
     selectedContext.value = context;
@@ -22,7 +25,8 @@ export function useContextComposable() {
   });
 
   return {
-    context,
+    chatContext,
+    hooksContext,
     selectContext,
     selectedContext
   };

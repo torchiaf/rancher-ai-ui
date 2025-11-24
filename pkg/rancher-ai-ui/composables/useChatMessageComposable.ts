@@ -1,10 +1,11 @@
-import { ref, computed, onMounted, watch } from 'vue';
+import {
+  ref, computed, onMounted, watch, Ref
+} from 'vue';
 import { useStore } from 'vuex';
 import { debounce } from 'lodash';
 import { NORMAN } from '@shell/config/types';
-import { useContextComposable } from './useContextComposable';
 import {
-  ChatError, ConfirmationStatus, Message, MessagePhase, MessageTemplateComponent, Role, Tag
+  ChatError, ConfirmationStatus, Context, Message, MessagePhase, MessageTemplateComponent, Role, Tag
 } from '../types';
 import {
   formatMessagePromptWithContext, formatMessageRelatedResourcesActions, formatConfirmationAction, formatSuggestionActions, formatFileMessages,
@@ -23,9 +24,12 @@ const EXPAND_THINKING = false;
  *
  * It exposes methods to interact with WebSocket events and to manipulate chat messages.
  *
+ * @param args - Arguments for the composable.
+ *  - selectedContext: Reactive reference to the selected context array.
+ *
  * @returns Composable for managing chat messages within the AI chat.
  */
-export function useChatMessageComposable() {
+export function useChatMessageComposable(args: { selectedContext: Ref<Context[]> }) {
   const store = useStore();
   const t = store.getters['i18n/t'];
 
@@ -52,8 +56,6 @@ export function useChatMessageComposable() {
     });
   };
 
-  const { selectContext, selectedContext } = useContextComposable();
-
   function wsSend(ws: WebSocket, value: string) {
     if (!ws) {
       return;
@@ -67,7 +69,7 @@ export function useChatMessageComposable() {
 
     let summaryContent = '';
     let messageContent = msg as string;
-    let contextContent = selectedContext.value;
+    let contextContent = args.selectedContext.value;
 
     // msg is type of Message
     if (msg && typeof msg === 'object' && msg.messageContent) {
@@ -77,7 +79,7 @@ export function useChatMessageComposable() {
       contextContent = msg.contextContent || [];
     } else { /* msg is type of string */ }
 
-    wsSend(ws, formatMessagePromptWithContext(messageContent, selectedContext.value));
+    wsSend(ws, formatMessagePromptWithContext(messageContent, args.selectedContext.value));
 
     addMessage({
       role,
@@ -135,11 +137,11 @@ export function useChatMessageComposable() {
 
     if (ws) {
       const initPrompt = `Hi!
-        - Send me a message with 3 ${ selectedContext.value?.length ? 'suggestions based on the context.' : 'generic suggestions.' }.
+        - Send me a message with 3 ${ args.selectedContext.value?.length ? 'suggestions based on the context.' : 'generic suggestions.' }.
         - DO NOT ask for any confirmation or additional information.
       `;
 
-      wsSend(ws, formatMessagePromptWithContext(initPrompt, selectedContext.value));
+      wsSend(ws, formatMessagePromptWithContext(initPrompt, args.selectedContext.value));
       setPhase(MessagePhase.Processing);
     }
   }
@@ -174,7 +176,10 @@ export function useChatMessageComposable() {
         templateContent: {
           component: MessageTemplateComponent.Welcome,
           content:   {
-            principal,
+            principal: {
+              name:      principal?.name || '',
+              loginName: principal?.loginName || '',
+            },
             message: t('ai.message.system.welcome.info'),
           }
         },
@@ -330,7 +335,6 @@ export function useChatMessageComposable() {
     addMessage,
     updateMessage,
     confirmMessage,
-    selectContext,
     resetChatError,
     downloadMessages,
     resetMessages,
