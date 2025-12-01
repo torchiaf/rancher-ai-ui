@@ -1,5 +1,6 @@
 import { Store } from 'vuex';
 import { Context, Message, Role, HookContextTag } from '../../types';
+import { formatContextFromHook } from '../../utils/format';
 
 export interface MessageTemplateFill {
   message: Message;
@@ -20,21 +21,7 @@ class TemplateMessageFactory {
 
     const resource = ctx.value as any;
 
-    // Add resource as context
-    const resourceCtx = [{
-      tag:         resource?.kind?.toLowerCase(),
-      description: resource?.kind,
-      icon:        ctx.icon,
-      value:       resource?.name
-    }];
-
-    // Add resource's namespace as context if available
-    const resourceNamespaceCtx = resource?.namespace ? [{
-      tag:         'namespace',
-      description: t('ai.message.template.namespace'),
-      icon:        'icon-namespace',
-      value:       resource?.namespace
-    }] : [];
+    const resourceCtx = formatContextFromHook([ctx], t);
 
     switch (ctx.tag) {
     case HookContextTag.SortableTableRow:
@@ -83,7 +70,6 @@ class TemplateMessageFactory {
     const contextContent = [
       ...(globalCtx || []),
       ...resourceCtx,
-      ...resourceNamespaceCtx
     ].filter((item, index, self) => index === self.findIndex((c) => c.tag === item.tag && c.value === item.value));
 
     return {

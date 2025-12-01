@@ -84,15 +84,20 @@ const getters = {
     return all.filter((c: Context) => !c.hookId);
   },
 
-  transient: (state: State) => {
-    return state.context || [];
+  /**
+   * Gets the context from available hooks. This is used to by prompt autocomplete
+   */
+  hooks: (state: State, getters: any, rootState: any, rootGetters: any) => {
+    const all = rootGetters['ui-context/all'] || [];
+
+    return all.filter((c: Context) => !!c.hookId);
   },
 
   /**
-   * Gets all active context.
+   * Gets computed context for the Chat.
    *
    * This includes context from the current cluster, active namespaces,
-   * default context from the main Rancher UI, and any transient context
+   * default context from the main Rancher UI, and, in the future, context
    * added specifically for Rancher AI.
    */
   all: (state: State, getters: any, rootState: any, rootGetters: any) => {

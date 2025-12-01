@@ -1,10 +1,13 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
 import { onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { PRODUCT_NAME, AGENT_NAME, AGENT_NAMESPACE, AGENT_API_PATH } from '../product';
+import {
+  PRODUCT_NAME, AGENT_NAME, AGENT_NAMESPACE, AGENT_MESSAGES_API_PATH, AGENT_AUTOCOMPLETE_API_PATH
+} from '../product';
 import { MessagePhase } from '../types';
-import { useConnectionComposable } from '../composables/useConnectionComposable';
+import { useMessagesConnectionComposable } from '../composables/useMessagesConnectionComposable';
 import { useChatMessageComposable } from '../composables/useChatMessageComposable';
+import { usePromptAutocompleteComposable } from '../composables/usePromptAutocompleteComposable';
 import { useContextComposable } from '../composables/useContextComposable';
 import { useHeaderComposable } from '../composables/useHeaderComposable';
 import { useAgentComposable } from '../composables/useAgentComposable';
@@ -23,6 +26,10 @@ const store = useStore();
 const { agent, error: agentError } = useAgentComposable();
 
 const {
+  chatContext, hooksContext, selectedContext, selectContext
+} = useContextComposable();
+
+const {
   messages,
   onopen,
   onmessage,
@@ -31,29 +38,43 @@ const {
   confirmMessage,
   downloadMessages,
   resetMessages,
-  selectContext,
   resetChatError,
   phase: messagePhase,
   error: messageError
-} = useChatMessageComposable();
+} = useChatMessageComposable({ selectedContext });
+
+const {
+  connect: connectAutocompleteWS,
+  disconnect: disconnectAutocompleteWS,
+  autocomplete,
+  fetchAutocomplete
+} = usePromptAutocompleteComposable();
 
 const {
   ws,
-  connect,
-  disconnect,
+  connect: connectMessagesWS,
+  disconnect: disconnectMessagesWS,
   error: wsError
-} = useConnectionComposable({
+} = useMessagesConnectionComposable({
   onopen,
   onmessage,
 });
-
-const { context } = useContextComposable();
 
 const {
   resize,
   close: closePanel,
   restore,
 } = useHeaderComposable();
+
+function connect() {
+  connectMessagesWS(AGENT_NAMESPACE, AGENT_NAME, AGENT_MESSAGES_API_PATH);
+  connectAutocompleteWS(AGENT_NAMESPACE, AGENT_NAME, AGENT_AUTOCOMPLETE_API_PATH);
+}
+
+function disconnect(showError = { showError: true }) {
+  disconnectMessagesWS(showError);
+  disconnectAutocompleteWS();
+}
 
 // Agent errors are priority over websocket and message errors
 const errors = computed(() => {
@@ -77,7 +98,7 @@ function resetChat() {
   resetChatError();
   disconnect({ showError: false });
   nextTick(() => {
-    connect(AGENT_NAMESPACE, AGENT_NAME, AGENT_API_PATH);
+    connect();
   });
 }
 
@@ -89,7 +110,7 @@ function routeToSettings() {
 }
 
 onMounted(() => {
-  connect(AGENT_NAMESPACE, AGENT_NAME, AGENT_API_PATH);
+  connect();
   // Ensure disconnection on browser refresh/close
   window.addEventListener('beforeunload', unmount);
 });
@@ -131,14 +152,16 @@ function unmount() {
         @send:message="sendMessage($event, ws)"
       />
       <Context
-        :value="context"
+        :value="chatContext"
         :disabled="errors.length > 0"
         @select="selectContext"
       />
       <Console
         :disabled="!ws || ws.readyState === 3 || errors.length > 0 || messagePhase === MessagePhase.AwaitingConfirmation"
         :agent="agent"
+        :autocomplete="autocomplete"
         @input:content="sendMessage($event, ws)"
+        @fetch:autocomplete="fetchAutocomplete({ prompt: $event, messages, selectedContext, hooksContext })"
       />
     </div>
   </div>

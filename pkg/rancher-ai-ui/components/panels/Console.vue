@@ -1,140 +1,85 @@
 <script lang="ts" setup>
-import {
-  ref, computed, defineProps, defineEmits, nextTick,
-  onMounted,
-  watch,
-  onUpdated
-} from 'vue';
-import { Agent } from '../../types';
+import { defineProps, defineEmits } from 'vue';
 import { useStore } from 'vuex';
+import { debounce } from 'lodash';
+import { Agent } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import TextLabelPopover from '../popover/TextLabel.vue';
 import VerifyResultsDisclaimer from '../../static/VerifyResultsDisclaimer.vue';
 import { useInputComposable } from '../../composables/useInputComposable';
 
-import type { PropType } from 'vue';
+import PromptAutocompleteTextarea from '../PromptAutocompleteTextarea.vue';
 
-/**
- * Console panel for AI chat messages input and info about the Agent.
- */
+import type { PropType } from 'vue';
 
 const store = useStore();
 const t = store.getters['i18n/t'];
 
 const props = defineProps({
   disabled: {
-    type:    Boolean,
+    type: Boolean,
     default: false,
   },
   agent: {
-    type:     Object as PropType<Agent | null>,
-    default:  null,
-  }
+    type: Object as PropType<Agent | null>,
+    default: null,
+  },
+  autocomplete: {
+    type: String,
+    default: '',
+  },
 });
 
-const emit = defineEmits(['input:content']);
+const emit = defineEmits(['input:content', 'fetch:autocomplete']);
 
 const { inputText, updateInput, cleanInput } = useInputComposable();
 
-const promptTextarea = ref<HTMLTextAreaElement | null>(null);
+// Send message
+function sendContent() {
+  if (!inputText.value || props.disabled) return;
 
-const text = computed(() => {
-  if (props.disabled) {
-    return '';
-  }
-
-  return inputText.value;
-});
-
-function onInputMessage(event: Event) {
-  updateInput((event?.target as HTMLTextAreaElement)?.value);
-  autoResizePrompt();
-}
-
-function handleTextareaKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    sendContent(event);
-  }
-}
-
-function sendContent(event: Event) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  emit('input:content', cleanInput(text.value));
-
+  emit('input:content', cleanInput(inputText.value));
+  // This is the ONLY place input is cleared
   updateInput('');
 }
 
-function autoResizePrompt(height?: number) {
-  const textarea = promptTextarea.value;
+// Debounced autocomplete fetch
+const fetchAutocompleteDebounced = debounce((prompt: string) => {
+  emit('fetch:autocomplete', prompt);
+}, 300);
 
-  if (textarea) {
-    textarea.style.overflow = parseInt(textarea.style.height) > 90 ? 'auto' : 'hidden';
-    textarea.style.height = 'auto';
-    textarea.style.height = `${ height || textarea.scrollHeight }px`;
-  }
+function handleFetchAutocomplete(prompt: string) {
+  fetchAutocompleteDebounced(prompt);
 }
-
-onMounted(() => {
-  nextTick(() => {
-    promptTextarea.value?.focus();
-  });
-});
-
-onUpdated(() => {
-  nextTick(() => {
-    promptTextarea.value?.focus();
-  });
-});
-
-watch(promptTextarea, (el) => {
-  if (el) {
-    nextTick(() => el.focus());
-  }
-}, {});
-
-watch(() => text.value, () => {
-  nextTick(() => {
-    autoResizePrompt();
-  });
-}, {});
 </script>
 
 <template>
   <div class="chat-console">
-    <div
-      class="chat-console-row"
+    <PromptAutocompleteTextarea
+      v-model="inputText"
+      :disabled="props.disabled"
+      :autocomplete="props.autocomplete"
+      @submit="sendContent"
+      @fetch:autocomplete="handleFetchAutocomplete"
     >
-      <textarea
-        ref="promptTextarea"
-        class="chat-input"
-        :class="{ disabled: props.disabled }"
-        rows="1"
-        :value="text"
-        :placeholder="props.disabled ? '' : t('ai.prompt.placeholder')"
-        :disabled="props.disabled"
-        autocomplete="off"
-        @input="onInputMessage"
-        @keydown="handleTextareaKeydown"
-      />
-      <div
-        class="chat-input-send"
-        :class="{ disabled: props.disabled }"
-      >
+      <template #send>
         <RcButton
           small
-          :disabled="!text || props.disabled"
+          :disabled="!inputText || props.disabled"
           @click="sendContent"
-          @keydown.enter="sendContent"
         >
           <i class="icon icon-lg icon-send" />
         </RcButton>
-      </div>
-    </div>
+      </template>
+    </PromptAutocompleteTextarea>
+
     <div class="chat-console-row chat-console-chat-text-info">
       <span class="chat-model label text-deemphasized">
-        {{ !!props.agent ? t('ai.agent.label', { name: props.agent.name, model: props.agent.model }, true) : t('ai.agent.unknown') }}
+        {{
+          !!props.agent
+            ? t('ai.agent.label', { name: props.agent.name, model: props.agent.model }, true)
+            : t('ai.agent.unknown')
+        }}
       </span>
       <TextLabelPopover
         :label="t('ai.agent.verifyResults.button.label')"
@@ -146,11 +91,11 @@ watch(() => text.value, () => {
   </div>
 </template>
 
-<style lang='scss' scoped>
+<style scoped lang="scss">
 .chat-console {
   display: flex;
   flex-direction: column;
-  padding: 16px 16px 16px 16px;
+  padding: 16px;
   gap: 0.75rem;
   border-top: 1px solid var(--border);
   min-height: 70px;
@@ -164,42 +109,7 @@ watch(() => text.value, () => {
   font-size: 12px;
 }
 
-.chat-console-row {
-  display: flex;
-  align-items: end;
-  gap: 8px;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.chat-input {
-  flex: 1;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 1rem;
-  outline: none;
-  color: var(--input-text);
-  transition: border 0.2s;
-  width: auto;
-  outline-offset: 0;
-  resize: none;
-  overflow: auto;
-  min-height: 36px;
-  max-height: 90px;
-}
-
-.chat-input:focus {
-  border: solid 1.5px var(--secondary-border, var(--primary));
-}
-
-.chat-input-send {
-  .btn {
-    height: 36px;
-  }
-}
-
-.chat-console-chat-text-info {
+.chat-console-row.chat-console-chat-text-info {
   justify-content: flex-start;
 }
 </style>
