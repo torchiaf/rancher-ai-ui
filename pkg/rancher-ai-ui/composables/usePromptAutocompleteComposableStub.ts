@@ -38,7 +38,7 @@ export function usePromptAutocompleteComposable() {
     stopStream();
 
     const prompt = args.prompt;
-    let text = 'Hello world how are you';
+    let text = 'Hello world how are you, I am a simulated autocomplete response from the Rancher AI backend. This is only a stub for testing purposes.';
 
     //
     // FIX: Correctly remove the prefix that matches the prompt

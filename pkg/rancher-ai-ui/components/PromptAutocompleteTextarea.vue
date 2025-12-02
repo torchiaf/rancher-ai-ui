@@ -9,6 +9,9 @@ import {
   watch,
 } from 'vue';
 import { debounce } from 'lodash';
+import { useStore } from 'vuex';
+
+const store = useStore();
 
 const props = defineProps({
   modelValue: {
@@ -46,13 +49,24 @@ const textProxy = computed({
   set: (v: string) => emit('update:modelValue', v),
 });
 
-function autoResizePrompt(height?: number) {
+// ⬇⬇⬇ FLIPPED: ghost drives size, textarea follows
+function autoResizePrompt() {
   const textarea = promptTextarea.value;
-  if (!textarea) return;
+  const ghost = mirror.value;
+  if (!textarea || !ghost) return;
 
-  textarea.style.overflow = parseInt(textarea.style.height) > 90 ? 'auto' : 'hidden';
-  textarea.style.height = 'auto';
-  textarea.style.height = `${ height || textarea.scrollHeight }px`;
+  // let ghost grow naturally first
+  ghost.style.height = 'auto';
+
+  const rawHeight = ghost.scrollHeight || 0;
+  const min = 36;
+  const max = 90;
+  const targetHeight = Math.min(Math.max(rawHeight, min), max);
+
+  ghost.style.height = `${targetHeight}px`;
+
+  textarea.style.height = `${targetHeight}px`;
+  textarea.style.overflow = targetHeight >= max ? 'auto' : 'hidden';
 }
 
 function updateTextBeforeCursor(value: string) {
@@ -73,17 +87,19 @@ function updateAutocompleteLabel(value: string) {
  */
 function syncMirror() {
   const textarea = promptTextarea.value;
-  if (!textarea) return;
+  const ghost = mirror.value;
+  if (!textarea || !ghost) return;
 
-  const cursorPos = textarea.selectionStart ?? textarea.value.length;
+  const cursorPos = textarea.value.length;
   const textValue = textarea.value;
 
   updateTextBeforeCursor(textValue.substring(0, cursorPos));
 
-  if (mirror.value) {
-    mirror.value.scrollTop = textarea.scrollTop;
-    mirror.value.style.width = `${ textarea.offsetWidth }px`;
-  }
+  // keep scroll in sync
+  ghost.scrollTop = textarea.scrollTop;
+
+  // ⬇⬇⬇ FLIPPED: textarea width follows ghost
+  textarea.style.width = `${ghost.offsetWidth}px`;
 }
 
 /**
@@ -105,8 +121,8 @@ const scheduleStableAutocomplete = debounce((prompt: string) => {
  */
 function handleInput() {
   nextTick(() => {
-    autoResizePrompt();
     syncMirror();
+    autoResizePrompt();
 
     // User changed text -> schedule autocomplete for stable input
     scheduleStableAutocomplete(textProxy.value);
@@ -151,6 +167,12 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
+function onParentResize() {
+  // recalc layout
+  syncMirror();
+  autoResizePrompt();
+}
+
 /**
  * Tab / Shift+Tab behavior:
  * - Tab: accept full autocomplete remainder
@@ -170,7 +192,10 @@ function onTab(event: KeyboardEvent) {
     const neu = current + labelText;
 
     textProxy.value = neu;
-    nextTick(() => autoResizePrompt());
+    nextTick(() => {
+      syncMirror();
+      autoResizePrompt();
+    });
 
     updateAutocompleteLabel(''); // suggestion consumed
 
@@ -191,7 +216,10 @@ function onTab(event: KeyboardEvent) {
   const neu = current + chunk;
 
   textProxy.value = neu;
-  nextTick(() => autoResizePrompt());
+  nextTick(() => {
+    syncMirror();
+    autoResizePrompt();
+  });
 
   updateAutocompleteLabel(newRemainder);
   suppressAutocomplete.value = false;
@@ -202,8 +230,8 @@ function onTab(event: KeyboardEvent) {
 onMounted(() => {
   nextTick(() => {
     promptTextarea.value?.focus();
-    autoResizePrompt();
     syncMirror();
+    autoResizePrompt();
   });
 });
 
@@ -212,8 +240,8 @@ watch(
   () => props.modelValue,
   () => {
     nextTick(() => {
-      autoResizePrompt();
       syncMirror();
+      autoResizePrompt();
     });
   },
   { immediate: true },
@@ -227,8 +255,24 @@ watch(
     if (suppressAutocomplete.value) return;
 
     updateAutocompleteLabel(val || '');
+
+    // ⬇⬇⬇ autocomplete can change ghost height → resize
+    nextTick(() => {
+      syncMirror();
+      autoResizePrompt();
+    });
   },
   { immediate: false },
+);
+
+watch(
+  () => store.state.wm.panelWidth.left,
+  () => onParentResize()
+);
+
+watch(
+  () => store.state.wm.panelWidth.right,
+  () => onParentResize()
 );
 </script>
 
@@ -268,7 +312,9 @@ watch(
 }
 
 .chat-input {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 16px;
@@ -276,12 +322,12 @@ watch(
   outline: none;
   color: var(--input-text);
   transition: border 0.2s;
-  width: auto;
   outline-offset: 0;
   resize: none;
   overflow: auto;
-  min-height: 36px;
-  max-height: 90px;
+
+  // ⬇⬇⬇ match mirror’s width
+  width: 100%;
 }
 
 .chat-input:focus {
@@ -290,7 +336,6 @@ watch(
 
 .chat-input,
 .mirror {
-  height: 150px;
   padding: 10px;
   margin: 0;
   box-sizing: border-box;
@@ -299,12 +344,12 @@ watch(
   line-height: 1.5;
   white-space: pre-wrap;
   overflow: hidden;
+  min-height: 36px;
+  max-height: 90px;
 }
 
 .mirror {
-  position: absolute;
-  top: 0;
-  left: 0;
+  flex: 1;
   background: transparent;
   pointer-events: none;
   z-index: 10;
