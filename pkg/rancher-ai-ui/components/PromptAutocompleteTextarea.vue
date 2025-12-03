@@ -22,7 +22,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // backend-sent autocomplete *suffix*
   autocomplete: {
     type: String,
     default: '',
@@ -38,24 +37,21 @@ const emit = defineEmits<{
 const promptTextarea = ref<HTMLTextAreaElement | null>(null);
 const mirror = ref<HTMLDivElement | null>(null);
 const textBeforeCursor = ref<HTMLSpanElement | null>(null);
-const floatingLabel = ref<HTMLSpanElement | null>(null);
 
-// 🔥 gate showing autocomplete until input is stable
+const suggestion = ref('');
+
 const suppressAutocomplete = ref(true);
 
-// v-model proxy
 const textProxy = computed({
   get: () => props.modelValue,
   set: (v: string) => emit('update:modelValue', v),
 });
 
-// ⬇⬇⬇ FLIPPED: ghost drives size, textarea follows
 function autoResizePrompt() {
   const textarea = promptTextarea.value;
   const ghost = mirror.value;
   if (!textarea || !ghost) return;
 
-  // let ghost grow naturally first
   ghost.style.height = 'auto';
 
   const rawHeight = ghost.scrollHeight || 0;
@@ -64,7 +60,6 @@ function autoResizePrompt() {
   const targetHeight = Math.min(Math.max(rawHeight, min), max);
 
   ghost.style.height = `${targetHeight}px`;
-
   textarea.style.height = `${targetHeight}px`;
   textarea.style.overflow = targetHeight >= max ? 'auto' : 'hidden';
 }
@@ -76,9 +71,7 @@ function updateTextBeforeCursor(value: string) {
 }
 
 function updateAutocompleteLabel(value: string) {
-  if (floatingLabel.value) {
-    floatingLabel.value.textContent = value;
-  }
+  suggestion.value = value || '';
 }
 
 /**
@@ -95,22 +88,16 @@ function syncMirror() {
 
   updateTextBeforeCursor(textValue.substring(0, cursorPos));
 
-  // keep scroll in sync
   ghost.scrollTop = textarea.scrollTop;
-
-  // ⬇⬇⬇ FLIPPED: textarea width follows ghost
   textarea.style.width = `${ghost.offsetWidth}px`;
 }
 
 /**
  * Debounced "input is stable" signal.
- * After this delay, we:
- *  - unsuppress autocomplete
- *  - ask backend for a suggestion
  */
 const scheduleStableAutocomplete = debounce((prompt: string) => {
-  suppressAutocomplete.value = false;           // 🔓 allow showing autocomplete
-  emit('fetch:autocomplete', prompt);          // ask backend now
+  suppressAutocomplete.value = false;
+  emit('fetch:autocomplete', prompt);
 }, 500);
 
 /**
@@ -123,8 +110,6 @@ function handleInput() {
   nextTick(() => {
     syncMirror();
     autoResizePrompt();
-
-    // User changed text -> schedule autocomplete for stable input
     scheduleStableAutocomplete(textProxy.value);
   });
 }
@@ -147,19 +132,16 @@ function handleScroll() {
  * - Tab handled separately
  */
 function handleKeydown(event: KeyboardEvent) {
-  // Any printable key OR Backspace/Delete means "user is actively editing"
   if (
-    event.key.length === 1 ||          // characters
+    event.key.length === 1 ||
     event.key === 'Backspace' ||
     event.key === 'Delete'
   ) {
-    // User typing → hide current suggestion and suppress new ones
-    suppressAutocomplete.value = true;    // 🚫 block showing autocomplete
-    scheduleStableAutocomplete.cancel?.(); // cancel pending stable trigger, if any
-    updateAutocompleteLabel('');          // clear label instantly
+    suppressAutocomplete.value = true;
+    scheduleStableAutocomplete.cancel?.();
+    updateAutocompleteLabel('');
   }
 
-  // Submit on Enter (but not Shift+Enter)
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     emit('submit');
@@ -168,7 +150,6 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function onParentResize() {
-  // recalc layout
   syncMirror();
   autoResizePrompt();
 }
@@ -182,7 +163,7 @@ function onTab(event: KeyboardEvent) {
   event.preventDefault();
   event.stopPropagation();
 
-  const labelText = floatingLabel.value?.textContent || '';
+  const labelText = suggestion.value || '';
   if (!labelText) return;
 
   const current = props.modelValue;
@@ -197,12 +178,10 @@ function onTab(event: KeyboardEvent) {
       autoResizePrompt();
     });
 
-    updateAutocompleteLabel(''); // suggestion consumed
+    updateAutocompleteLabel('');
 
-    // treated as stable, so we can fetch new suggestion for full text
     suppressAutocomplete.value = false;
-    scheduleStableAutocomplete(neu); // reuse same debounce
-
+    scheduleStableAutocomplete(neu);
     return;
   }
 
@@ -226,7 +205,58 @@ function onTab(event: KeyboardEvent) {
   scheduleStableAutocomplete(neu);
 }
 
-// lifecycle
+/** -------------------------------------------------------------------------
+ * SPLIT suggestion into first word + rest (robust, no "H ello" bug)
+ * ------------------------------------------------------------------------- */
+
+const trimmedSuggestion = computed(() => {
+  const s = suggestion.value;
+  if (!s) return '';
+  return s.replace(/^\s+/, ''); // left trim only
+});
+
+const hasSuggestion = computed(() => !!trimmedSuggestion.value);
+
+const firstWord = computed(() => {
+  const s = trimmedSuggestion.value;
+  if (!s) return '';
+  const idx = s.indexOf(' ');
+  if (idx === -1) return s;
+  return s.slice(0, idx);
+});
+
+const restText = computed(() => {
+  const s = trimmedSuggestion.value;
+  if (!s) return '';
+  const idx = s.indexOf(' ');
+  if (idx === -1) return '';
+  return s.slice(idx + 1); // everything after first space
+});
+
+const isMultiWord = computed(() => !!restText.value);
+
+/** -------------------------------------------------------------------------
+ * HINT VISIBILITY LOGIC
+ *  - multi-word: show shift+tab between firstWord and restText
+ *  - single-word: show tab after the word
+ * ------------------------------------------------------------------------- */
+
+const showShiftTabHint = computed(() =>
+  !props.disabled &&
+  !suppressAutocomplete.value &&
+  hasSuggestion.value &&
+  isMultiWord.value,
+);
+
+// NOTE: as in your current code, this shows TAB whenever there is a suggestion
+const showTabHint = computed(() =>
+  !props.disabled &&
+  !suppressAutocomplete.value &&
+  hasSuggestion.value,
+);
+
+/** ------------------------------------------------------------------------- */
+
 onMounted(() => {
   nextTick(() => {
     promptTextarea.value?.focus();
@@ -235,7 +265,6 @@ onMounted(() => {
   });
 });
 
-// resize & mirror when external model changes (e.g. we accept autocomplete)
 watch(
   () => props.modelValue,
   () => {
@@ -247,16 +276,13 @@ watch(
   { immediate: true },
 );
 
-// ❗ ONLY place where backend autocomplete gets applied to label.
 watch(
   () => props.autocomplete,
   (val) => {
-    // if user is still typing or we haven't reached stable input delay, don't show
     if (suppressAutocomplete.value) return;
 
     updateAutocompleteLabel(val || '');
 
-    // ⬇⬇⬇ autocomplete can change ghost height → resize
     nextTick(() => {
       syncMirror();
       autoResizePrompt();
@@ -267,12 +293,12 @@ watch(
 
 watch(
   () => store.state.wm.panelWidth.left,
-  () => onParentResize()
+  () => onParentResize(),
 );
 
 watch(
   () => store.state.wm.panelWidth.right,
-  () => onParentResize()
+  () => onParentResize(),
 );
 </script>
 
@@ -280,7 +306,31 @@ watch(
   <div class="chat-console-row">
     <div ref="mirror" class="mirror">
       <span ref="textBeforeCursor"></span>
-      <span ref="floatingLabel" class="floating-label"></span>
+      <span
+        v-if="!suppressAutocomplete && hasSuggestion"
+        class="ghost-autocomplete"
+      >
+        <span v-if="firstWord" class="first_hint_word">
+          {{ firstWord }}
+        </span>
+        <span
+          v-if="showShiftTabHint"
+          class="tab_complete-hint tab_complete-hint--middle"
+        >
+          shift+tab
+        </span><span
+          v-if="restText"
+          class="rest_hint"
+        >
+          {{ ' ' + restText }}
+        </span>
+        <span
+          v-if="showTabHint"
+          class="tab_complete-hint tab_complete-hint--end"
+        >
+          tab
+        </span>
+      </span>
     </div>
 
     <textarea
@@ -297,7 +347,10 @@ watch(
       @keydown.tab.prevent="onTab"
     />
 
-    <div class="chat-input-send" :class="{ disabled: props.disabled }">
+    <div
+      class="chat-input-send"
+      :class="{ disabled: props.disabled }"
+    >
       <slot name="send"></slot>
     </div>
   </div>
@@ -307,8 +360,30 @@ watch(
 .chat-console-row {
   position: relative;
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   gap: 8px;
+}
+
+.mirror {
+  display: block;
+  flex: 1;
+  background: transparent;
+  pointer-events: none;
+  z-index: 10;
+  color: transparent;
+  padding: 10px;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow: hidden;
+  min-height: 36px;
+  max-height: 90px;
+}
+.mirror span {
+  display: inline;
 }
 
 .chat-input {
@@ -325,38 +400,26 @@ watch(
   outline-offset: 0;
   resize: none;
   overflow: auto;
-
-  // ⬇⬇⬇ match mirror’s width
   width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  box-sizing: border-box;
+  font-family: monospace;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  min-height: 36px;
+  max-height: 90px;
 }
 
 .chat-input:focus {
   border: solid 1.5px var(--secondary-border, var(--primary));
 }
 
-.chat-input,
-.mirror {
-  padding: 10px;
-  margin: 0;
-  box-sizing: border-box;
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow: hidden;
-  min-height: 36px;
-  max-height: 90px;
+.chat-input-send {
+  flex-shrink: 0;
 }
 
-.mirror {
-  flex: 1;
-  background: transparent;
-  pointer-events: none;
-  z-index: 10;
-  color: transparent;
-}
-
-.floating-label {
+.ghost-autocomplete {
   background-color: transparent;
   color: var(--input-text);
   opacity: 0.3;
@@ -364,6 +427,32 @@ watch(
   border-radius: 3px;
   position: relative;
   top: 1px;
-  margin-left: -8px;
+  white-space: pre-wrap;
+}
+
+.first_hint_word,
+.rest_hint {
+  white-space: pre-wrap;
+}
+
+.tab_complete-hint {
+  color: var(--input-text);
+  opacity: 0.3;
+  position: relative;
+  border: 1px solid var(--input-text);
+  border-radius: 4px;
+  font-size: 10px;
+  background-color: var(--input-placeholder);
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.tab_complete-hint--middle {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.tab_complete-hint--end {
+  margin-left: 4px;
 }
 </style>

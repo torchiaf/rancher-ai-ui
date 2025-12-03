@@ -42,15 +42,6 @@ function sendContent() {
   // This is the ONLY place input is cleared
   updateInput('');
 }
-
-// Debounced autocomplete fetch
-const fetchAutocompleteDebounced = debounce((prompt: string) => {
-  emit('fetch:autocomplete', prompt);
-}, 300);
-
-function handleFetchAutocomplete(prompt: string) {
-  fetchAutocompleteDebounced(prompt);
-}
 </script>
 
 <template>
@@ -60,7 +51,7 @@ function handleFetchAutocomplete(prompt: string) {
       :disabled="props.disabled"
       :autocomplete="props.autocomplete"
       @submit="sendContent"
-      @fetch:autocomplete="handleFetchAutocomplete"
+      @fetch:autocomplete="emit('fetch:autocomplete', $event)"
     >
       <template #send>
         <RcButton
@@ -110,6 +101,9 @@ function handleFetchAutocomplete(prompt: string) {
 }
 
 .chat-console-row.chat-console-chat-text-info {
+  display: flex;
   justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
 }
 </style>
