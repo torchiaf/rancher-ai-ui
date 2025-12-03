@@ -7,6 +7,7 @@ import {
   nextTick,
   onMounted,
   watch,
+  onUpdated,
 } from 'vue';
 import { debounce } from 'lodash';
 import { useStore } from 'vuex';
@@ -206,7 +207,7 @@ function onTab(event: KeyboardEvent) {
 }
 
 /** -------------------------------------------------------------------------
- * SPLIT suggestion into first word + rest (robust, no "H ello" bug)
+ * Handle suggestion trimming and visibility
  * ------------------------------------------------------------------------- */
 
 const trimmedSuggestion = computed(() => {
@@ -217,42 +218,10 @@ const trimmedSuggestion = computed(() => {
 
 const hasSuggestion = computed(() => !!trimmedSuggestion.value);
 
-const firstWord = computed(() => {
-  const s = trimmedSuggestion.value;
-  if (!s) return '';
-  const idx = s.indexOf(' ');
-  if (idx === -1) return s;
-  return s.slice(0, idx);
-});
-
-const restText = computed(() => {
-  const s = trimmedSuggestion.value;
-  if (!s) return '';
-  const idx = s.indexOf(' ');
-  if (idx === -1) return '';
-  return s.slice(idx + 1); // everything after first space
-});
-
-const isMultiWord = computed(() => !!restText.value);
-
-/** -------------------------------------------------------------------------
- * HINT VISIBILITY LOGIC
- *  - multi-word: show shift+tab between firstWord and restText
- *  - single-word: show tab after the word
- * ------------------------------------------------------------------------- */
-
-const showShiftTabHint = computed(() =>
+const showHints = computed(() =>
   !props.disabled &&
   !suppressAutocomplete.value &&
-  hasSuggestion.value &&
-  isMultiWord.value,
-);
-
-// NOTE: as in your current code, this shows TAB whenever there is a suggestion
-const showTabHint = computed(() =>
-  !props.disabled &&
-  !suppressAutocomplete.value &&
-  hasSuggestion.value,
+  hasSuggestion.value
 );
 
 /** ------------------------------------------------------------------------- */
@@ -264,6 +233,18 @@ onMounted(() => {
     autoResizePrompt();
   });
 });
+
+onUpdated(() => {
+  nextTick(() => {
+    promptTextarea.value?.focus();
+  });
+});
+
+watch(promptTextarea, (el) => {
+  if (el) {
+    nextTick(() => el.focus());
+  }
+}, {});
 
 watch(
   () => props.modelValue,
@@ -310,26 +291,20 @@ watch(
         v-if="!suppressAutocomplete && hasSuggestion"
         class="ghost-autocomplete"
       >
-        <span v-if="firstWord" class="first_hint_word">
-          {{ firstWord }}
-        </span>
         <span
-          v-if="showShiftTabHint"
-          class="tab_complete-hint tab_complete-hint--middle"
-        >
-          shift+tab
-        </span><span
-          v-if="restText"
-          class="rest_hint"
-        >
-          {{ ' ' + restText }}
-        </span>
+          v-if="trimmedSuggestion"
+          class="hint_word"
+        >{{ trimmedSuggestion }}</span>
         <span
-          v-if="showTabHint"
-          class="tab_complete-hint tab_complete-hint--end"
-        >
-          tab
-        </span>
+          v-if="showHints"
+          class="tab_complete-hint"
+          v-clean-tooltip="'Press Tab to accept full suggestion'"
+        >Tab</span>
+        <span
+          v-if="showHints"
+          class="tab_complete-hint"
+          v-clean-tooltip="'Press Shift+Tab to accept next word'"
+        >Shift+Tab</span>
       </span>
     </div>
 
@@ -430,29 +405,23 @@ watch(
   white-space: pre-wrap;
 }
 
-.first_hint_word,
-.rest_hint {
+.hint_word {
   white-space: pre-wrap;
 }
 
 .tab_complete-hint {
   color: var(--input-text);
-  opacity: 0.3;
+  opacity: 0.8;
   position: relative;
   border: 1px solid var(--input-text);
   border-radius: 4px;
   font-size: 10px;
   background-color: var(--input-placeholder);
   white-space: nowrap;
-  padding: 0 4px;
-}
-
-.tab_complete-hint--middle {
-  margin-left: 4px;
-  margin-right: 4px;
-}
-
-.tab_complete-hint--end {
-  margin-left: 4px;
+  padding: 2px 4px;
+  margin-left: 2px;
+  cursor: default;
+  pointer-events: all;
+  z-index: 100;
 }
 </style>
