@@ -16,15 +16,15 @@ const store = useStore();
 
 const props = defineProps({
   modelValue: {
-    type: String,
+    type:    String,
     default: '',
   },
   disabled: {
-    type: Boolean,
+    type:    Boolean,
     default: false,
   },
   autocomplete: {
-    type: String,
+    type:    String,
     default: '',
   },
 });
@@ -51,7 +51,10 @@ const textProxy = computed({
 function autoResizePrompt() {
   const textarea = promptTextarea.value;
   const ghost = mirror.value;
-  if (!textarea || !ghost) return;
+
+  if (!textarea || !ghost) {
+    return;
+  }
 
   ghost.style.height = 'auto';
 
@@ -60,8 +63,8 @@ function autoResizePrompt() {
   const max = 90;
   const targetHeight = Math.min(Math.max(rawHeight, min), max);
 
-  ghost.style.height = `${targetHeight}px`;
-  textarea.style.height = `${targetHeight}px`;
+  ghost.style.height = `${ targetHeight }px`;
+  textarea.style.height = `${ targetHeight }px`;
   textarea.style.overflow = targetHeight >= max ? 'auto' : 'hidden';
 }
 
@@ -82,7 +85,10 @@ function updateAutocompleteLabel(value: string) {
 function syncMirror() {
   const textarea = promptTextarea.value;
   const ghost = mirror.value;
-  if (!textarea || !ghost) return;
+
+  if (!textarea || !ghost) {
+    return;
+  }
 
   const cursorPos = textarea.value.length;
   const textValue = textarea.value;
@@ -90,7 +96,7 @@ function syncMirror() {
   updateTextBeforeCursor(textValue.substring(0, cursorPos));
 
   ghost.scrollTop = textarea.scrollTop;
-  textarea.style.width = `${ghost.offsetWidth}px`;
+  textarea.style.width = `${ ghost.offsetWidth }px`;
 }
 
 /**
@@ -121,6 +127,7 @@ function handleClick() {
 
 function handleScroll() {
   const textarea = promptTextarea.value;
+
   if (mirror.value && textarea) {
     mirror.value.scrollTop = textarea.scrollTop;
   }
@@ -146,6 +153,7 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     emit('submit');
+
     return;
   }
 }
@@ -165,7 +173,10 @@ function onTab(event: KeyboardEvent) {
   event.stopPropagation();
 
   const labelText = suggestion.value || '';
-  if (!labelText) return;
+
+  if (!labelText) {
+    return;
+  }
 
   const current = props.modelValue;
 
@@ -183,13 +194,17 @@ function onTab(event: KeyboardEvent) {
 
     suppressAutocomplete.value = false;
     scheduleStableAutocomplete(neu);
+
     return;
   }
 
   // SHIFT+TAB → accept next word only
   const remainder = labelText;
   const match = remainder.match(/^\s*\S+(\s*)?/);
-  if (!match) return;
+
+  if (!match) {
+    return;
+  }
 
   const chunk = match[0];
   const newRemainder = remainder.slice(chunk.length);
@@ -212,14 +227,17 @@ function onTab(event: KeyboardEvent) {
 
 const trimmedSuggestion = computed(() => {
   const s = suggestion.value;
-  if (!s) return '';
+
+  if (!s) {
+    return '';
+  }
+
   return s.replace(/^\s+/, ''); // left trim only
 });
 
 const hasSuggestion = computed(() => !!trimmedSuggestion.value);
 
-const showHints = computed(() =>
-  !props.disabled &&
+const showHints = computed(() => !props.disabled &&
   !suppressAutocomplete.value &&
   hasSuggestion.value
 );
@@ -260,7 +278,9 @@ watch(
 watch(
   () => props.autocomplete,
   (val) => {
-    if (suppressAutocomplete.value) return;
+    if (suppressAutocomplete.value) {
+      return;
+    }
 
     updateAutocompleteLabel(val || '');
 
@@ -285,7 +305,10 @@ watch(
 
 <template>
   <div class="chat-console-row">
-    <div ref="mirror" class="mirror">
+    <div
+      ref="mirror"
+      class="mirror"
+    >
       <span ref="textBeforeCursor"></span>
       <span
         v-if="!suppressAutocomplete && hasSuggestion"
@@ -297,21 +320,21 @@ watch(
         >{{ trimmedSuggestion }}</span>
         <span
           v-if="showHints"
-          class="tab_complete-hint"
           v-clean-tooltip="'Press Tab to accept full suggestion'"
+          class="tab_complete-hint"
         >Tab</span>
         <span
           v-if="showHints"
-          class="tab_complete-hint"
           v-clean-tooltip="'Press Shift+Tab to accept next word'"
+          class="tab_complete-hint"
         >Shift+Tab</span>
       </span>
     </div>
 
     <textarea
       ref="promptTextarea"
-      class="chat-input"
       v-model="textProxy"
+      class="chat-input"
       :disabled="props.disabled"
       rows="1"
       autocomplete="off"

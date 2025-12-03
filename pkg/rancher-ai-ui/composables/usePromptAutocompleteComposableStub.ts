@@ -28,13 +28,12 @@ export function usePromptAutocompleteComposable() {
   // ----------------------------
   // STUB: Simulated autocomplete
   // ----------------------------
-  function fetchAutocomplete(args: { 
-    prompt: string, 
-    messages: Message[], 
-    selectedContext: Context[], 
-    hooksContext: Context[] 
+  function fetchAutocomplete(args: {
+    prompt: string,
+    messages: Message[],
+    selectedContext: Context[],
+    hooksContext: Context[]
   }) {
-
     stopStream();
 
     const prompt = args.prompt;

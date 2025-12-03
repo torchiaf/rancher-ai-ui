@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { defineProps, defineEmits } from 'vue';
 import { useStore } from 'vuex';
-import { debounce } from 'lodash';
 import { Agent } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import TextLabelPopover from '../popover/TextLabel.vue';
@@ -17,15 +16,15 @@ const t = store.getters['i18n/t'];
 
 const props = defineProps({
   disabled: {
-    type: Boolean,
+    type:    Boolean,
     default: false,
   },
   agent: {
-    type: Object as PropType<Agent | null>,
+    type:    Object as PropType<Agent | null>,
     default: null,
   },
   autocomplete: {
-    type: String,
+    type:    String,
     default: '',
   },
 });
@@ -36,7 +35,9 @@ const { inputText, updateInput, cleanInput } = useInputComposable();
 
 // Send message
 function sendContent() {
-  if (!inputText.value || props.disabled) return;
+  if (!inputText.value || props.disabled) {
+    return;
+  }
 
   emit('input:content', cleanInput(inputText.value));
   // This is the ONLY place input is cleared
