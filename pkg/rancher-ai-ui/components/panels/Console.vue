@@ -23,6 +23,10 @@ const props = defineProps({
     type:    Object as PropType<Agent | null>,
     default: null,
   },
+  chatCnt: {
+    type:    Number,
+    required: true,
+  },
   autocomplete: {
     type:    String,
     default: '',
@@ -49,6 +53,7 @@ function sendContent() {
   <div class="chat-console">
     <PromptAutocompleteTextarea
       v-model="inputText"
+      :chat-cnt="props.chatCnt"
       :disabled="props.disabled"
       :autocomplete="props.autocomplete"
       @submit="sendContent"

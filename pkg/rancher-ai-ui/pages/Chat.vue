@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
-import { onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import {
   PRODUCT_NAME, AGENT_NAME, AGENT_NAMESPACE, AGENT_MESSAGES_API_PATH, AGENT_AUTOCOMPLETE_API_PATH
 } from '../product';
@@ -22,6 +22,8 @@ import Chat from '../handlers/chat';
  */
 
 const store = useStore();
+
+const chatCnt = ref(0);
 
 const { agent, error: agentError } = useAgentComposable();
 
@@ -94,6 +96,7 @@ function close() {
 }
 
 function resetChat() {
+  chatCnt.value += 1;
   resetMessages();
   resetChatError();
   disconnect({ showError: false });
@@ -160,6 +163,7 @@ function unmount() {
         :disabled="!ws || ws.readyState === 3 || errors.length > 0 || messagePhase === MessagePhase.AwaitingConfirmation"
         :agent="agent"
         :autocomplete="autocomplete"
+        :chatCnt="chatCnt"
         @input:content="sendMessage($event, ws)"
         @fetch:autocomplete="fetchAutocomplete({ prompt: $event, messages, selectedContext, hooksContext })"
       />

@@ -15,6 +15,10 @@ import { useStore } from 'vuex';
 const store = useStore();
 
 const props = defineProps({
+  chatCnt: {
+    type:    Number,
+    required: true,
+  },
   modelValue: {
     type:    String,
     default: '',
@@ -35,6 +39,9 @@ const emit = defineEmits<{
   (e: 'fetch:autocomplete', prompt: string): void;
 }>();
 
+const lastPrompt = ref('');
+const lastAutocomplete = ref('');
+
 const promptTextarea = ref<HTMLTextAreaElement | null>(null);
 const mirror = ref<HTMLDivElement | null>(null);
 const textBeforeCursor = ref<HTMLSpanElement | null>(null);
@@ -47,6 +54,12 @@ const textProxy = computed({
   get: () => props.modelValue,
   set: (v: string) => emit('update:modelValue', v),
 });
+
+function normalizeForCompare(s: string): string {
+  // remove leading/trailing spaces & CRLF for comparison only
+  return s.replace(/\r?\n/g, ' ').trim();
+}
+
 
 function autoResizePrompt() {
   const textarea = promptTextarea.value;
@@ -102,10 +115,33 @@ function syncMirror() {
 /**
  * Debounced "input is stable" signal.
  */
-const scheduleStableAutocomplete = debounce((prompt: string) => {
+const scheduleStableAutocomplete = debounce((rawPrompt: string) => {
+  const cmpPrompt = normalizeForCompare(rawPrompt);
+
+  // 1. must be >= 3 visible chars
+  if (cmpPrompt.length < 3) return;
+
+  // 2. must differ from previous cmp prompt
+  if (cmpPrompt === lastPrompt.value) return;
+
+  // 3. user manually typed exact last suggestion
+  if (
+    lastAutocomplete.value &&
+    cmpPrompt.endsWith(lastAutocomplete.value.trim())
+  ) {
+    return;
+  }
+
   suppressAutocomplete.value = false;
-  emit('fetch:autocomplete', prompt);
+
+  // store normalized for comparison only
+  lastPrompt.value = cmpPrompt;
+
+  // send RAW prompt - do NOT trim!
+  emit('fetch:autocomplete', rawPrompt);
 }, 500);
+
+
 
 /**
  * On every input:
@@ -192,8 +228,8 @@ function onTab(event: KeyboardEvent) {
 
     updateAutocompleteLabel('');
 
-    suppressAutocomplete.value = false;
-    scheduleStableAutocomplete(neu);
+    // DO NOT re-fetch autocomplete here
+    // suppressAutocomplete stays as-is
 
     return;
   }
@@ -217,8 +253,7 @@ function onTab(event: KeyboardEvent) {
   });
 
   updateAutocompleteLabel(newRemainder);
-  suppressAutocomplete.value = false;
-  scheduleStableAutocomplete(neu);
+  // DO NOT re-fetch autocomplete here
 }
 
 /** -------------------------------------------------------------------------
@@ -282,6 +317,7 @@ watch(
       return;
     }
 
+    lastAutocomplete.value = val?.trim() || ''; // track
     updateAutocompleteLabel(val || '');
 
     nextTick(() => {
@@ -289,7 +325,6 @@ watch(
       autoResizePrompt();
     });
   },
-  { immediate: false },
 );
 
 watch(
@@ -300,6 +335,15 @@ watch(
 watch(
   () => store.state.wm.panelWidth.right,
   () => onParentResize(),
+);
+
+watch(
+  () => props.chatCnt,
+  () => {
+    emit('update:modelValue', '');
+    textProxy.value = '';
+  },
+  { immediate: true },
 );
 </script>
 
