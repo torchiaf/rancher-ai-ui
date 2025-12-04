@@ -327,7 +327,9 @@ watch(
           v-if="showHints"
           v-clean-tooltip="'Press Shift+Tab to accept next word'"
           class="tab_complete-hint"
-        >Shift+Tab</span>
+        >
+          <span class="arrow-icon">⇧</span>+Tab
+        </span>
       </span>
     </div>
 
@@ -446,5 +448,17 @@ watch(
   cursor: default;
   pointer-events: all;
   z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.arrow-icon {
+  font-size: 1.4em;
+  line-height: 1;
+  display: inline-block;
+  opacity: 1;
+  font-weight: 600;
 }
 </style>
