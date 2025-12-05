@@ -3,7 +3,8 @@ import {
   ActionType, MessageConfirmationAction, Tag, Context,
   Message,
   Role,
-  MessageAction
+  MessageAction,
+  AutocompletePayload
 } from '../types';
 import { validateActionResource } from './validator';
 
@@ -47,6 +48,7 @@ export function formatAutocompleteMessage(
   selectedContext: Context[],
   hooksContext: Context[],
   previousMessages: Message[],
+  wildcard: string | undefined,
   t: any
 ): string {
   const keys: Record<string, number> = {};
@@ -84,11 +86,17 @@ export function formatAutocompleteMessage(
       };
     });
 
-  return JSON.stringify({
+  const out: AutocompletePayload = {
     prompt,
     context,
-    chatPayload
-  });
+    chatPayload,
+  };
+
+  if (wildcard) {
+    out.wildcard = wildcard;
+  }
+
+  return JSON.stringify(out);
 }
 
 export function formatContextFromHook(context: Context[], t: any): Context[] {
@@ -198,6 +206,33 @@ export function formatSuggestionActions(suggestionActions: string[], remaining: 
   };
 }
 
+export function formatAutocompleteItems(items: string[], remaining: string): { items: string[]; remaining: string } {
+  const re = /<item\b[^>]*>([\s\S]*?)<\/item>/i;
+  const match = remaining?.match(re);
+
+  if (match) {
+    const inner = match[1];
+
+    try {
+      const parsedItem = JSON.parse(inner);
+
+      items.push(parsedItem);
+    } catch (e) {
+      console.error('Failed to parse autocomplete item:', e); /* eslint-disable-line no-console */
+    }
+
+    remaining = remaining.replace(match[0], '').trim();
+
+    if (remaining) {
+      return formatAutocompleteItems(items, remaining);
+    }
+  }
+
+  return {
+    items,
+    remaining
+  };
+}
 export function formatFileMessages(principal: any, messages: Message[]): string {
   const avatar = {
     [Role.User]:      `👤 ${ principal?.name || 'user' }`,

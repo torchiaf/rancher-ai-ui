@@ -40,6 +40,8 @@ export const enum Tag {
   ConfirmationEnd = '</confirmation-response>',
   SuggestionsStart = '<suggestion>',
   SuggestionsEnd = '</suggestion>',
+  AutocompleteItem = '<item>',
+  AutocompleteItemEnd = '</item>',
   ErrorStart = '<error>',
   ErrorEnd = '</error>',
 }
@@ -141,6 +143,16 @@ export interface FormattedMessage extends Message {
   formattedThinkingContent?: string;
   formattedMessageContent?: string;
   isError?: boolean;
+}
+
+export interface AutocompletePayload {
+  prompt: string;
+  context: Record<string, string | object | null>;
+  chatPayload: {
+    role: Role;
+    content: string;
+  }[];
+  wildcard?: string;
 }
 
 export interface Agent {

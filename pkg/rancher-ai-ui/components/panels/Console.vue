@@ -24,12 +24,20 @@ const props = defineProps({
     default: null,
   },
   chatCnt: {
-    type:    Number,
+    type:     Number,
     required: true,
   },
   autocomplete: {
     type:    String,
     default: '',
+  },
+  autocompleteItems: {
+    type:    Array as PropType<any[]>,
+    default: () => [],
+  },
+  autocompleteItemsLoading: {
+    type:    Boolean,
+    default: true,
   },
 });
 
@@ -56,6 +64,8 @@ function sendContent() {
       :chat-cnt="props.chatCnt"
       :disabled="props.disabled"
       :autocomplete="props.autocomplete"
+      :autocomplete-items="props.autocompleteItems"
+      :autocomplete-items-loading="props.autocompleteItemsLoading"
       @submit="sendContent"
       @fetch:autocomplete="emit('fetch:autocomplete', $event)"
     >

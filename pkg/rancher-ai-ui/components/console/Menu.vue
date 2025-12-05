@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import {
   RcDropdown,
@@ -59,7 +59,39 @@ const options = ref([
   // }
 ]);
 
+async function handleMenuOpen(open: boolean) {
+  if (open) {
+    const chatsData = await fetch('/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-chat:80/proxy/chats?min-messages=2');
+
+    chats.value = await chatsData.json();
+  }
+
+  isOpen.value = open;
+}
+
+async function showChatInfo(chat: any) {
+  const messagesData = await fetch(`/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-chat:80/proxy/chats/${ chat.chat_id }/messages`);
+
+  const dataMessagesJson: {
+    message: string;
+    role:    string;
+    created_at: string;
+  }[] = await messagesData.json();
+
+  const formattedMessages = dataMessagesJson
+    .sort((a, b) => Number(a.created_at) - Number(b.created_at))
+    .map((msg) => `[${ msg.role }]: ${ msg.message.slice(0, 50) } ${ msg.message.length > 50 ? '...' : '' }`)
+    .join('\n');
+
+  alert(`Messages: \n\n${ formattedMessages }`);
+}
+
 const isOpen = ref(false);
+const chats = ref<Array<any>>([]);
+
+const MAX_VISIBLE_CHATS = 10;
+
+const shouldShowScroll = computed(() => chats.value.length > MAX_VISIBLE_CHATS);
 </script>
 
 <template>
@@ -67,7 +99,7 @@ const isOpen = ref(false);
     <rc-dropdown
       class="menu-dropdown"
       placement="top-end"
-      @update:open="isOpen = $event"
+      @update:open="handleMenuOpen"
     >
       <rc-dropdown-trigger
         ghost
@@ -94,7 +126,66 @@ const isOpen = ref(false);
             />
           </template>
         </rc-dropdown-item>
+        <div v-if="chats.length">
+          <hr class="dropdown-divider" />
+          <div class="dropdown-header">
+            Chat History
+          </div>
+          <div
+            class="chats-container"
+            :class="{ 'has-scroll': shouldShowScroll }"
+          >
+            <rc-dropdown-item
+              v-for="chat in chats"
+              :key="chat.id"
+              @click="showChatInfo(chat)"
+            >
+              <div>
+                {{ chat.name || chat.id }}
+              </div>
+            </rc-dropdown-item>
+          </div>
+        </div>
       </template>
     </rc-dropdown>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.dropdown-divider {
+  margin: 8px 0;
+}
+.dropdown-header {
+  font-size:    0.85rem;
+  font-weight:  600;
+  color:        var(--rc-color-text-secondary);
+  padding:      0 1rem;
+  text-transform: uppercase;
+  margin: 16px 0 8px 0;
+}
+
+.chats-container {
+  &.has-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb, rgba(0, 0, 0, 0.2));
+      border-radius: 4px;
+
+      &:hover {
+        background: var(--scrollbar-thumb-hover, rgba(0, 0, 0, 0.3));
+      }
+    }
+  }
+}
+</style>

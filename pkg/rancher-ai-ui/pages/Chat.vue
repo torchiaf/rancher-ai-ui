@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
+import {
+  ref, onMounted, onBeforeUnmount, computed, nextTick
+} from 'vue';
 import {
   PRODUCT_NAME, AGENT_NAME, AGENT_NAMESPACE, AGENT_MESSAGES_API_PATH, AGENT_AUTOCOMPLETE_API_PATH
 } from '../product';
@@ -49,6 +51,8 @@ const {
   connect: connectAutocompleteWS,
   disconnect: disconnectAutocompleteWS,
   autocomplete,
+  autocompleteItems,
+  autocompleteItemsLoading,
   fetchAutocomplete
 } = usePromptAutocompleteComposable();
 
@@ -163,9 +167,11 @@ function unmount() {
         :disabled="!ws || ws.readyState === 3 || errors.length > 0 || messagePhase === MessagePhase.AwaitingConfirmation"
         :agent="agent"
         :autocomplete="autocomplete"
-        :chatCnt="chatCnt"
+        :chat-cnt="chatCnt"
+        :autocomplete-items-loading="autocompleteItemsLoading"
+        :autocomplete-items="autocompleteItems"
         @input:content="sendMessage($event, ws)"
-        @fetch:autocomplete="fetchAutocomplete({ prompt: $event, messages, selectedContext, hooksContext })"
+        @fetch:autocomplete="fetchAutocomplete({ prompt: $event.prompt, messages, selectedContext, hooksContext, wildcard: $event.wildcard })"
       />
     </div>
   </div>
