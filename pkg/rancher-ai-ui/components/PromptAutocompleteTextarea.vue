@@ -16,7 +16,7 @@ const store = useStore();
 
 const props = defineProps({
   chatCnt: {
-    type:    Number,
+    type:     Number,
     required: true,
   },
   modelValue: {
@@ -31,12 +31,16 @@ const props = defineProps({
     type:    String,
     default: '',
   },
+  autocompleteItems: {
+    type:    Array as () => any[],
+    default: () => [],
+  },
 });
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
   (e: 'submit'): void;
-  (e: 'fetch:autocomplete', prompt: string): void;
+  (e: 'fetch:autocomplete', args: { prompt: string, wildcard: string | undefined }): void;
 }>();
 
 const lastPrompt = ref('');
@@ -50,6 +54,32 @@ const suggestion = ref('');
 
 const suppressAutocomplete = ref(true);
 
+// @ mention dropdown state
+const showMentionDropdown = ref(false);
+const mentionPosition = ref({
+  top:  0,
+  left: 0
+});
+const mentionQuery = ref('');
+const selectedMentionIndex = ref(0);
+
+const filteredMentionItems = computed(() => {
+  const mentionItems = props.autocompleteItems.map((item: any, index: number) => ({
+    id:      index,
+    label:   item.name,
+    value:   item.name,
+    tooltip: item.name.length > 32 ? `Name: ${ item.name } Type: ${ item.type }` : null,
+  }));
+
+  if (!mentionQuery.value) {
+    return mentionItems;
+  }
+  const query = mentionQuery.value.toLowerCase();
+
+  return mentionItems.filter((item) => item.value.toLowerCase().includes(query)
+  );
+});
+
 const textProxy = computed({
   get: () => props.modelValue,
   set: (v: string) => emit('update:modelValue', v),
@@ -59,7 +89,6 @@ function normalizeForCompare(s: string): string {
   // remove leading/trailing spaces & CRLF for comparison only
   return s.replace(/\r?\n/g, ' ').trim();
 }
-
 
 function autoResizePrompt() {
   const textarea = promptTextarea.value;
@@ -113,21 +142,135 @@ function syncMirror() {
 }
 
 /**
+ * Check for @ mention trigger and show dropdown
+ */
+function checkMentionTrigger() {
+  const textarea = promptTextarea.value;
+
+  if (!textarea) {
+    return;
+  }
+
+  const cursorPos = textarea.selectionStart;
+  const text = textarea.value;
+
+  // Find the last @ before cursor
+  let lastAtPos = -1;
+
+  for (let i = cursorPos - 1; i >= 0; i--) {
+    if (text[i] === '@') {
+      // Check if @ is at start or preceded by whitespace
+      if (i === 0 || /\s/.test(text[i - 1])) {
+        lastAtPos = i;
+        break;
+      }
+    } else if (/\s/.test(text[i])) {
+      // Stop at whitespace
+      break;
+    }
+  }
+
+  if (lastAtPos !== -1) {
+    // Extract query after @
+    const query = text.substring(lastAtPos + 1, cursorPos);
+
+    mentionQuery.value = query;
+
+    // Calculate position for dropdown
+    const rect = textarea.getBoundingClientRect();
+
+    mentionPosition.value = {
+      top:  rect.top - 10, // Position above textarea
+      left: rect.left,
+    };
+
+    showMentionDropdown.value = true;
+    selectedMentionIndex.value = 0; // Reset selection when opening
+  } else {
+    showMentionDropdown.value = false;
+    mentionQuery.value = '';
+    selectedMentionIndex.value = 0;
+  }
+}
+
+/**
+ * Insert selected mention item
+ */
+function selectMentionItem(item: any) {
+  const textarea = promptTextarea.value;
+
+  if (!textarea) {
+    return;
+  }
+
+  const cursorPos = textarea.selectionStart;
+  const text = textarea.value;
+
+  // Find the @ position
+  let atPos = -1;
+
+  for (let i = cursorPos - 1; i >= 0; i--) {
+    if (text[i] === '@') {
+      if (i === 0 || /\s/.test(text[i - 1])) {
+        atPos = i;
+        break;
+      }
+    } else if (/\s/.test(text[i])) {
+      break;
+    }
+  }
+
+  if (atPos !== -1) {
+    // Replace @query with selected value
+    const newText = `${ text.substring(0, atPos) + item.value  } ${  text.substring(cursorPos) }`;
+
+    textProxy.value = newText;
+
+    nextTick(() => {
+      // Set cursor after inserted mention
+      const newCursorPos = atPos + item.value.length + 1;
+
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      syncMirror();
+      autoResizePrompt();
+    });
+  }
+
+  showMentionDropdown.value = false;
+  mentionQuery.value = '';
+  selectedMentionIndex.value = 0;
+}
+
+/**
  * Debounced "input is stable" signal.
  */
 const scheduleStableAutocomplete = debounce((rawPrompt: string) => {
   const cmpPrompt = normalizeForCompare(rawPrompt);
 
   // 1. must be >= 3 visible chars
-  if (cmpPrompt.length < 3) return;
+  if (cmpPrompt.length < 3) {
+    return;
+  }
 
   // 2. must differ from previous cmp prompt
-  if (cmpPrompt === lastPrompt.value) return;
+  if (cmpPrompt === lastPrompt.value) {
+    return;
+  }
 
   // 3. user manually typed exact last suggestion
   if (
     lastAutocomplete.value &&
     cmpPrompt.endsWith(lastAutocomplete.value.trim())
+  ) {
+    return;
+  }
+
+  // 4. avoid to re-fetch if @ mention is present and the new mention is incremental
+  if (
+    cmpPrompt.includes('@') &&
+    cmpPrompt.includes(lastPrompt.value) &&
+    cmpPrompt.length >= lastPrompt.value.length &&
+    props.autocompleteItems.length > 0
   ) {
     return;
   }
@@ -138,27 +281,31 @@ const scheduleStableAutocomplete = debounce((rawPrompt: string) => {
   lastPrompt.value = cmpPrompt;
 
   // send RAW prompt - do NOT trim!
-  emit('fetch:autocomplete', rawPrompt);
+  emit('fetch:autocomplete', {
+    prompt:   rawPrompt,
+    wildcard: rawPrompt.includes('@') ? '@' : undefined
+  });
 }, 500);
-
-
 
 /**
  * On every input:
  * - Resize
  * - Sync cursor/mirror
  * - Schedule autocomplete fetch once input is stable
+ * - Check for @ mention trigger
  */
 function handleInput() {
   nextTick(() => {
     syncMirror();
     autoResizePrompt();
     scheduleStableAutocomplete(textProxy.value);
+    checkMentionTrigger();
   });
 }
 
 function handleClick() {
   syncMirror();
+  checkMentionTrigger();
 }
 
 function handleScroll() {
@@ -174,8 +321,48 @@ function handleScroll() {
  * - INSTANT autocomplete clearing on typing keys
  * - Enter submit
  * - Tab handled separately
+ * - Escape to close mention dropdown
+ * - Arrow keys for mention dropdown navigation
  */
 function handleKeydown(event: KeyboardEvent) {
+  // Handle mention dropdown navigation
+  if (showMentionDropdown.value) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      showMentionDropdown.value = false;
+      mentionQuery.value = '';
+      selectedMentionIndex.value = 0;
+
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      selectedMentionIndex.value = Math.min(
+        selectedMentionIndex.value + 1,
+        filteredMentionItems.value.length - 1
+      );
+
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      selectedMentionIndex.value = Math.max(selectedMentionIndex.value - 1, 0);
+
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (filteredMentionItems.value[selectedMentionIndex.value]) {
+        selectMentionItem(filteredMentionItems.value[selectedMentionIndex.value]);
+      }
+
+      return;
+    }
+  }
+
   if (
     event.key.length === 1 ||
     event.key === 'Backspace' ||
@@ -187,6 +374,14 @@ function handleKeydown(event: KeyboardEvent) {
   }
 
   if (event.key === 'Enter' && !event.shiftKey) {
+    suppressAutocomplete.value = true;
+    scheduleStableAutocomplete.cancel?.();
+
+    if (showMentionDropdown.value) {
+      // Don't submit if dropdown is open
+      return;
+    }
+
     event.preventDefault();
     emit('submit');
 
@@ -345,6 +540,13 @@ watch(
   },
   { immediate: true },
 );
+
+// Reset selection when filtered items change
+watch(filteredMentionItems, () => {
+  if (selectedMentionIndex.value >= filteredMentionItems.value.length) {
+    selectedMentionIndex.value = Math.max(0, filteredMentionItems.value.length - 1);
+  }
+});
 </script>
 
 <template>
@@ -390,6 +592,31 @@ watch(
       @keydown="handleKeydown"
       @keydown.tab.prevent="onTab"
     />
+
+    <!-- @ Mention Dropdown -->
+    <div
+      v-if="showMentionDropdown && filteredMentionItems.length > 0"
+      class="mention-dropdown"
+      :style="{
+        top: `${mentionPosition.top}px`,
+        left: `${mentionPosition.left}px`,
+      }"
+    >
+      <div class="mention-dropdown-content">
+        <div
+          v-for="(item, index) in filteredMentionItems"
+          :key="item.id"
+          class="mention-item"
+          :class="{ selected: index === selectedMentionIndex }"
+          @click="selectMentionItem(item)"
+          @mouseenter="selectedMentionIndex = index"
+        >
+          <span v-clean-tooltip="item.tooltip">
+            {{ item.label }}
+          </span>
+        </div>
+      </div>
+    </div>
 
     <div
       class="chat-input-send"
@@ -503,6 +730,63 @@ watch(
   line-height: 1;
   display: inline-block;
   opacity: 1;
-  font-weight: 600;
+  font-weight: 900;
+  -webkit-text-stroke: 0.5px currentColor;
+  text-shadow: 0 0 0.5px currentColor, 0 0 0.5px currentColor;
+}
+
+/* @ Mention Dropdown Styles */
+.mention-dropdown {
+  position: fixed;
+  z-index: 1000;
+  transform: translateY(-100%);
+  margin-bottom: 8px;
+  max-width: 300px;
+  min-width: 200px;
+}
+
+.mention-dropdown-content {
+  background: var(--dropdown-bg, var(--body-bg));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mention-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--body-text);
+  transition: background-color 0.2s;
+
+  &:hover,
+  &.selected {
+    background-color: var(--dropdown-hover-bg, var(--wm-closer-default));
+  }
+
+  .icon {
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.mention-no-results {
+  cursor: default;
+  opacity: 0.6;
+  font-style: italic;
+
+  &:hover {
+    background-color: transparent;
+  }
 }
 </style>
