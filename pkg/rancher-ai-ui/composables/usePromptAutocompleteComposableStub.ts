@@ -32,7 +32,8 @@ export function usePromptAutocompleteComposable() {
     prompt: string,
     messages: Message[],
     selectedContext: Context[],
-    hooksContext: Context[]
+    hooksContext: Context[],
+    wildcard: string
   }) {
     stopStream();
 

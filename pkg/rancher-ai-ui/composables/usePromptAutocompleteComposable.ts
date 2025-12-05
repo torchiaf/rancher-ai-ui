@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { Context, Message, Tag } from '../types';
-import { formatAutocompleteMessage } from '../utils/format';
+import { formatAutocompleteMessage, formatAutocompleteItems } from '../utils/format';
 
 export function usePromptAutocompleteComposable() {
   const store = useStore();
@@ -10,7 +10,13 @@ export function usePromptAutocompleteComposable() {
   const ws = ref(null as WebSocket | null);
 
   const pendingAutocomplete = ref<boolean>(false);
+  const currentPayload = ref<{ items: any[], completion: string }>({
+    items:      [],
+    completion: ''
+  });
+
   const autocomplete = ref<string>('');
+  const autocompleteItems = ref<any[]>([]);
 
   async function connect(
     agentNamespace: string,
@@ -32,8 +38,8 @@ export function usePromptAutocompleteComposable() {
     }
   }
 
-  function fetchAutocomplete(args: { prompt: string, messages: Message[], selectedContext: Context[], hooksContext: Context[] }) {
-    const msg = formatAutocompleteMessage(args.prompt, args.selectedContext, args.hooksContext, args.messages, t);
+  function fetchAutocomplete(args: { prompt: string, messages: Message[], selectedContext: Context[], hooksContext: Context[], wildcard: string | undefined }) {
+    const msg = formatAutocompleteMessage(args.prompt, args.selectedContext, args.hooksContext, args.messages, args.wildcard, t);
 
     ws.value?.send(msg);
   }
@@ -49,14 +55,37 @@ export function usePromptAutocompleteComposable() {
     case Tag.MessageStart:
       pendingAutocomplete.value = true;
       autocomplete.value = '';
+      autocompleteItems.value = [];
+
+      currentPayload.value = {
+        items:      [],
+        completion: ''
+      };
       break;
     case Tag.MessageEnd: {
       pendingAutocomplete.value = false;
+
+      // If we have items, the completion is not relevant - the user will work with the items in the dropdown
+      if (currentPayload.value.items.length > 0) {
+        autocompleteItems.value = currentPayload.value.items;
+        autocomplete.value = '';
+      } else {
+        autocomplete.value = currentPayload.value.completion;
+        autocompleteItems.value = [];
+      }
       break;
     }
     default:
       if (pendingAutocomplete.value) {
-        autocomplete.value += data;
+        currentPayload.value.completion += data;
+
+        if (currentPayload.value.completion.includes(Tag.AutocompleteItem) && currentPayload.value.completion.includes(Tag.AutocompleteItemEnd)) {
+          const { items, remaining } = formatAutocompleteItems(currentPayload.value.items || [], currentPayload.value.completion);
+
+          currentPayload.value.items = items;
+          currentPayload.value.completion = remaining;
+          break;
+        }
       }
       break;
     }
@@ -71,6 +100,7 @@ export function usePromptAutocompleteComposable() {
     connect,
     disconnect,
     autocomplete,
+    autocompleteItems,
     fetchAutocomplete
   };
 }
