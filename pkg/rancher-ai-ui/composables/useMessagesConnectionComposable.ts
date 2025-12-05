@@ -3,16 +3,14 @@ import { useStore } from 'vuex';
 import { ConnectionPhase } from '../types';
 
 /**
- * Composable for managing the AI connection state.
+ * Composable for managing the AI messages connection state.
  *
- * The connection remains persistent across different chat sessions (closing and reopening the chat).
+ * The connection remains persistent across different closing and opening of the chat panel.
  *
- * Note: The connection phase is not currently handled.
- *
- * @param options Options for the connection composable.
- * @returns Composable for managing the AI connection state.
+ * @param options Options for the messages connection composable.
+ * @returns Composable for managing the AI messages connection state.
  */
-export function useConnectionComposable(options: {
+export function useMessagesConnectionComposable(options: {
   onopen: (event: { target: WebSocket }) => void // eslint-disable-line no-unused-vars
   onmessage: (event: MessageEvent) => Promise<void>, // eslint-disable-line no-unused-vars
   onclose?: (event: CloseEvent) => void, // eslint-disable-line no-unused-vars

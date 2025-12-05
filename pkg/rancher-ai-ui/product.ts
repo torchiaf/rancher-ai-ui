@@ -6,7 +6,9 @@ export const BLANK_CLUSTER = '_';
 
 export const AGENT_NAMESPACE = 'cattle-ai-agent-system';
 export const AGENT_NAME = 'rancher-ai-agent';
-export const AGENT_API_PATH = 'agent/ws';
+
+export const AGENT_MESSAGES_API_PATH = 'agent/ws/messages';
+export const AGENT_AUTOCOMPLETE_API_PATH = 'agent/ws/autocomplete';
 
 export const AGENT_CONFIG_SECRET_NAME = 'llm-config';
 
