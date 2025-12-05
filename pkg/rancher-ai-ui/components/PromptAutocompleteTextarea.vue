@@ -35,6 +35,10 @@ const props = defineProps({
     type:    Array as () => any[],
     default: () => [],
   },
+  autocompleteItemsLoading: {
+    type:    Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits<{
@@ -595,7 +599,7 @@ watch(filteredMentionItems, () => {
 
     <!-- @ Mention Dropdown -->
     <div
-      v-if="showMentionDropdown && filteredMentionItems.length > 0"
+      v-if="showMentionDropdown && !props.autocompleteItemsLoading"
       class="mention-dropdown"
       :style="{
         top: `${mentionPosition.top}px`,
@@ -603,18 +607,25 @@ watch(filteredMentionItems, () => {
       }"
     >
       <div class="mention-dropdown-content">
-        <div
-          v-for="(item, index) in filteredMentionItems"
-          :key="item.id"
-          class="mention-item"
-          :class="{ selected: index === selectedMentionIndex }"
-          @click="selectMentionItem(item)"
-          @mouseenter="selectedMentionIndex = index"
-        >
-          <span v-clean-tooltip="item.tooltip">
-            {{ item.label }}
-          </span>
-        </div>
+        <template v-if="filteredMentionItems.length > 0">
+          <div
+            v-for="(item, index) in filteredMentionItems"
+            :key="item.id"
+            class="mention-item"
+            :class="{ selected: index === selectedMentionIndex }"
+            @click="selectMentionItem(item)"
+            @mouseenter="selectedMentionIndex = index"
+          >
+            <span v-clean-tooltip="item.tooltip">
+              {{ item.label }}
+            </span>
+          </div>
+        </template>
+        <template v-else>
+          <div class="mention-item mention-no-results">
+            No results found
+          </div>
+        </template>
       </div>
     </div>
 
@@ -765,6 +776,7 @@ watch(filteredMentionItems, () => {
 
   &:hover,
   &.selected {
+    color: var(--link);
     background-color: var(--dropdown-hover-bg, var(--wm-closer-default));
   }
 

@@ -35,6 +35,10 @@ const props = defineProps({
     type:    Array as PropType<any[]>,
     default: () => [],
   },
+  autocompleteItemsLoading: {
+    type:    Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['input:content', 'fetch:autocomplete']);
@@ -61,6 +65,7 @@ function sendContent() {
       :disabled="props.disabled"
       :autocomplete="props.autocomplete"
       :autocomplete-items="props.autocompleteItems"
+      :autocomplete-items-loading="props.autocompleteItemsLoading"
       @submit="sendContent"
       @fetch:autocomplete="emit('fetch:autocomplete', $event)"
     >

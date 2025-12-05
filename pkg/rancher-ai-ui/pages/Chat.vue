@@ -52,6 +52,7 @@ const {
   disconnect: disconnectAutocompleteWS,
   autocomplete,
   autocompleteItems,
+  autocompleteItemsLoading,
   fetchAutocomplete
 } = usePromptAutocompleteComposable();
 
@@ -167,6 +168,7 @@ function unmount() {
         :agent="agent"
         :autocomplete="autocomplete"
         :chat-cnt="chatCnt"
+        :autocomplete-items-loading="autocompleteItemsLoading"
         :autocomplete-items="autocompleteItems"
         @input:content="sendMessage($event, ws)"
         @fetch:autocomplete="fetchAutocomplete({ prompt: $event.prompt, messages, selectedContext, hooksContext, wildcard: $event.wildcard })"

@@ -17,6 +17,7 @@ export function usePromptAutocompleteComposable() {
 
   const autocomplete = ref<string>('');
   const autocompleteItems = ref<any[]>([]);
+  const autocompleteItemsLoading = ref<boolean>(false);
 
   async function connect(
     agentNamespace: string,
@@ -39,6 +40,7 @@ export function usePromptAutocompleteComposable() {
   }
 
   function fetchAutocomplete(args: { prompt: string, messages: Message[], selectedContext: Context[], hooksContext: Context[], wildcard: string | undefined }) {
+    autocompleteItemsLoading.value = true;
     const msg = formatAutocompleteMessage(args.prompt, args.selectedContext, args.hooksContext, args.messages, args.wildcard, t);
 
     ws.value?.send(msg);
@@ -56,6 +58,7 @@ export function usePromptAutocompleteComposable() {
       pendingAutocomplete.value = true;
       autocomplete.value = '';
       autocompleteItems.value = [];
+      autocompleteItemsLoading.value = true;
 
       currentPayload.value = {
         items:      [],
@@ -73,6 +76,7 @@ export function usePromptAutocompleteComposable() {
         autocomplete.value = currentPayload.value.completion;
         autocompleteItems.value = [];
       }
+      autocompleteItemsLoading.value = false;
       break;
     }
     default:
@@ -101,6 +105,7 @@ export function usePromptAutocompleteComposable() {
     disconnect,
     autocomplete,
     autocompleteItems,
+    autocompleteItemsLoading,
     fetchAutocomplete
   };
 }
