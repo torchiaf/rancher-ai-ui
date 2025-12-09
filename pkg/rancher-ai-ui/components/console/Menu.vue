@@ -59,6 +59,12 @@ const options = ref([
   // }
 ]);
 
+const chats = ref<Array<any>>([]);
+
+const filteredChats = computed(() => {
+  return chats.value.filter((chat) => !!chat.name);
+});
+
 async function handleMenuOpen(open: boolean) {
   if (open) {
     const chatsData = await fetch('/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-chat:80/proxy/chats?min-messages=2');
@@ -87,7 +93,6 @@ async function showChatInfo(chat: any) {
 }
 
 const isOpen = ref(false);
-const chats = ref<Array<any>>([]);
 
 const MAX_VISIBLE_CHATS = 10;
 
@@ -126,7 +131,7 @@ const shouldShowScroll = computed(() => chats.value.length > MAX_VISIBLE_CHATS);
             />
           </template>
         </rc-dropdown-item>
-        <div v-if="chats.length">
+        <div v-if="filteredChats.length">
           <hr class="dropdown-divider" />
           <div class="dropdown-header">
             Chat History
@@ -136,7 +141,7 @@ const shouldShowScroll = computed(() => chats.value.length > MAX_VISIBLE_CHATS);
             :class="{ 'has-scroll': shouldShowScroll }"
           >
             <rc-dropdown-item
-              v-for="chat in chats"
+              v-for="chat in filteredChats"
               :key="chat.id"
               @click="showChatInfo(chat)"
             >
