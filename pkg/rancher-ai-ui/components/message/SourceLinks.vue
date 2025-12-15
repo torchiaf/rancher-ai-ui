@@ -15,7 +15,11 @@ const { links = [] } = defineProps<Props>();
 
 const items = computed(() => {
   return links.map((value) => {
-    const chunks = value?.split('/') || [];
+    // Remove trailing slash if present
+    const url = value?.endsWith('/') ? value.slice(0, -1) : value;
+
+    // Extract last chunk of the URL path for label and normalize it (e.g., "my-link-name" -> "My Link Name")
+    const chunks = url?.split('/') || [];
     const lastChunk = chunks[chunks.length - 1] || '';
     const label = lastChunk
       .split('-')
