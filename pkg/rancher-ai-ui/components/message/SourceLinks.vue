@@ -1,19 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
-
 import ContextTag from '../context/ContextTag.vue';
 
 const store = useStore();
 const t = store.getters['i18n/t'];
 
-const isCollapsed = ref(true);
+const isCollapsed = ref(false);
 
-// TODO: replace with actual source items when available
-const items = [
-  { value: 'Cluster Management Guide' },
-  { value: 'Best Practices' },
-];
+interface Props {
+  links?: string[];
+}
+const { links = [] } = defineProps<Props>();
+
+const items = computed(() => {
+  return links.map((value) => {
+    // Remove trailing slash if present
+    const url = value?.endsWith('/') ? value.slice(0, -1) : value;
+
+    // Extract last chunk of the URL path for label and normalize it (e.g., "my-link-name" -> "My Link Name")
+    const chunks = url?.split('/') || [];
+    const lastChunk = chunks[chunks.length - 1] || '';
+    const label = lastChunk
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return {
+      label: label || 'Link',
+      value
+    };
+  });
+});
+
+function openLink(url: string) {
+  window.open(url, '_blank');
+}
 
 </script>
 
@@ -34,18 +56,19 @@ const items = [
       v-if="!isCollapsed"
       class="chat-msg-source-tags"
     >
-      <template
+      <div
         v-for="item in items"
         :key="item.value"
+        @click="openLink(item.value)"
       >
-        <context-tag
+        <span class="sr-only">{{ t('ai.generic.opensInNewTab') }}</span>
+        <ContextTag
           :remove-enabled="false"
-          :item="item"
+          :item="{ value: item.label }"
           type="user"
-          class="chat-msg-user-context-tag"
-        >
-        </context-tag>
-      </template>
+          class="chat-msg-source-tag"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -71,10 +94,17 @@ const items = [
 }
 
 .chat-msg-source-tag {
+  height: auto;
   color: #9fabc6;
   border-radius: 8px;
   padding: 2px 8px;
   font-size: 0.75rem;
   border: 1px solid #9fabc6;
+  cursor: pointer;
+}
+
+// Only display content to screen readers
+.sr-only {
+  visibility: hidden;
 }
 </style>
