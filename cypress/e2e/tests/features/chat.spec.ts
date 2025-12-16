@@ -1,12 +1,12 @@
-import HomePagePo from '@/cypress/e2e/po/pages/home.po';
-import ClusterDashboardPagePo from '@/cypress/e2e/po/pages/explorer/cluster-dashboard.po';
-import ClusterManagerListPagePo from '@/cypress/e2e/po/pages/cluster-manager/cluster-manager-list.po';
-import { FleetDashboardListPagePo } from '@/cypress/e2e/po/pages/fleet/fleet-dashboard.po';
-import UsersPo from '@/cypress/e2e/po/pages/users-and-auth/users.po';
-import ExtensionsPagePo from '@/cypress/e2e/po/pages/extensions.po';
-import { SettingsPagePo } from '@/cypress/e2e/po/pages/global-settings/settings.po';
+import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
+import ClusterDashboardPagePo from '@rancher/cypress/e2e/po/pages/explorer/cluster-dashboard.po';
+import ClusterManagerListPagePo from '@rancher/cypress/e2e/po/pages/cluster-manager/cluster-manager-list.po';
+import { FleetDashboardListPagePo } from '@rancher/cypress/e2e/po/pages/fleet/fleet-dashboard.po';
+import UsersPo from '@rancher/cypress/e2e/po/pages/users-and-auth/users.po';
+import ExtensionsPagePo from '@rancher/cypress/e2e/po/pages/extensions.po';
+import { SettingsPagePo } from '@rancher/cypress/e2e/po/pages/global-settings/settings.po';
 
-import ChatPo from '@/cypress/e2e/po/extensions/ai/chat.po';
+import ChatPo from '@/cypress/e2e/po/chat.po';
 
 describe('Chat', () => {
   const chat = new ChatPo();

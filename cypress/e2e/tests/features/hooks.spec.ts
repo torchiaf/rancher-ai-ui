@@ -1,7 +1,7 @@
-import HomePagePo from '@/cypress/e2e/po/pages/home.po';
+import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 
-import { SlidingBadgePo } from '@/cypress/e2e/po/extensions/ai/hook.po';
-import ChatPo from '@/cypress/e2e/po/extensions/ai/chat.po';
+import { SlidingBadgePo } from '@/cypress/e2e/po/hook.po';
+import ChatPo from '@/cypress/e2e/po/chat.po';
 
 describe('Hooks', () => {
   const chat = new ChatPo();

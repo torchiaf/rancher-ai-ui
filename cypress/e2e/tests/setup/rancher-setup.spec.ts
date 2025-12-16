@@ -1,6 +1,6 @@
-import { RancherSetupLoginPagePo } from '@/cypress/e2e/po/pages/rancher-setup-login.po';
-import { RancherSetupConfigurePage } from '@/cypress/e2e/po/pages/rancher-setup-configure.po';
-import HomePagePo from '@/cypress/e2e/po/pages/home.po';
+import { RancherSetupLoginPagePo } from '@rancher/cypress/e2e/po/pages/rancher-setup-login.po';
+import { RancherSetupConfigurePage } from '@rancher/cypress/e2e/po/pages/rancher-setup-configure.po';
+import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 
 describe('Rancher setup', () => {
   const rancherSetupLoginPage = new RancherSetupLoginPagePo();
