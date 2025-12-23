@@ -89,8 +89,8 @@ describe('Chat', () => {
 
       HomePagePo.goTo();
 
-      cy.enqueueAIAgentResponse({
-        content:   'Providing mock response from the agent, containing suggestions for the welcome message. <suggestion>View resources</suggestion><suggestion>Analyze logs</suggestion><suggestion>Do action</suggestion>',
+      cy.enqueueLLMResponse({
+        text:      'Providing mock response from the agent, containing suggestions for the welcome message. <suggestion>View resources</suggestion><suggestion>Analyze logs</suggestion><suggestion>Do action</suggestion>',
         chunkSize: 30
       });
 

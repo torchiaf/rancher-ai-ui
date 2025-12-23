@@ -25,8 +25,7 @@ export function useConnectionComposable(options: {
   const error = computed(() => store.getters['rancher-ai-ui/connection/error']);
 
   async function connect() {
-    const url = process.env.VUE_APP_AGENT_MESSAGES_WS_PATH || /* eslint-disable-line no-undef */
-      `wss://${ window.location.host }/api/v1/namespaces/${ AGENT_NAMESPACE }/services/http:${ AGENT_NAME }:80/proxy/${ AGENT_API_PATH }`;
+    const url = `wss://${ window.location.host }/api/v1/namespaces/${ AGENT_NAMESPACE }/services/http:${ AGENT_NAME }:80/proxy/${ AGENT_API_PATH }`;
 
     const { onopen, onmessage, onclose } = options;
 

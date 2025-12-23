@@ -45,16 +45,20 @@ yarn serve-pkgs
 
 ## E2E tests
 
-#### Launch the mock Agent
+#### Install AI Agent chart
+
+This will install the AI Agent Helm chart into your Kubernetes cluster.
+The LLM is configured to use a mock service for testing purposes.
+
 ```bash
-cd mock-agent
-yarn install
-yarn start
+cd .github/scripts
+./deploy-rancher-ai.sh $YOUR_KUBECONFIG_PATH
 ```
 
 #### Launch UI in dev mode
+
 ```bash
-API=https://your-rancher VUE_APP_AGENT_MESSAGES_WS_PATH=ws://localhost:8000/ws/agent yarn dev
+API=https://your-rancher yarn dev
 ```
 
 #### Launch Cypress
