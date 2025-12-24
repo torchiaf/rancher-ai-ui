@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
-import { onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
+import {
+  onMounted, onBeforeUnmount, computed, nextTick, ref
+} from 'vue';
 import { PRODUCT_NAME } from '../product';
 import { MessagePhase } from '../types';
 import { useConnectionComposable } from '../composables/useConnectionComposable';
@@ -12,6 +14,7 @@ import Header from '../components/panels/Header.vue';
 import Messages from '../components/panels/Messages.vue';
 import Context from '../components/panels/Context.vue';
 import Console from '../components/panels/Console.vue';
+import History from '../components/panels/History.vue';
 import Chat from '../handlers/chat';
 
 /**
@@ -55,6 +58,8 @@ const {
   restore,
 } = useHeaderComposable();
 
+const openHistory = ref(false);
+
 // Agent errors are priority over websocket and message errors
 const errors = computed(() => {
   if (agentError.value) {
@@ -73,6 +78,7 @@ function close() {
 }
 
 function resetChat() {
+  openHistory.value = false;
   resetMessages();
   resetChatError();
   disconnect({ showError: false });
@@ -118,10 +124,12 @@ function unmount() {
     />
     <div class="chat-panel">
       <Header
-        @close="close"
+        :disabled="errors.length > 0"
+        @close:chat="close"
         @config:chat="routeToSettings"
         @download:chat="downloadMessages"
         @reset:chat="resetChat"
+        @open:history="openHistory = true"
       />
       <Messages
         :messages="messages"
@@ -140,6 +148,10 @@ function unmount() {
         :disabled="!ws || ws.readyState === 3 || errors.length > 0 || messagePhase === MessagePhase.AwaitingConfirmation"
         :agent="agent"
         @input:content="sendMessage($event, ws)"
+      />
+      <History
+        :open="openHistory && !errors.length"
+        @close="openHistory = false"
       />
     </div>
   </div>
