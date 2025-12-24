@@ -21,12 +21,16 @@ export KUBECONFIG="$KUBECONFIG_PATH"
 echo ""
 echo "Cloning rancher-ai-agent chart repository..."
 
-git clone https://github.com/rancher-sandbox/rancher-ai-agent.git
+git clone https://github.com/torchiaf/rancher-ai-agent.git
+cd rancher-ai-agent
+git fetch feature-support-llm-mock
+git checkout feature-support-llm-mock
+cd ..
 
 echo ""
 echo "Cloning llm-mock chart repository..."
 
-git clone https://github.com/rancher-sandbox/llm-mock.git
+git clone https://github.com/torchiaf/rancher-ai-llm-mock.git
 
 echo ""
 echo "Deploying Rancher AI Helm chart with LLM mock configuration..."
@@ -40,6 +44,8 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set insecureSkipTls=true \
   --set activeLlm=gemini \
   --set log.level=debug \
+  --set aiAgent.image.repository=ghcr.io/torchiaf/rancher-ai-agent \
+  --set aiAgent.image.tag=v1.0.0 \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
   --wait --timeout 1m
@@ -50,9 +56,11 @@ kubectl -n cattle-ai-agent-system wait --for=condition=available --timeout=1m de
 echo ""
 echo "Deploying LLM mock service..."
 
-helm upgrade --install llm-mock chart/llm-mock \
+helm upgrade --install llm-mock ./rancher-ai-llm-mock/chart/llm-mock \
   --namespace cattle-ai-agent-system \
   --create-namespace \
+  --set image.repository=ghcr.io/torchiaf/rancher-ai-llm-mock \
+  --set image.tag=v1.0.4 \
   --wait --timeout 1m
 
 kubectl -n cattle-ai-agent-system rollout status deployment/llm-mock --timeout=1m
