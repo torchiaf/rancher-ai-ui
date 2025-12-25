@@ -38,4 +38,8 @@ export default class ChatPo extends ComponentPo {
   getTemplateMessage(templateName: string) {
     return this.self().find(`[data-testid="rancher-ai-ui-chat-message-template-${ templateName }"]`);
   }
+
+  sendMessage(message: string) {
+    this.self().find('textarea[data-testid="rancher-ai-ui-chat-input-textarea"]').type(message).type('{enter}');
+  }
 }

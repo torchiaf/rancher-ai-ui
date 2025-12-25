@@ -115,6 +115,7 @@ watch(() => text.value, () => {
         :placeholder="props.disabled ? '' : t('ai.prompt.placeholder')"
         :disabled="props.disabled"
         autocomplete="off"
+        data-testid="rancher-ai-ui-chat-input-textarea"
         @input="onInputMessage"
         @keydown="handleTextareaKeydown"
       />

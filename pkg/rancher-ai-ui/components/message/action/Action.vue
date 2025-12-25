@@ -66,7 +66,10 @@ onMounted(async() => {
 </script>
 
 <template>
-  <div v-if="props.value.type === ActionType.Button">
+  <div
+    v-if="props.value.type === ActionType.Button"
+    :data-testid="`rancher-ai-ui-chat-message-action-button-${ props.value?.resource?.name }`"
+  >
     <RcButton
       v-clean-tooltip="tooltip"
       small
