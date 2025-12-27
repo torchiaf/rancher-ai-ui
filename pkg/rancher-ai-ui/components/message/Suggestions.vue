@@ -35,6 +35,7 @@ const emit = defineEmits(['select']);
         <RcButton
           tertiary
           small
+          :data-testid="`rancher-ai-ui-chat-message-suggestion-${index}`"
           @click="() => emit('select', suggestion)"
         >
           <span class="rc-button-label">

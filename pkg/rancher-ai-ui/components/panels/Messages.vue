@@ -170,6 +170,8 @@ onBeforeUnmount(() => {
         :class="{
           'chat-message-template-welcome': formattedMessages.length > 1,
         }"
+        :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
+        :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
         :disabled="disabled"
         :content="message.templateContent.content"
         :message="message"
@@ -177,6 +179,8 @@ onBeforeUnmount(() => {
       />
       <MessageComponent
         v-else
+        :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
+        :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
         :message="message"
         :disabled="disabled"
         :pending-confirmation="messagePhase === MessagePhase.AwaitingConfirmation"
