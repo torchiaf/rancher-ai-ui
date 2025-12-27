@@ -15,7 +15,7 @@ describe('Chat', () => {
     cy.login();
   });
 
-  describe('Verify chat availability in different UI areas', () => {
+  describe('Chat is available in main UI areas', () => {
     it('Home', () => {
       HomePagePo.goTo();
 
@@ -99,23 +99,23 @@ describe('Chat', () => {
 
       chat.open();
 
-      const welcomeMessage = chat.getTemplateMessage('welcome');
+      const welcomeMessage = chat.getMessage(1);
 
-      welcomeMessage.should('exist');
+      welcomeMessage.containsText("I'm Liz, your personal AI assistant. How can I help you?");
 
-      welcomeMessage.within(() => {
-        cy.contains("I'm Liz, your personal AI assistant. How can I help you?").should('be.visible');
+      const suggestions = ['View resources', 'Analyze logs', 'Do action'];
 
-        const suggestions = ['View resources', 'Analyze logs', 'Do action'];
-
-        suggestions.forEach((s) => {
-          cy.contains(s, { timeout: 5000 }).should('be.visible');
-        });
+      suggestions.forEach((value, index) => {
+        welcomeMessage.suggestion(index).should('contain.text', value);
       });
     });
 
     it('Show list of resources', () => {
       chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
 
       cy.enqueueLLMResponse({
         text:      ['Here', ' are the resources'],
@@ -131,25 +131,27 @@ describe('Chat', () => {
 
       chat.sendMessage('Show me the pods in cattle-ai-agent-system namespace');
 
-      chat.getMessage(1).within(() => {
-        cy.contains('Show me the pods in cattle-ai-agent-system namespace').should('be.visible');
-      });
+      const userMessage = chat.getMessage(2);
 
-      chat.getMessage(2).within(() => {
-        cy.contains('Here').should('be.visible');
-        cy.contains('are the resources').should('be.visible');
+      userMessage.containsText('Show me the pods in cattle-ai-agent-system namespace');
 
-        cy.get('[data-testid^="rancher-ai-ui-chat-message-action-button-llm-mock"]').should('exist');
-        cy.get('[data-testid^="rancher-ai-ui-chat-message-action-button-rancher-ai-agent"]').should('exist');
-        cy.get('[data-testid^="rancher-ai-ui-chat-message-action-button-rancher-mcp"]').should('exist');
-      });
+      const resourceMessage = chat.getMessage(3);
+
+      resourceMessage.containsText('Here are the resources');
+      resourceMessage.resourceButton('llm-mock').should('exist');
+      resourceMessage.resourceButton('rancher-ai-agent').should('exist');
+      resourceMessage.resourceButton('rancher-mcp').should('exist');
     });
 
     it('Confirm resource creation action', () => {
       chat.open();
 
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
       cy.enqueueLLMResponse({
-        text:      'Confirmed',
+        text:      'Pod created successfully.',
         tool: {
           name: 'createKubernetesResource',
           args: {
@@ -164,19 +166,20 @@ describe('Chat', () => {
 
       chat.sendMessage('Create a pod named my-pod in default namespace');
 
-      chat.getMessage(1).within(() => {
-        cy.contains('Create a pod named my-pod in default namespace').should('be.visible');
-      });
+      const userMessage = chat.getMessage(2);
 
-      chat.getMessage(2).within(() => {
-        cy.contains('Are you sure you want to proceed with this action?').should('be.visible');
-        cy.get('[data-testid="rancher-ai-ui-chat-message-confirmation-confirm-button"]').should('exist').click();
-      });
+      userMessage.containsText('Create a pod named my-pod in default namespace');
 
-      chat.getMessage(2).within(() => {
-        cy.contains('Confirmed').should('be.visible');
-        cy.get('[data-testid="rancher-ai-ui-chat-message-confirmation-confirmed"]').should('exist');
-      });
+      const confirmationRequestMessage = chat.getMessage(3);
+
+      confirmationRequestMessage.containsText('Are you sure you want to proceed with this action?');
+      confirmationRequestMessage.confirmationButton().should('exist').click();
+      confirmationRequestMessage.isConfirmed().should('exist');
+      confirmationRequestMessage.containsText('Confirmed');
+
+      const resultMessage = chat.getMessage(4);
+
+      resultMessage.containsText('Pod created successfully.');
     });
   });
 });

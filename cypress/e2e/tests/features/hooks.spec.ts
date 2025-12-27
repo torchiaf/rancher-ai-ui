@@ -27,11 +27,10 @@ describe('Hooks', () => {
 
       chat.isOpen();
 
-      const message = chat.getMessage(0);
+      const message = chat.getMessage(1);
 
-      message.should('exist');
-      message.should('contain.text', 'Please analyse the Cluster "local" and troubleshoot any problems.');
-      message.should('contain.text', 'See More');
+      message.containsText('Please analyse the Cluster "local" and troubleshoot any problems.');
+      message.containsText('See More');
     });
   });
 });

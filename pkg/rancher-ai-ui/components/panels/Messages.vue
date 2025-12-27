@@ -170,6 +170,7 @@ onBeforeUnmount(() => {
         :class="{
           'chat-message-template-welcome': formattedMessages.length > 1,
         }"
+        :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
         :disabled="disabled"
         :content="message.templateContent.content"
         :message="message"
@@ -177,12 +178,18 @@ onBeforeUnmount(() => {
       />
       <MessageComponent
         v-else
+        :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
         :message="message"
         :disabled="disabled"
         :pending-confirmation="messagePhase === MessagePhase.AwaitingConfirmation"
         @update:message="emit('update:message', message)"
         @confirm:message="emit('confirm:message', $event)"
         @send:message="emit('send:message', $event)"
+      />
+      <span
+        v-if="message.completed"
+        :data-testid="`rancher-ai-ui-chat-message-status-${ message.id }-completed`"
+        class="sr-only"
       />
     </template>
     <MessageComponent

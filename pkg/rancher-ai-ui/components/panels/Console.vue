@@ -102,7 +102,10 @@ watch(() => text.value, () => {
 </script>
 
 <template>
-  <div class="chat-console">
+  <div
+    class="chat-console"
+    data-testid="rancher-ai-ui-chat-console"
+  >
     <div
       class="chat-console-row"
     >
