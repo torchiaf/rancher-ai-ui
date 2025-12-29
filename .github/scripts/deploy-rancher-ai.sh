@@ -21,7 +21,11 @@ export KUBECONFIG="$KUBECONFIG_PATH"
 echo ""
 echo "Cloning rancher-ai-agent chart repository..."
 
-git clone https://github.com/rancher-sandbox/rancher-ai-agent.git
+git clone https://github.com/torchiaf/rancher-ai-agent.git
+cd rancher-ai-agent
+git fetch feature-support-llm-mock
+git checkout feature-support-llm-mock
+cd ..
 
 echo ""
 echo "Cloning llm-mock chart repository..."
@@ -43,6 +47,8 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set awsBedrock.accessKeyId=empty \
   --set awsBedrock.secretAccessKey=empty \
   --set log.level=debug \
+  --set aiAgent.image.repository=ghcr.io/torchiaf/rancher-ai-agent \
+  --set aiAgent.image.tag=v1.0.1 \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
   --wait --timeout 1m
