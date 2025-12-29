@@ -39,6 +39,9 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set llmModel=gemini-2.0-flash \
   --set insecureSkipTls=true \
   --set activeLlm=gemini \
+  --set awsBedrock.region=us-west-2 \
+  --set awsBedrock.accessKeyId=empty \
+  --set awsBedrock.secretAccessKey=empty \
   --set log.level=debug \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
