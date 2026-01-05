@@ -15,16 +15,20 @@ export default class ChatPo extends ComponentPo {
     return this.self().get('[data-testid="rancher-ai-ui-chat-close-button"]');
   }
 
+  historyButton() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-history-button"]');
+  }
+
   console() {
     return new ConsolePo();
   }
 
   isOpen(): Cypress.Chainable<boolean> {
-    return this.self().should('exist');
+    return this.checkExists();
   }
 
   isClosed(): Cypress.Chainable<boolean> {
-    return this.self().should('not.exist');
+    return this.checkNotExists();
   }
 
   open() {
@@ -35,6 +39,10 @@ export default class ChatPo extends ComponentPo {
   close() {
     this.closeButton().click();
     this.isClosed();
+  }
+
+  toggleHistory() {
+    this.historyButton().click();
   }
 
   getMessage(id: string | number) {

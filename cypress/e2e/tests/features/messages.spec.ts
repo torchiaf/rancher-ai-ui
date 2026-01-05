@@ -59,7 +59,9 @@ describe('Messages', () => {
 
     const resultMessage = chat.getMessage(3);
 
-    resultMessage.showThinkingButton().click({ force: true });
+    resultMessage.thinkingLabel().should('exist');
+
+    resultMessage.thinkingButton().click({ force: true });
 
     resultMessage.containsText('Thinking about the response');
 
@@ -103,9 +105,6 @@ describe('Messages', () => {
       'llm-mock',
       'rancher-ai-agent',
       'rancher-mcp',
-      'rancher-ai-chat',
-      'rancher-ai-redis',
-      'rancher-ai-mysql',
     ];
 
     deployments.forEach((name) => {

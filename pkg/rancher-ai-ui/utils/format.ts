@@ -175,17 +175,21 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message
     description:   key,
   }));
 
-  // This should become a function to be used also in useChatMessageComposable.ts
-  let suggestionActionsData: string[] = [];
+  /**
+   * Parsing suggestion actions
+   */
+  let suggestionActions: string[] = [];
 
   if (msg.message?.includes(Tag.SuggestionsStart) && msg.message?.includes(Tag.SuggestionsEnd)) {
-    const { suggestionActions, remaining } = formatSuggestionActions(suggestionActionsData, msg.message);
+    const { suggestionActions: suggestionActionsData, remaining } = formatSuggestionActions(suggestionActions, msg.message);
 
-    suggestionActionsData = suggestionActions;
+    suggestionActions = suggestionActionsData;
     msg.message = remaining;
   }
 
-  // This should become a function to be used also in useChatMessageComposable.ts
+  /**
+   * Parsing related resources actions
+   */
   let relatedResourcesActions: MessageAction[] = [];
 
   if (msg.message?.startsWith(Tag.McpResultStart) && msg.message?.includes(Tag.McpResultEnd)) {
@@ -200,17 +204,54 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message
     msg.message = remaining;
   }
 
-  // TODO handle other message parts (templateContent, etc.)
+  /**
+   * Parsing source links
+   */
+  let sourceLinks: string[] = [];
+
+  while (msg.message?.includes(Tag.DocLinkStart) && msg.message?.includes(Tag.DocLinkEnd)) {
+    const linkPart = msg.message.substring(
+      msg.message.indexOf(Tag.DocLinkStart),
+      msg.message.indexOf(Tag.DocLinkEnd) + Tag.DocLinkEnd.length
+    );
+
+    sourceLinks = formatSourceLinks(sourceLinks, linkPart);
+    msg.message = msg.message.replace(linkPart, '').trim();
+  }
+
+  /**
+   * Parsing thinking content
+   */
+  let thinkingContent = '';
+
+  if (msg.message?.startsWith(Tag.ThinkingStart) && msg.message?.includes(Tag.ThinkingEnd)) {
+    const thinkingPart = msg.message.substring(
+      msg.message.indexOf(Tag.ThinkingStart),
+      msg.message.indexOf(Tag.ThinkingEnd) + Tag.ThinkingEnd.length
+    );
+
+    thinkingContent = thinkingPart
+      .replaceAll(Tag.ThinkingStart, '')
+      .replaceAll(Tag.ThinkingEnd, '')
+      .trim();
+
+    const remaining = msg.message.replace(thinkingPart, '').trim();
+
+    msg.message = remaining;
+  }
 
   return {
-    role:              msg.role as Role,
+    role:              msg.role === 'agent' ? Role.Assistant : Role.User,
     id:                msg.requestId,
     completed:         true,
     thinking:          false,
-    messageContent:    msg.message,
+    showThinking:      false,
+    thinkingContent,
     contextContent,
     relatedResourcesActions,
-    suggestionActions: suggestionActionsData,
+    suggestionActions,
+    sourceLinks,
+    messageContent:    msg.message,
     timestamp:         new Date(Number(msg.createdAt) * 1000),
   };
 }

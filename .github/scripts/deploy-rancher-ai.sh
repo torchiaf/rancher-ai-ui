@@ -21,11 +21,7 @@ export KUBECONFIG="$KUBECONFIG_PATH"
 echo ""
 echo "Cloning rancher-ai-agent chart repository..."
 
-git clone https://github.com/torchiaf/rancher-ai-agent.git
-cd rancher-ai-agent
-git fetch feature-support-llm-mock
-git checkout feature-support-llm-mock
-cd ..
+git clone https://github.com/rancher-sandbox/rancher-ai-agent.git
 
 echo ""
 echo "Cloning llm-mock chart repository..."
@@ -41,20 +37,16 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set googleApiKey=empty \
   --set ollamaUrl="" \
   --set llmModel=gemini-2.0-flash \
-  --set insecureSkipTls=true \
   --set activeLlm=gemini \
-  --set awsBedrock.region=us-west-2 \
-  --set awsBedrock.accessKeyId=empty \
-  --set awsBedrock.secretAccessKey=empty \
-  --set log.level=debug \
-  --set aiAgent.image.repository=ghcr.io/torchiaf/rancher-ai-agent \
-  --set aiAgent.image.tag=v1.0.1 \
+  --set db.supervisor.enabled=false \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
-  --wait --timeout 1m
+  --set insecureSkipTls=true \
+  --set log.level=debug \
+  --wait --timeout 2m
 
-kubectl -n cattle-ai-agent-system rollout status deployment/rancher-ai-agent --timeout=1m
-kubectl -n cattle-ai-agent-system wait --for=condition=available --timeout=1m deployment/rancher-ai-agent
+kubectl -n cattle-ai-agent-system rollout status deployment/rancher-ai-agent --timeout=2m
+kubectl -n cattle-ai-agent-system wait --for=condition=available --timeout=2m deployment/rancher-ai-agent
 
 echo ""
 echo "Deploying LLM mock service..."

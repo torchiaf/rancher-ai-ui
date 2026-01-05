@@ -105,10 +105,14 @@ async function loadChat(chatId: string | null) {
   });
 }
 
-async function deleteChat(chatId: string) {
-  await deleteHistoryChat(chatId);
+async function deleteChat(chat: { id: string; active: boolean }) {
+  await deleteHistoryChat(chat.id);
   chatHistory.value = await fetchChats();
-  loadChat(null);
+
+  // Reset chat panel if the deleted chat was the active one
+  if (chat.active) {
+    loadChat(null);
+  }
 }
 
 function routeToSettings() {

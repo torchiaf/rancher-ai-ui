@@ -16,6 +16,7 @@ export function useChatHistoryComposable() {
         ...chat,
         chatId: undefined,
         id:     chat.chatId || '',
+        active: chat.active === 1 ? true : false,
       }));
   }
 
@@ -24,9 +25,7 @@ export function useChatHistoryComposable() {
 
     const messages = await data.json() as HistoryChatMessage[];
 
-    return messages
-      .sort((a, b) => Number(a.createdAt) - Number(b.createdAt))
-      .map(buildMessageFromHistoryMessage);
+    return messages.map(buildMessageFromHistoryMessage);
   }
 
   async function deleteChat(chatId: string): Promise<void> {

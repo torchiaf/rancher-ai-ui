@@ -50,14 +50,19 @@ function openChat(id: string) {
     <div
       v-if="props.open"
       class="history-panel-overlay"
+      data-testid="rancher-ai-ui-chat-history-panel-overlay"
       @click.self="emit('close:panel')"
     >
-      <div class="history-panel">
+      <div
+        class="history-panel"
+        data-testid="rancher-ai-ui-chat-history-panel"
+      >
         <div class="history-body">
           <RcButton
             ref="createBtn"
             primary
             class="btn-create-chat"
+            data-testid="rancher-ai-ui-chat-history-create-chat-button"
             @click="createChat"
             @keydown.enter.stop="createChat"
             @keydown.space.enter.stop="createChat"
@@ -73,15 +78,16 @@ function openChat(id: string) {
             </div>
             <div class="history-chat-list">
               <RcButton
-                v-for="chat in props.chats"
+                v-for="(chat, index) in props.chats"
                 :key="chat.id"
                 tertiary
                 class="history-chat-item"
                 :class="{ 'focused': chat.active }"
+                :data-testid="`rancher-ai-ui-chat-history-chat-item-${ index }`"
                 @click="openChat(chat.id)"
                 @keydown.enter.stop="openChat(chat.id)"
                 @keydown.space.enter.stop="openChat(chat.id)"
-                @mouseenter="chatBtnHover[chat.id] = true"
+                @mouseover="chatBtnHover[chat.id] = true"
                 @mouseleave="chatBtnHover[chat.id] = false"
               >
                 <span class="chat-name">
@@ -90,7 +96,7 @@ function openChat(id: string) {
                 <HistoryChatMenu
                   v-if="chatBtnHover[chat.id]"
                   @click.stop
-                  @delete:chat="emit('delete:chat', chat.id)"
+                  @delete:chat="emit('delete:chat', { id: chat.id, active: chat.active })"
                 />
               </RcButton>
             </div>
