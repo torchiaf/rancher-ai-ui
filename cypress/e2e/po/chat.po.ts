@@ -1,7 +1,7 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import RancherHeaderPo from '@/cypress/e2e/po/components/rancher-header.po';
-import { MessagePo } from '@/cypress/e2e/po/components/message.po';
-import { ConsolePo } from '@/cypress/e2e/po/components/console.po';
+import { MessagePo } from '@/cypress/e2e/po/message.po';
+import { ConsolePo } from '@/cypress/e2e/po/console.po';
 
 export default class ChatPo extends ComponentPo {
   rancherHeader: RancherHeaderPo;

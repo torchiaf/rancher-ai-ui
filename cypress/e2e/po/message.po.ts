@@ -8,6 +8,30 @@ export class MessagePo extends ComponentPo {
     this.id = id;
   }
 
+  content() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-message-formatted-content"]');
+  }
+
+  suggestion(index: number) {
+    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-suggestion-${ index }"]`);
+  }
+
+  sourceLink(index: number) {
+    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-source-link-${ index }"]`);
+  }
+
+  resourceButton(resourceIdPrefix: string) {
+    return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ resourceIdPrefix }"]`);
+  }
+
+  confirmButton() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-message-confirmation-confirm-button"]');
+  }
+
+  cancelButton() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-message-confirmation-cancel-button"]');
+  }
+
   isCompleted() {
     return this.self().get(`[data-teststatus="rancher-ai-ui-chat-message-status-${ this.id }-completed"]`).should('exist');
   }
@@ -34,29 +58,13 @@ export class MessagePo extends ComponentPo {
     return this.self().find('[data-testid="rancher-ai-ui-chat-message-show-thinking-button"]');
   }
 
-  suggestion(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-suggestion-${ index }"]`);
-  }
-
-  sourceLink(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-source-link-${ index }"]`);
-  }
-
-  resourceButton(resourceIdPrefix: string) {
-    return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ resourceIdPrefix }"]`);
-  }
-
-  confirmButton() {
-    return this.self().get('[data-testid="rancher-ai-ui-chat-message-confirmation-confirm-button"]');
-  }
-
-  cancelButton() {
-    return this.self().get('[data-testid="rancher-ai-ui-chat-message-confirmation-cancel-button"]');
-  }
-
   containsText(value: string) {
     return this.self().within(() => {
       cy.contains(value).should('be.visible', { timeout: 10000 });
     });
+  }
+
+  scrollIntoView() {
+    return this.self().scrollIntoView();
   }
 }
