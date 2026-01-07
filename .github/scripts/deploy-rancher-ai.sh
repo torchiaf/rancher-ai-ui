@@ -18,10 +18,19 @@ fi
 
 export KUBECONFIG="$KUBECONFIG_PATH"
 
+helm uninstall ai-agent -n cattle-ai-agent-system
+helm uninstall llm-mock -n cattle-ai-agent-system || true
+
 echo ""
 echo "Cloning rancher-ai-agent chart repository..."
 
-git clone https://github.com/rancher-sandbox/rancher-ai-agent.git
+rm -rf rancher-ai-agent
+rm -rf rancher-ai-llm-mock
+git clone https://github.com/torchiaf/rancher-ai-agent.git
+cd rancher-ai-agent
+git fetch origin feature-chat-history
+git checkout feature-chat-history
+cd ..
 
 echo ""
 echo "Cloning llm-mock chart repository..."
@@ -38,6 +47,12 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set ollamaUrl="" \
   --set llmModel=gemini-2.0-flash \
   --set activeLlm=gemini \
+  --set aiAgent.image.tag=v1.0.51 \
+  --set mcp.image.tag=v0.1.1 \
+  --set chat.image.tag=v1.0.28 \
+  --set chat.image.pullPolicy=Always \
+  --set db.supervisor.image.tag=v1.0.12 \
+  --set db.supervisor.image.pullPolicy=Always \
   --set db.supervisor.enabled=false \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
