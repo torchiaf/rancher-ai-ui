@@ -26,7 +26,7 @@ export function useConnectionComposable(options: {
 
   const baseUrl = `wss://${ window.location.host }/api/v1/namespaces/${ AGENT_NAMESPACE }/services/http:${ AGENT_NAME }:80/proxy/${ AGENT_API_PATH }`;
 
-  async function connect(chatId?: string) {
+  async function connect(chatId?: string | null) {
     const url = chatId ? `${ baseUrl }/${ chatId }` : baseUrl;
 
     const { onopen, onmessage, onclose } = options;

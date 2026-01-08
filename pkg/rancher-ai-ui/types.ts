@@ -149,7 +149,7 @@ export interface HistoryChat {
   id: string;
   chatId?: string;
   name?: string;
-  active: boolean;
+  active: boolean | number;
   createdAt: Date;
 }
 
@@ -159,7 +159,7 @@ export interface HistoryChatMessage {
   createdAt: string;
   message: string;
   requestId: string;
-  role: Role;
+  role: string | Role;
 }
 
 export interface Agent {

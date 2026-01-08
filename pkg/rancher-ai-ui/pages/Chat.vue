@@ -101,14 +101,18 @@ async function loadChat(chatId: string | null) {
   disconnect({ showError: false });
   loadMessages(chatId ? await fetchMessages(chatId) : []);
   nextTick(() => {
-    connect(chatId as string);
+    connect(chatId);
   });
 }
 
-async function deleteChat(chatId: string) {
-  await deleteHistoryChat(chatId);
-  chatHistory.value = await fetchChats();
-  loadChat(null);
+async function deleteChat(chat: { id: string; active: boolean }) {
+  await deleteHistoryChat(chat.id);
+
+  if (chat.active) {
+    loadChat(null);
+  } else {
+    chatHistory.value = await fetchChats();
+  }
 }
 
 function routeToSettings() {

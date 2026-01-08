@@ -16,6 +16,7 @@ const emit = defineEmits([
 
 const options = ref([
   {
+    id:          'delete-chat',
     label:       t('ai.history.menu.items.delete'),
     icon:        'icon-trash',
     action:      () => {
@@ -28,7 +29,10 @@ const isOpen = ref(false);
 </script>
 
 <template>
-  <div class="chat-console-menu-container">
+  <div
+    class="history-chat-item-menu-container"
+    data-testid="rancher-ai-ui-chat-history-chat-item-menu-button"
+  >
     <rc-dropdown
       class="menu-dropdown"
       placement="top-end"
@@ -47,7 +51,11 @@ const isOpen = ref(false);
           class="history-chat-menu-dropdown-item"
           @click="opt.action"
         >
-          {{ opt.label }}
+          <span
+            :data-testid="`rancher-ai-ui-chat-history-chat-item-menu-button-option-${ opt.id }`"
+          >
+            {{ opt.label }}
+          </span>
           <template
             #before
           >

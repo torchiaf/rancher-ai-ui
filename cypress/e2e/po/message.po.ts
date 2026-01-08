@@ -48,12 +48,8 @@ export class MessagePo extends ComponentPo {
     return this.self().get('[data-testid="rancher-ai-ui-chat-message-thinking-label"]');
   }
 
-  showThinkingButton() {
-    const thinkingLabel = this.thinkingLabel();
-
-    thinkingLabel.should('exist');
-
-    thinkingLabel.trigger('mouseenter', { force: true });
+  thinkingButton() {
+    this.self().trigger('mouseenter', { force: true });
 
     return this.self().find('[data-testid="rancher-ai-ui-chat-message-show-thinking-button"]');
   }

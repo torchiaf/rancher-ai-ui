@@ -26,7 +26,7 @@
     "test:ci": "NODE_OPTIONS=--max_old_space_size=8192 jest --silent",
     "cypress:open": "rancher-cypress open --e2e --browser chrome",
     "cypress:run": "rancher-cypress run",
-    "e2e": "CATTLE_BOOTSTRAP_PASSWORD=$CATTLE_BOOTSTRAP_PASSWORD TEST_PASSWORD=$TEST_PASSWORD TEST_USERNAME=$TEST_USERNAME VAI_ENABLED=$VAI_ENABLED TEST_BASE_URL=$TEST_BASE_URL API=$API yarn cypress:run"
+    "e2e": "CATTLE_BOOTSTRAP_PASSWORD=$CATTLE_BOOTSTRAP_PASSWORD TEST_USERNAME=$TEST_USERNAME VAI_ENABLED=$VAI_ENABLED API=$API yarn cypress:run"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
