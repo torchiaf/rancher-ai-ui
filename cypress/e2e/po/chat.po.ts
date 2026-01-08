@@ -1,12 +1,22 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
-import HeaderPo from '@/cypress/e2e/po/components/header.po';
+import RancherHeaderPo from '@/cypress/e2e/po/components/rancher-header.po';
+import { MessagePo } from '@/cypress/e2e/po/components/message.po';
+import { ConsolePo } from '@/cypress/e2e/po/components/console.po';
 
 export default class ChatPo extends ComponentPo {
-  rancherHeader: HeaderPo;
+  rancherHeader: RancherHeaderPo;
 
   constructor() {
     super('[data-testid="rancher-ai-ui-chat-container"]');
-    this.rancherHeader = new HeaderPo();
+    this.rancherHeader = new RancherHeaderPo();
+  }
+
+  closeButton() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-close-button"]');
+  }
+
+  console() {
+    return new ConsolePo();
   }
 
   isOpen(): Cypress.Chainable<boolean> {
@@ -23,19 +33,15 @@ export default class ChatPo extends ComponentPo {
   }
 
   close() {
-    this.self().find('[data-testid="rancher-ai-ui-chat-close-button"]').click();
+    this.closeButton().click();
     this.isClosed();
   }
 
-  messages() {
-    return this.self().get('[data-testid^="rancher-ai-ui-chat-message"]');
+  getMessage(id: string | number) {
+    return new MessagePo(id.toString());
   }
 
-  getMessage(index: number) {
-    return this.messages().eq(index);
-  }
-
-  getTemplateMessage(templateName: string) {
-    return this.self().find(`[data-testid="rancher-ai-ui-chat-message-template-${ templateName }"]`);
+  sendMessage(value: string) {
+    this.console().sendMessage(value);
   }
 }

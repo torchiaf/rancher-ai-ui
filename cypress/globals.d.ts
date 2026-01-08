@@ -1,8 +1,14 @@
+export interface McpTool {
+  name: string;
+  args: Record<string, string | object>;
+}
+
 declare global {
   namespace Cypress {
     interface Chainable {
-      enqueueAIAgentResponse(args: { content: string, chunkSize?: number }): void;
-      // Add more custom commands here
+      enqueueLLMResponse(args: { text?: string | string[], chunkSize?: number, tool?: McpTool }): void;
+      clearLLMResponses(): void;
+      // Add more commands here
     }
   }
 }

@@ -3,7 +3,7 @@
 # Helper script to run Rancher in a Docker container
 
 VERSION="head"
-CATTLE_SERVER_URL="https://localhost"
+CATTLE_SERVER_URL="https://172.17.0.1"
 CATTLE_BOOTSTRAP_PASSWORD="asd"
 
 if [ -n "$1" ]; then

@@ -102,7 +102,10 @@ watch(() => text.value, () => {
 </script>
 
 <template>
-  <div class="chat-console">
+  <div
+    class="chat-console"
+    data-testid="rancher-ai-ui-chat-console"
+  >
     <div
       class="chat-console-row"
     >
@@ -115,6 +118,7 @@ watch(() => text.value, () => {
         :placeholder="props.disabled ? '' : t('ai.prompt.placeholder')"
         :disabled="props.disabled"
         autocomplete="off"
+        data-testid="rancher-ai-ui-chat-input-textarea"
         @input="onInputMessage"
         @keydown="handleTextareaKeydown"
       />

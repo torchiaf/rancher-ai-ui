@@ -68,6 +68,7 @@ const confirmationText = computed(() => {
     <div class="confirmation-message">
       <span
         v-clean-html="confirmationText"
+        data-testid="rancher-ai-ui-chat-message-confirmation-message"
       />
     </div>
     <div
@@ -87,6 +88,7 @@ const confirmationText = computed(() => {
         <RcButton
           small
           tertiary
+          data-testid="rancher-ai-ui-chat-message-confirmation-cancel-button"
           @click="emit('confirm', false)"
         >
           <span class="rc-button-label">
@@ -96,6 +98,7 @@ const confirmationText = computed(() => {
         <RcButton
           small
           tertiary
+          data-testid="rancher-ai-ui-chat-message-confirmation-confirm-button"
           @click="emit('confirm', true)"
         >
           <span class="rc-button-label">
@@ -109,7 +112,10 @@ const confirmationText = computed(() => {
       class="confirmation-status"
     >
       <template v-if="props.value.status === ConfirmationStatus.Confirmed">
-        <div class="status-confirmed">
+        <div
+          class="status-confirmed"
+          data-testid="rancher-ai-ui-chat-message-confirmation-confirmed"
+        >
           <i class="icon icon-checkmark" />
           <p>
             {{ t('ai.confirmation.confirmed') }}
@@ -117,7 +123,10 @@ const confirmationText = computed(() => {
         </div>
       </template>
       <template v-else-if="props.value.status === ConfirmationStatus.Canceled">
-        <div class="status-canceled">
+        <div
+          class="status-canceled"
+          data-testid="rancher-ai-ui-chat-message-confirmation-canceled"
+        >
           <i class="icon icon-close canceled" />
           <p>
             {{ t('ai.confirmation.canceled') }}

@@ -105,7 +105,6 @@ onBeforeUnmount(() => {
       'chat-message-user': props.message.role === RoleEnum.User,
       disabled: props.disabled
     }"
-    :data-testid="`rancher-ai-ui-chat-message-${ props.message.id }`"
   >
     <component
       :is="props.message.role === RoleEnum.User ? UserAvatar : SystemAvatar"
@@ -128,6 +127,7 @@ onBeforeUnmount(() => {
             v-if="props.message.role === RoleEnum.Assistant && !!props.message.thinkingContent"
             v-clean-tooltip="props.message.showThinking ? t('ai.message.actions.tooltip.hideThinking') : t('ai.message.actions.tooltip.showThinking')"
             class="bubble-action-btn btn header-btn role-tertiary"
+            data-testid="rancher-ai-ui-chat-message-show-thinking-button"
             type="button"
             role="button"
             @click="handleShowThinking"
@@ -162,6 +162,7 @@ onBeforeUnmount(() => {
         <div class="chat-msg-text">
           <div v-if="!props.disabled && isThinking">
             <Processing
+              data-testid="rancher-ai-ui-chat-message-thinking-label"
               :phase="MessagePhase.Thinking"
             />
           </div>
