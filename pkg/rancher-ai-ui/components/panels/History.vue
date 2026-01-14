@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import {
-  ref, watch, nextTick, PropType, reactive
+  ref, watch, nextTick, PropType, reactive,
 } from 'vue';
+import { useStore } from 'vuex';
 import { HistoryChat } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import HistoryChatMenu from '../history/HistoryChatMenu.vue';
+
+const store = useStore();
+const t = store.getters['i18n/t'];
 
 const props = defineProps({
   chats: {
     type:    Array as PropType<HistoryChat[]>,
     default: () => ([]),
+  },
+  activeChatId: {
+    type:    String,
+    default: null,
   },
   open: {
     type:    Boolean,
@@ -82,7 +90,7 @@ function openChat(id: string) {
                 :key="chat.id"
                 tertiary
                 class="history-chat-item"
-                :class="{ 'focused': chat.active }"
+                :class="{ 'focused': props.activeChatId === chat.id }"
                 :data-testid="`rancher-ai-ui-chat-history-chat-item-${ index }`"
                 @click="openChat(chat.id)"
                 @keydown.enter.stop="openChat(chat.id)"
@@ -96,7 +104,7 @@ function openChat(id: string) {
                 <HistoryChatMenu
                   v-if="chatBtnHover[chat.id]"
                   @click.stop
-                  @delete:chat="emit('delete:chat', { id: chat.id, active: chat.active })"
+                  @delete:chat="emit('delete:chat', chat.id)"
                 />
               </RcButton>
             </div>

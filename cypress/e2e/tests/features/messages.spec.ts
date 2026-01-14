@@ -8,7 +8,6 @@ describe('Messages', () => {
 
   beforeEach(() => {
     cy.login();
-    cy.clearLLMResponses();
 
     HomePagePo.goTo();
   });

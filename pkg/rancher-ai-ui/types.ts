@@ -30,6 +30,8 @@ export const enum PanelState {
 }
 
 export const enum Tag {
+  ChatMetadataStart = '<chat-metadata>',
+  ChatMetadataEnd = '</chat-metadata>',
   MessageStart = '<message>',
   MessageEnd = '</message>',
   ThinkingStart = '<think>',
@@ -145,11 +147,13 @@ export interface FormattedMessage extends Message {
   isError?: boolean;
 }
 
+export interface ChatMetadata {
+  chatId: string;
+}
+
 export interface HistoryChat {
   id: string;
-  chatId?: string;
   name?: string;
-  active: boolean | number;
   createdAt: Date;
 }
 

@@ -8,7 +8,6 @@ describe('History Panel', () => {
 
   before(() => {
     cy.login();
-    cy.chatHistoryEnabled(true);
     cy.cleanChatHistory();
   });
 
@@ -42,8 +41,6 @@ describe('History Panel', () => {
   it('It should create new chats and populate the history list', () => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        cy.wait(500); // Wait for previous message processing
-
         const request = `Chat ${ i + 1 } - Request Request Request ${ j + 1 }`;
         const response = `Chat ${ i + 1 } - Response Response Response ${ j + 1 }`;
 
@@ -265,6 +262,5 @@ describe('History Panel', () => {
   after(() => {
     cy.login();
     cy.cleanChatHistory();
-    cy.chatHistoryEnabled(false);
   });
 });

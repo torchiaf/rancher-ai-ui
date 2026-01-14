@@ -9,7 +9,7 @@ declare global {
       enqueueLLMResponse(args: { text?: string | string[], chunkSize?: number, tool?: McpTool }): void;
       clearLLMResponses(): void;
       cleanChatHistory(): void;
-      chatHistoryEnabled(value: boolean): void;
+      agentDBPersistencyEnabled(value: boolean): void;
     }
   }
 }

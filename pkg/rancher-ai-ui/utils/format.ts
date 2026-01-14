@@ -4,7 +4,8 @@ import {
   Message,
   Role,
   MessageAction,
-  HistoryChatMessage
+  HistoryChatMessage,
+  ChatMetadata,
 } from '../types';
 import { validateActionResource } from './validator';
 
@@ -35,6 +36,16 @@ export function formatWSInputMessage(prompt: string, selectedContext: Context[],
     context,
     tags,
   });
+}
+
+export function formatChatMetadata(data: string): ChatMetadata | null {
+  if (data.startsWith(Tag.ChatMetadataStart) && data.endsWith(Tag.ChatMetadataEnd)) {
+    const cleaned = data.replaceAll(Tag.ChatMetadataStart, '').replaceAll(Tag.ChatMetadataEnd, '').trim();
+
+    return JSON.parse(cleaned);
+  }
+
+  return null;
 }
 
 export function formatMessageRelatedResourcesActions(value: string, actionType = ActionType.Button): MessageAction[] {
@@ -252,6 +263,6 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message
     suggestionActions,
     sourceLinks,
     messageContent:    msg.message,
-    timestamp:         new Date(Number(msg.createdAt) * 1000),
+    timestamp:         new Date(msg.createdAt),
   };
 }

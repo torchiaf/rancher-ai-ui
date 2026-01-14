@@ -8,7 +8,8 @@ import {
 } from '../types';
 import {
   formatWSInputMessage, formatMessageRelatedResourcesActions, formatConfirmationAction, formatSuggestionActions, formatFileMessages,
-  formatErrorMessage, formatSourceLinks
+  formatErrorMessage, formatSourceLinks,
+  formatChatMetadata
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 
@@ -104,7 +105,7 @@ export function useChatMessageComposable() {
   }
 
   function confirmMessage({ message, result }: { message: Message; result: boolean }, ws: WebSocket) {
-    wsSend(ws, formatWSInputMessage(result ? 'yes' : 'no', []));
+    wsSend(ws, formatWSInputMessage(result ? 'yes' : 'no', [], ['confirmation']));
 
     updateMessage({
       ...message,
@@ -150,6 +151,7 @@ export function useChatMessageComposable() {
     try {
       if (!messages.value.find((msg) => msg.completed)) {
         setPhase(MessagePhase.Initializing);
+        await processChatMetadata(data);
         await processWelcomeData(data);
       } else {
         await processMessageData(data);
@@ -163,6 +165,14 @@ export function useChatMessageComposable() {
       });
 
       setPhase(MessagePhase.Idle);
+    }
+  }
+
+  async function processChatMetadata(data: string) {
+    const metadata = formatChatMetadata(data);
+
+    if (metadata) {
+      store.commit('rancher-ai-ui/chat/setMetadata', { activeChatId: metadata?.chatId });
     }
   }
 

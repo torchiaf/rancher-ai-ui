@@ -6,26 +6,27 @@ export function useChatHistoryComposable() {
   const servicePath = `/api/v1/namespaces/${ AGENT_NAMESPACE }/services/http:${ CHAT_HISTORY_SERVICE_NAME }:80/proxy`;
 
   async function fetchChats(): Promise<HistoryChat[]> {
-    const data = await fetch(`${ servicePath }/chats?exclude-tag=welcome`);
+    try {
+      const data = await fetch(`${ servicePath }/chats`);
 
-    const all = await data.json() as HistoryChat[];
+      const all = await data.json() as HistoryChat[];
 
-    return all
-      .filter((chat) => !!chat.name)
-      .map((chat) => ({
-        ...chat,
-        chatId: undefined,
-        id:     chat.chatId || '',
-        active: chat.active === 1 ? true : false,
-      }));
+      return all.filter((chat) => !!chat.name);
+    } catch (error) {
+      return [];
+    }
   }
 
   async function fetchMessages(chatId: string): Promise<Message[]> {
-    const data = await fetch(`${ servicePath }/chats/${ chatId }/messages?exclude-tag=welcome`);
+    try {
+      const data = await fetch(`${ servicePath }/chats/${ chatId }/messages`);
 
-    const messages = await data.json() as HistoryChatMessage[];
+      const messages = await data.json() as HistoryChatMessage[];
 
-    return messages.map(buildMessageFromHistoryMessage);
+      return messages.map(buildMessageFromHistoryMessage);
+    } catch (error) {
+      return [];
+    }
   }
 
   async function deleteChat(chatId: string): Promise<void> {

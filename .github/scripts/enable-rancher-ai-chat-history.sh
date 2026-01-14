@@ -15,7 +15,7 @@ helm upgrade ai-agent ${HELM_CHART_ROOT}/chart/agent \
   --set activeLlm=gemini \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
-  --set db.supervisor.enabled=${ENABLE} \
+  --set dbManager.enabled=${ENABLE} \
   --set insecureSkipTls=true \
   --set log.level=debug \
   --wait --timeout 2m

@@ -1,6 +1,7 @@
 import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
 import {
+  ChatMetadata,
   ConfirmationStatus, Message, MessageError, MessagePhase, Role
 } from '../types';
 
@@ -20,10 +21,14 @@ interface Chat {
 }
 
 interface State {
+  metadata: ChatMetadata | null;
   chats: Record<string, Chat>;
 }
 
 const getters = {
+  metadata: (state: State) => {
+    return state.metadata;
+  },
   messages: (state: State) => (chatId: string) => {
     return state.chats[chatId]?.messages || {};
   },
@@ -68,6 +73,13 @@ const mutations = {
     state.chats[chatId] = {
       id:       chatId,
       messages: {},
+    };
+  },
+
+  setMetadata(state: State, metadata: ChatMetadata) {
+    state.metadata = {
+      ...state.metadata,
+      ...metadata
     };
   },
 
@@ -193,7 +205,10 @@ const actions = {
 const factory = (): CoreStoreSpecifics => {
   return {
     state: (): State => {
-      return { chats: {} };
+      return {
+        metadata: null,
+        chats:    {}
+      };
     },
     getters:   { ...getters },
     mutations: { ...mutations },

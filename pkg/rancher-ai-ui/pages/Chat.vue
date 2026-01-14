@@ -67,6 +67,9 @@ const {
 
 const showHistory = ref(false);
 const chatHistory = ref<HistoryChat[]>([]);
+const activeChatId = computed(() => {
+  return store.getters['rancher-ai-ui/chat/metadata']?.activeChatId || null;
+});
 
 // Agent errors are priority over websocket and message errors
 const errors = computed(() => {
@@ -97,18 +100,23 @@ async function toggleHistoryPanel() {
 
 async function loadChat(chatId: string | null) {
   showHistory.value = false;
+  if (chatId && chatId === activeChatId.value) {
+    return;
+  }
+
   resetChatError();
   disconnect({ showError: false });
   loadMessages(chatId ? await fetchMessages(chatId) : []);
   nextTick(() => {
+    store.commit('rancher-ai-ui/chat/setMetadata', { activeChatId: chatId });
     connect(chatId);
   });
 }
 
-async function deleteChat(chat: { id: string; active: boolean }) {
-  await deleteHistoryChat(chat.id);
+async function deleteChat(id: string) {
+  await deleteHistoryChat(id);
 
-  if (chat.active) {
+  if (id === activeChatId.value) {
     loadChat(null);
   } else {
     chatHistory.value = await fetchChats();
@@ -180,6 +188,7 @@ function unmount() {
       />
       <History
         :chats="chatHistory"
+        :active-chat-id="activeChatId"
         :open="showHistory && !errors.length"
         @close:panel="showHistory = false"
         @create:chat="loadChat(null)"
