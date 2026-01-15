@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Helpers to enable or disable chat history feature in Rancher AI Agent via Helm chart.
+# Helpers to enable or disable db persistence in Rancher AI Agent via Helm chart.
 
 KUBECONFIG_PATH=$1
 HELM_CHART_ROOT=$2
@@ -15,7 +15,7 @@ helm upgrade ai-agent ${HELM_CHART_ROOT}/chart/agent \
   --set activeLlm=gemini \
   --set llmMock.enabled=true \
   --set llmMock.url=http://llm-mock \
-  --set dbManager.enabled=${ENABLE} \
+  --set storage.enabled=${ENABLE} \
   --set insecureSkipTls=true \
   --set log.level=debug \
   --wait --timeout 2m

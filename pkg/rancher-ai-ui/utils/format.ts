@@ -178,7 +178,10 @@ export function formatErrorMessage(value: string): { message: string } {
 }
 
 export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message {
-  const contextData = JSON.parse(msg.context || '[]');
+  /**
+   * Parsing context
+   */
+  const contextData = (msg.context || {}) as Record<string, any>;
 
   const contextContent: Context[] = Object.keys(contextData).map((key) => ({
     value:       contextData[key],
