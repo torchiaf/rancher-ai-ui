@@ -88,6 +88,16 @@ export const enum ConfirmationStatus {
   Canceled = 'canceled',
 }
 
+export const enum ConfirmationResponse {
+  Yes = 'yes',
+  No = 'no',
+}
+
+export const enum MessageTag {
+  Ephemeral = 'ephemeral',
+  Confirmation = 'confirmation',
+}
+
 export interface MessageConfirmationAction {
   type: ConfirmationType | string;
   payload?: OperationPayload[];
@@ -159,11 +169,12 @@ export interface HistoryChat {
 
 export interface HistoryChatMessage {
   chatId: string;
-  context?: string;
-  createdAt: string;
-  message: string;
   requestId: string;
   role: string | Role;
+  message: string;
+  context?: string;
+  tags?: string[];
+  createdAt: string;
 }
 
 export interface Agent {

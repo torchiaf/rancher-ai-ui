@@ -171,10 +171,6 @@ describe('History Panel', () => {
       },
     });
 
-    let welcomeMessage = chat.getMessage(1);
-
-    welcomeMessage.isCompleted();
-
     chat.sendMessage('Request message.');
 
     const responseMessage = chat.getMessage(3);
@@ -197,22 +193,53 @@ describe('History Panel', () => {
 
     chat.sendMessage('Create a pod');
 
-    const confirmationRequestMessage = chat.getMessage(5);
+    let confirmationRequestMessage = chat.getMessage(5);
 
+    confirmationRequestMessage.isCompleted();
     confirmationRequestMessage.containsText('Are you sure you want to proceed with this action?');
     confirmationRequestMessage.confirmButton().click();
     confirmationRequestMessage.isConfirmed();
     confirmationRequestMessage.containsText('Confirmed');
 
-    const resultMessage = chat.getMessage(6);
+    let resultMessage = chat.getMessage(6);
 
+    resultMessage.isCompleted();
     resultMessage.containsText('Pod created successfully.');
+
+    cy.enqueueLLMResponse({
+      text:      'Pod creation canceled.',
+      tool: {
+        name: 'createKubernetesResource',
+        args: {
+          kind:      'Pod',
+          name:      'my-pod',
+          resource:  {},
+          cluster:   'local',
+          namespace: 'default'
+        }
+      },
+    });
+
+    chat.sendMessage('Create a pod but cancel');
+
+    confirmationRequestMessage = chat.getMessage(8);
+
+    confirmationRequestMessage.isCompleted();
+    confirmationRequestMessage.containsText('Are you sure you want to proceed with this action?');
+    confirmationRequestMessage.cancelButton().click();
+    confirmationRequestMessage.isCanceled();
+    confirmationRequestMessage.containsText('Canceled');
+
+    resultMessage = chat.getMessage(9);
+
+    resultMessage.isCompleted();
+    resultMessage.containsText('Pod creation canceled.');
 
     // Create a new chat to trigger the history population
     history.open();
     history.createChat();
 
-    welcomeMessage = chat.getMessage(1);
+    const welcomeMessage = chat.getMessage(1);
 
     welcomeMessage.isCompleted();
 
@@ -251,7 +278,7 @@ describe('History Panel', () => {
     historyResponseMessage.sourceLink(0).should('contain.text', 'Why Rancher');
     historyResponseMessage.sourceLink(1).should('contain.text', 'Support');
 
-    // Verify confirmation actions
+    // Verify confirmation action
     const historyUserMessage = chat.getMessage(3);
 
     historyUserMessage.scrollIntoView();
@@ -261,7 +288,29 @@ describe('History Panel', () => {
 
     historyConfirmedMessage.confirmButton().should('not.exist');
     historyConfirmedMessage.cancelButton().should('not.exist');
-    historyConfirmedMessage.containsText('Pod created successfully.');
+    historyConfirmedMessage.isConfirmed();
+    historyConfirmedMessage.containsText('Confirmed');
+
+    const historyResultMessage = chat.getMessage(5);
+
+    historyResultMessage.containsText('Pod created successfully.');
+
+    // Verify cancel action
+    const historyUserMessage1 = chat.getMessage(6);
+
+    historyUserMessage1.scrollIntoView();
+    historyUserMessage1.containsText('Create a pod but cancel');
+
+    const historyCanceledMessage = chat.getMessage(7);
+
+    historyCanceledMessage.confirmButton().should('not.exist');
+    historyCanceledMessage.cancelButton().should('not.exist');
+    historyCanceledMessage.isCanceled();
+    historyCanceledMessage.containsText('Canceled');
+
+    const historyResultMessage1 = chat.getMessage(8);
+
+    historyResultMessage1.containsText('Pod creation canceled.');
   });
 
   after(() => {

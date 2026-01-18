@@ -4,7 +4,7 @@ import debounce from 'lodash/debounce';
 import { NORMAN } from '@shell/config/types';
 import { useContextComposable } from './useContextComposable';
 import {
-  ChatError, ConfirmationStatus, Message, MessagePhase, MessageTemplateComponent, Role, Tag
+  ChatError, ConfirmationResponse, ConfirmationStatus, Message, MessagePhase, MessageTag, MessageTemplateComponent, Role, Tag
 } from '../types';
 import {
   formatWSInputMessage, formatMessageRelatedResourcesActions, formatConfirmationAction, formatSuggestionActions, formatFileMessages,
@@ -105,7 +105,7 @@ export function useChatMessageComposable() {
   }
 
   function confirmMessage({ message, result }: { message: Message; result: boolean }, ws: WebSocket) {
-    wsSend(ws, formatWSInputMessage(result ? 'yes' : 'no', [], ['confirmation']));
+    wsSend(ws, formatWSInputMessage(result ? ConfirmationResponse.Yes : ConfirmationResponse.No, [], [MessageTag.Confirmation]));
 
     updateMessage({
       ...message,
@@ -140,7 +140,7 @@ export function useChatMessageComposable() {
         - DO NOT ask for any confirmation or additional information.
       `;
 
-      wsSend(ws, formatWSInputMessage(initPrompt, selectedContext.value, ['welcome']));
+      wsSend(ws, formatWSInputMessage(initPrompt, selectedContext.value, [MessageTag.Ephemeral]));
       setPhase(MessagePhase.Processing);
     }
   }

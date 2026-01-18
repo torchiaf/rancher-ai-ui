@@ -210,7 +210,7 @@ describe('Messages', () => {
     welcomeMessage.isCompleted();
 
     cy.enqueueLLMResponse({
-      text:      'Pod created successfully.',
+      text:      'Pod creation canceled.',
       tool: {
         name: 'createKubernetesResource',
         args: {
