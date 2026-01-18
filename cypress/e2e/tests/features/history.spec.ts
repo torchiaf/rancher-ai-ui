@@ -38,6 +38,18 @@ describe('History Panel', () => {
     history.isClosed();
   });
 
+  it('It should discard empty chats from history', () => {
+    history.open();
+    history.createChat();
+
+    const welcomeMessage = chat.getMessage(1);
+
+    welcomeMessage.isCompleted();
+
+    history.open();
+    history.chatItems().should('have.length', 0);
+  });
+
   it('It should create new chats and populate the history list', () => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
