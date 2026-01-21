@@ -117,6 +117,30 @@ describe('History Panel', () => {
     }
   });
 
+  it('It should rename chats in history', () => {
+    history.open();
+
+    let chatItem = history.chatItem(0);
+
+    chatItem.menu().doAction('rename-chat');
+
+    const nameInput = chatItem.nameInput();
+
+    nameInput.should('be.visible');
+
+    const newName = 'Renamed Chat';
+
+    nameInput.clear().type(newName).blur();
+
+    chatItem.self().contains(newName);
+
+    history.closeByClickOutside();
+    history.open();
+
+    chatItem = history.chatItem(0);
+    chatItem.self().contains(newName);
+  });
+
   it('It should delete chats from history', () => {
     history.open();
 
