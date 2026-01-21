@@ -20,6 +20,32 @@ export function useChatHistoryComposable() {
     }
   }
 
+  async function updateChat(chat_id: string, payload: Partial<HistoryChat>): Promise<HistoryChat> {
+    try {
+      const data = await fetch(`${ apiPath }/chats/${ chat_id }`, {
+        method:  'PUT',
+        body:    JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      return await data.json() as HistoryChat;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update chat:', error);
+
+      throw error;
+    }
+  }
+
+  async function deleteChat(chatId: string): Promise<void> {
+    try {
+      await fetch(`${ apiPath }/chats/${ chatId }`, { method: 'DELETE' });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to delete chat:', error);
+    }
+  }
+
   async function fetchMessages(chatId: string): Promise<Message[]> {
     try {
       const data = await fetch(`${ apiPath }/chats/${ chatId }/messages`);
@@ -35,18 +61,10 @@ export function useChatHistoryComposable() {
     }
   }
 
-  async function deleteChat(chatId: string): Promise<void> {
-    try {
-      await fetch(`${ apiPath }/chats/${ chatId }`, { method: 'DELETE' });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to delete chat:', error);
-    }
-  }
-
   return {
     fetchChats,
     fetchMessages,
+    updateChat,
     deleteChat,
   };
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PropType, reactive } from 'vue';
+import { PropType, reactive, ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useShell } from '@shell/apis';
 import { useI18n } from '@shell/composables/useI18n';
@@ -32,10 +32,12 @@ const emit = defineEmits([
   'close:panel',
   'create:chat',
   'open:chat',
+  'update:chat',
   'delete:chat',
 ]);
 
 const chatBtnHover = reactive<Record<string, boolean>>({});
+const editingChat = ref<Partial<HistoryChat> | null>(null);
 
 function chatNameTooltip(chat: HistoryChat): string {
   let createdAt = '';
@@ -61,6 +63,10 @@ function createChat() {
 }
 
 function openChat(id: string) {
+  if (!!editingChat.value) {
+    return;
+  }
+
   emit('open:chat', id);
 }
 
@@ -72,6 +78,35 @@ function openDeleteChatModal(chat: HistoryChat) {
     },
     width: '400px',
   });
+}
+
+function updateChatName(chat: Partial<HistoryChat>) {
+  editingChat.value = { ...chat };
+
+  nextTick(() => {
+    const input = document.getElementById('history-chat-name-edit-input');
+
+    input?.focus();
+  });
+}
+
+function confirmEdit(chat: HistoryChat) {
+  const id = editingChat.value?.id;
+  const name = editingChat.value?.name?.trim();
+
+  if (id && name && chat.name !== name) {
+    chat.name = name; // update local copy to avoid flicker
+    emit('update:chat', {
+      id,
+      payload: { name }
+    });
+  }
+
+  dismissEdit();
+}
+
+function dismissEdit() {
+  editingChat.value = null;
 }
 </script>
 
@@ -120,7 +155,9 @@ function openDeleteChatModal(chat: HistoryChat) {
                 :key="chat.id"
                 tertiary
                 class="history-chat-item"
-                :class="{ 'focused': props.activeChatId === chat.id }"
+                :class="{
+                  'focused': props.activeChatId === chat.id || editingChat?.id === chat.id
+                }"
                 :data-testid="`rancher-ai-ui-chat-history-chat-item-${ index }`"
                 @click="openChat(chat.id)"
                 @keydown.enter.stop="openChat(chat.id)"
@@ -128,16 +165,31 @@ function openDeleteChatModal(chat: HistoryChat) {
                 @mouseover="chatBtnHover[chat.id] = true"
                 @mouseleave="chatBtnHover[chat.id] = false"
               >
+                <input
+                  v-if="editingChat?.id === chat.id"
+                  id="history-chat-name-edit-input"
+                  v-model="editingChat.name"
+                  data-testid="rancher-ai-ui-chat-history-item-name-input"
+                  class="history-chat-name-edit"
+                  type="text"
+                  :maxlength="64"
+                  autocomplete="off"
+                  @blur="confirmEdit(chat)"
+                  @keydown.enter.stop.prevent="confirmEdit(chat)"
+                  @keydown.esc.stop.prevent="dismissEdit"
+                />
                 <span
+                  v-else
                   v-clean-tooltip="chatNameTooltip(chat)"
                   data-testid="rancher-ai-ui-chat-history-item-name"
-                  class="chat-name"
+                  class="history-chat-name"
                 >
                   {{ chat.name }}
                 </span>
                 <HistoryChatMenu
                   v-if="chatBtnHover[chat.id]"
                   @click.stop
+                  @update:chat="updateChatName(chat)"
                   @delete:chat="openDeleteChatModal(chat)"
                 />
               </RcButton>
@@ -221,12 +273,18 @@ function openDeleteChatModal(chat: HistoryChat) {
   margin: 16px 0;
 }
 
-.chat-name {
+.history-chat-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
   display: block;
+}
+
+.history-chat-name-edit {
+  padding: 2px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
 }
 
 @keyframes slideIn {

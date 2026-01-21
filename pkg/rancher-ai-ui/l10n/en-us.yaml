@@ -179,6 +179,7 @@ ai:
           cancel: Cancel
     menu:
       items:
+        rename: Rename Chat
         delete: Delete Chat
 
   generic:
