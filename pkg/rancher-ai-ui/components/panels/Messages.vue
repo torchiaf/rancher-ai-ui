@@ -64,8 +64,16 @@ const errorMessages = computed<FormattedMessage[]>(() => {
     formattedMessageContent: error.message || t(error.key),
     timestamp:               new Date(),
     completed:               true,
-    isError:                 true,
-    actions:                 error.action ? [error.action] : []
+    actions:                 error.action ? [error.action] : [],
+
+    templateContent: {
+      component: MessageTemplateComponent.Welcome,
+      content:   {
+        principal: {},
+        message: t('ai.message.system.welcome.info'),
+      }
+    },
+
   }));
 });
 
@@ -189,11 +197,44 @@ onBeforeUnmount(() => {
         @send:message="emit('send:message', $event)"
       />
     </template>
-    <MessageComponent
-      v-for="(error, i) in errorMessages"
+
+    <template
+      v-for="(message, i) in errorMessages"
       :key="i"
-      :message="error"
-    />
+    >
+      <component
+        :is="getMessageTemplate(message.templateContent?.component)"
+        v-if="!!message.templateContent"
+        :class="{
+          'chat-message-template-welcome': formattedMessages.length > 1,
+        }"
+        :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
+        :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
+
+        :content="message.templateContent.content"
+        :message="message"
+        @send:message="emit('send:message', $event)"
+      />
+    </template>
+
+      <MessageComponent
+
+        :data-testid="`rancher-ai-ui-chat-message-box-${ 1 }`"
+        :message="{
+          role:                    Role.System,
+          formattedMessageContent: 'Rancher AI agent is not installed. Please install the agent to enable AI capabilities.',
+          timestamp:               new Date(),
+          completed:               true,
+          actions: [{
+            label:    t('ai.agent.goToInstall'),
+            type:     'Helm',
+            resource: { detailLocation: { name: 'c-cluster-apps-charts' } } // TODO: add params to open AI chart directly
+          }]
+        }"
+
+      />
+
+
     <Processing
       v-if="!disabled"
       class="chat-message-processing-label text-label"

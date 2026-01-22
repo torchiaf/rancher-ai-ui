@@ -121,7 +121,7 @@ export function useAgentComposable() {
           key:    'ai.error.agent.deployment.notFound',
           action: {
             label:    t('ai.agent.goToInstall'),
-            type:     ActionType.Button,
+            type:     'Helm',
             resource: { detailLocation: { name: 'c-cluster-apps-charts' } } // TODO: add params to open AI chart directly
           }
         };

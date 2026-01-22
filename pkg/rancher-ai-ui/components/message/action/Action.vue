@@ -5,6 +5,7 @@ import { warn } from '../../../utils/log';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { MessageAction } from '../../../types';
 import { ActionType } from '../../../types';
+import InstallHelmCharts from '@shell/components/InstallHelmCharts.vue';
 
 const store = useStore();
 
@@ -66,6 +67,18 @@ onMounted(async() => {
 </script>
 
 <template>
+  <div v-if="props.value.type === 'Helm'">
+    <InstallHelmCharts
+      :repo-display-name="'rancher-ai'"
+      :chart-display-name="'agent'"
+      store="management"
+      chart-name="agent"
+      repo-name="rancher-ai"
+      repo-url="https://rancher.github.io/rancher-ai-agent"
+    >
+
+    </InstallHelmCharts>
+  </div>
   <div
     v-if="props.value.type === ActionType.Button"
     :data-testid="`rancher-ai-ui-chat-message-action-button-${ props.value?.resource?.name }`"
