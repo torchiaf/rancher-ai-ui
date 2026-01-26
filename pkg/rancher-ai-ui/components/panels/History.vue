@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { PropType, reactive, ref } from 'vue';
+import { PropType, reactive } from 'vue';
 import { useStore } from 'vuex';
+import { useShell } from '@shell/apis';
+import { useI18n } from '@shell/composables/useI18n';
 import { HistoryChat } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import HistoryHeader from '../history/HistoryHeader.vue';
 import HistoryChatMenu from '../history/HistoryChatMenu.vue';
-import DeleteChatModal from '../../dialog/DeleteChatModal.vue';
+import DeleteChat from '../../dialog/DeleteChatCard.vue';
 
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
+const shellApi = useShell();
 
 const props = defineProps({
   chats: {
@@ -33,7 +36,6 @@ const emit = defineEmits([
 ]);
 
 const chatBtnHover = reactive<Record<string, boolean>>({});
-const deletingChat = ref<HistoryChat | null>(null);
 
 function chatNameTooltip(chat: HistoryChat): string {
   let createdAt = '';
@@ -62,12 +64,14 @@ function openChat(id: string) {
   emit('open:chat', id);
 }
 
-function deleteChat() {
-  if (deletingChat.value) {
-    emit('delete:chat', deletingChat.value.id);
-
-    deletingChat.value = null;
-  }
+function openDeleteChatModal(chat: HistoryChat) {
+  shellApi.modal.open(DeleteChat, {
+    props: {
+      name:      chat.name,
+      onConfirm: () => emit('delete:chat', chat.id),
+    },
+    width: '400px',
+  });
 }
 </script>
 
@@ -134,7 +138,7 @@ function deleteChat() {
                 <HistoryChatMenu
                   v-if="chatBtnHover[chat.id]"
                   @click.stop
-                  @delete:chat="deletingChat = chat"
+                  @delete:chat="openDeleteChatModal(chat)"
                 />
               </RcButton>
             </div>
@@ -143,12 +147,6 @@ function deleteChat() {
       </div>
     </div>
   </transition>
-  <DeleteChatModal
-    v-if="!!deletingChat"
-    :name="deletingChat.name"
-    @confirm="deleteChat"
-    @close="deletingChat = null"
-  />
 </template>
 
 <style lang="scss" scoped>
