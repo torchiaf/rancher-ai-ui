@@ -9,7 +9,7 @@ import { useConnectionComposable } from '../composables/useConnectionComposable'
 import { useChatMessageComposable } from '../composables/useChatMessageComposable';
 import { useContextComposable } from '../composables/useContextComposable';
 import { useHeaderComposable } from '../composables/useHeaderComposable';
-import { useAgentComposable } from '../composables/useAgentComposable';
+import { useAIServiceComposable } from '../composables/useAIServiceComposable';
 import { useChatHistoryComposable } from '../composables/useChatHistoryComposable';
 import Header from '../components/panels/Header.vue';
 import Messages from '../components/panels/Messages.vue';
@@ -24,7 +24,7 @@ import Chat from '../handlers/chat';
 
 const store = useStore();
 
-const { agent, error: agentError } = useAgentComposable();
+const { llmConfig, error: aiServiceError } = useAIServiceComposable();
 
 const {
   messages,
@@ -72,10 +72,10 @@ const activeChatId = computed(() => {
   return store.getters['rancher-ai-ui/chat/metadata']?.activeChatId || null;
 });
 
-// Agent errors are priority over websocket and message errors
+// AI service's errors are priority over websocket and message errors
 const errors = computed(() => {
-  if (agentError.value) {
-    return [agentError.value];
+  if (aiServiceError.value) {
+    return [aiServiceError.value];
   } else {
     return [
       wsError.value,
@@ -195,7 +195,7 @@ function unmount() {
       />
       <Console
         :disabled="!ws || ws.readyState === 3 || errors.length > 0 || messagePhase === MessagePhase.AwaitingConfirmation"
-        :agent="agent"
+        :llm-config="llmConfig"
         @input:content="sendMessage($event, ws)"
       />
       <History

@@ -20,8 +20,7 @@ Cypress.Commands.add('cleanChatHistory', () => {
 });
 
 /**
- * Enable or disable data persistency the Agent.
- *
+ * Enable or disable the AI agent database persistency feature.
  */
 Cypress.Commands.add('agentDBPersistencyEnabled', (value: boolean) => {
   return cy.getCookie('CSRF').then((token) => {

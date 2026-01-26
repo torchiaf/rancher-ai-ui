@@ -77,7 +77,7 @@ const user = computed(() => {
       </div>
       <div class="chat-welcome-msg-text-panel">
         <span>
-          {{ t('ai.message.system.welcome.greetings.line1') }}
+          {{ t('ai.message.system.welcome.greetings.line1', {}, true) }}
         </span>
         <span>
           {{ t('ai.message.system.welcome.greetings.line2') }}

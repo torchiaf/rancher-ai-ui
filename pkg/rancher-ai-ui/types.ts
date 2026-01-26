@@ -54,6 +54,36 @@ export const enum Role {
   System = 'system',
 }
 
+export const enum ContextTag {
+  CLUSTER   = 'cluster',
+  NAMESPACE = 'namespace',
+}
+
+export const enum HookContextTag {
+  SortableTableRow = '__sortable-table-row',
+  DetailsState = '__details-state',
+  StatusBanner = '__details-state-banner',
+}
+
+export const enum MessagePhase {
+  Idle = 'idle',
+  Initializing = 'initializing',
+  Thinking = 'thinking',
+  Working = 'working',
+  Processing = 'processing',
+  AwaitingConfirmation = 'awaitingConfirmation',
+  GeneratingResponse = 'generatingResponse',
+  Confirming = 'confirming',
+  Finalizing = 'finalizing',
+}
+
+export const enum ConnectionPhase {
+  Idle = 'idle',
+  Connecting = 'connecting',
+  Connected = 'connected',
+  Disconnected = 'disconnected'
+}
+
 export const enum ActionType {
   Link = 'link',
   Button = 'button',
@@ -178,7 +208,7 @@ export interface HistoryChatMessage {
   createdAt: string;
 }
 
-export interface Agent {
+export interface LLMConfig {
   id?: string;
   name: string;
   model: string; // model + version
@@ -193,32 +223,7 @@ export interface Context {
   icon?: string;
 }
 
-export const enum ContextTag {
-  CLUSTER   = 'cluster',
-  NAMESPACE = 'namespace',
-}
-
-export const enum HookContextTag {
-  SortableTableRow = '__sortable-table-row',
-  DetailsState = '__details-state',
-  StatusBanner = '__details-state-banner',
-}
-
-export const enum MessagePhase {
-  Idle = 'idle',
-  Initializing = 'initializing',
-  Thinking = 'thinking',
-  Working = 'working',
-  Processing = 'processing',
-  AwaitingConfirmation = 'awaitingConfirmation',
-  GeneratingResponse = 'generatingResponse',
-  Confirming = 'confirming',
-  Finalizing = 'finalizing',
-}
-
-export const enum ConnectionPhase {
-  Idle = 'idle',
-  Connecting = 'connecting',
-  Connected = 'connected',
-  Disconnected = 'disconnected'
+export interface Agent {
+  id?: string;
+  name: string;
 }
