@@ -5,21 +5,21 @@ import { base64Decode } from '@shell/utils/crypto';
 import { warn } from '../utils/log';
 import { AGENT_NAMESPACE, AGENT_NAME, AGENT_CONFIG_SECRET_NAME, PRODUCT_NAME } from '../product';
 import { SECRET, WORKLOAD_TYPES } from '@shell/config/types';
-import { ActionType, Agent, ChatError } from '../types';
+import { ActionType, ChatError, LLMConfig } from '../types';
 
 /**
- * Composable for managing the AI agent state.
+ * Composable for managing the AI service configuration.
  *
- * The Agent information is used to determine which AI model is being used (shown in the Console panel)
- * and to handle any errors related to the agent's availability or configuration.
+ * The llm-config secret is used to determine which AI model is being used (shown in the Console panel)
+ * and to handle any errors related to the AI service's availability or configuration.
  *
- * @returns Composable for managing the AI agent state.
+ * @returns Composable for managing the AI service configuration.
  */
-export function useAgentComposable() {
+export function useAIServiceComposable() {
   const store = useStore();
   const { t } = useI18n(store);
 
-  const agent = ref<Agent | null>(null);
+  const llmConfig = ref<LLMConfig | null>(null);
   const error = ref<ChatError | null>(null);
 
   function decodeLLM(ACTIVE_LLM: string): string {
@@ -54,7 +54,7 @@ export function useAgentComposable() {
     return model;
   }
 
-  function decodeAgentConfigs(data: any): Agent | null {
+  function decodeLLMConfig(data: any): LLMConfig | null {
     let activeLLM = '';
     let activeModel = '';
 
@@ -83,7 +83,7 @@ export function useAgentComposable() {
 
     if (activeLLM && activeModel) {
       return {
-        name:  t(`ai.agent.models.${ activeLLM }`),
+        name:  t(`ai.configurations.models.${ activeLLM }`),
         model: activeModel
       };
     }
@@ -91,9 +91,9 @@ export function useAgentComposable() {
     return null;
   }
 
-  async function checkAgentAvailability() {
+  async function checkAgentDeploymentAvailability() {
     if (!store.getters['management/canList'](WORKLOAD_TYPES.DEPLOYMENT)) {
-      error.value = { key: 'ai.error.agent.deployment.noPermission' };
+      error.value = { key: 'ai.error.services.deployment.noPermission' };
     } else {
       try {
         const agent = await store.dispatch('management/find', {
@@ -103,9 +103,9 @@ export function useAgentComposable() {
 
         if (agent && agent.state !== 'active') {
           error.value = {
-            key:    'ai.error.agent.deployment.notActive',
+            key:    'ai.error.services.deployment.notActive',
             action: {
-              label:    t('ai.agent.goToDeployment'),
+              label:    t('ai.installation.goToDeployment'),
               type:     ActionType.Button,
               resource: {
                 cluster:   'local',
@@ -119,9 +119,9 @@ export function useAgentComposable() {
       } catch (e) {
         warn('\'rancher-ai-agent\' deployment not found', e);
         error.value = {
-          key:    'ai.error.agent.deployment.notFound',
+          key:    'ai.error.services.deployment.notFound',
           action: {
-            label:    t('ai.agent.goToInstall'),
+            label:    t('ai.installation.goToInstall'),
             type:     ActionType.Button,
             resource: { detailLocation: { name: 'c-cluster-apps-charts' } } // TODO: add params to open AI chart directly
           }
@@ -132,9 +132,9 @@ export function useAgentComposable() {
     return !error.value;
   }
 
-  async function getAgentConfigs() {
+  async function getLLMConfigs() {
     if (!store.getters['management/canList'](SECRET)) {
-      error.value = { key: 'ai.error.agent.secret.noPermission' };
+      error.value = { key: 'ai.error.services.secret.noPermission' };
 
       return;
     }
@@ -146,15 +146,15 @@ export function useAgentComposable() {
       });
 
       if (secret?.data) {
-        agent.value = decodeAgentConfigs(secret.data);
+        llmConfig.value = decodeLLMConfig(secret.data);
       }
     } catch (e) {
       warn('Error fetching agent configuration secret:', e);
     }
 
-    if (!agent.value) {
+    if (!llmConfig.value) {
       error.value = {
-        key:    'ai.error.agent.secret.missingConfig',
+        key:    'ai.error.services.secret.missingConfig',
         action: {
           label:    t('ai.settings.goToSettings'),
           type:     ActionType.Button,
@@ -165,15 +165,15 @@ export function useAgentComposable() {
   }
 
   onMounted(async() => {
-    const available = await checkAgentAvailability();
+    const available = await checkAgentDeploymentAvailability();
 
     if (available) {
-      getAgentConfigs();
+      getLLMConfigs();
     }
   });
 
   return {
-    agent,
+    llmConfig,
     error
   };
 }
