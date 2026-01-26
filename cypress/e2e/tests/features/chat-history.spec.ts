@@ -1,6 +1,6 @@
-import PromptRemove from '@rancher/cypress/e2e/po/prompts/promptRemove.po';
 import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 import ChatPo from '@/cypress/e2e/po/chat.po';
+import DeleteChatPromptPo from '@/cypress/e2e/po/dialog/delete-chat.po';
 import { HistoryPo } from '@/cypress/e2e/po/history.po';
 
 describe('History Panel', () => {
@@ -125,9 +125,9 @@ describe('History Panel', () => {
 
       history.chatItem(i).menu().doAction('delete-chat');
 
-      const promptRemove = new PromptRemove();
+      const deleteChatPrompt = new DeleteChatPromptPo();
 
-      promptRemove.remove();
+      deleteChatPrompt.confirm();
 
       history.chatItems().should('have.length', i);
     }
@@ -156,9 +156,9 @@ describe('History Panel', () => {
     chatItem.isActive();
     chatItem.menu().doAction('delete-chat');
 
-    const promptRemove = new PromptRemove();
+    const deleteChatPrompt = new DeleteChatPromptPo();
 
-    promptRemove.remove();
+    deleteChatPrompt.confirm();
 
     // When the active chat is deleted, the chat panel initializes a new chat
     chat.isReady();
