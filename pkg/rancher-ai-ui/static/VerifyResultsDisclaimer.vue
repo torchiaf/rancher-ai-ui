@@ -10,26 +10,26 @@ const { t } = useI18n(store);
   <div class="disclaimer">
     <div class="disclaimer-section">
       <span class="disclaimer-section-title">
-        {{ t('ai.agent.verifyResults.disclaimer.section1.title') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section1.title') }}
       </span>
       <span class="disclaimer-section-body">
-        {{ t('ai.agent.verifyResults.disclaimer.section1.body') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section1.body') }}
       </span>
     </div>
     <div class="disclaimer-section">
       <span class="disclaimer-section-title">
-        {{ t('ai.agent.verifyResults.disclaimer.section2.title') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section2.title') }}
       </span>
       <span class="disclaimer-section-body">
-        {{ t('ai.agent.verifyResults.disclaimer.section2.body') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section2.body') }}
       </span>
     </div>
     <div class="disclaimer-section">
       <span class="disclaimer-section-title">
-        {{ t('ai.agent.verifyResults.disclaimer.section3.title') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section3.title') }}
       </span>
       <span class="disclaimer-section-body">
-        {{ t('ai.agent.verifyResults.disclaimer.section3.body') }}
+        {{ t('ai.configurations.verifyResults.disclaimer.section3.body') }}
       </span>
     </div>
   </div>

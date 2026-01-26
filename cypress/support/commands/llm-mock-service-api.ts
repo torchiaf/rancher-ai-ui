@@ -14,7 +14,7 @@ import { McpTool } from '../../globals';
  *   If not provided or less than or equal to 0, the entire text will be sent as a single chunk.
  *
  * arg.tool (Optional)
- *   The tool to be used by the Agent to request cluster resources to the MCP. It can be used to simulate resource fetching during tests and confirmation behavior.
+ *   The tool to be used by the Rancher AI agent to request cluster resources to the MCP. It can be used to simulate resource fetching during tests and confirmation behavior.
  *   The list of available MCP tool can be found here: https://github.com/rancher-sandbox/rancher-ai-mcp/blob/main/README.md
  *
  *   Usage example:

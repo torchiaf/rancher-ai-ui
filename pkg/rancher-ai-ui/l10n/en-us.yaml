@@ -68,7 +68,7 @@ ai:
     resources:
       cluster: Cluster
       namespace: Namespace
-  agent:
+  configurations:
     label: Uses AI (running {name} {model}).
     verifyResults:
       button:
@@ -88,7 +88,8 @@ ai:
       openai: ChatGPT
       gemini: Gemini
       bedrock: Bedrock
-    unknown: Unknown Agent
+      unknown: Unknown Model
+  installation:
     goToInstall: View Charts
     goToDeployment: View Agent Deployment
   hooks:
@@ -142,7 +143,7 @@ ai:
       generic: WebSocket error occurred. Please try again later.
       connection: Failed to connect to Rancher AI Agent. Please try again later.
       disconnected: Connection closed.
-    agent:
+    services:
       secret:
         noPermission: You do not have permission to access the Rancher AI Agent configuration. Please contact your administrator.
         missingConfig: Rancher AI Agent configuration is missing. Please go to Global [Settings > AI Assistant] and configure the agent.
