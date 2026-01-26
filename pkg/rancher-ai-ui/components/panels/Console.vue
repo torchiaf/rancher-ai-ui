@@ -7,7 +7,7 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { Agent } from '../../types';
+import { LLMConfig } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import TextLabelPopover from '../popover/TextLabel.vue';
 import VerifyResultsDisclaimer from '../../static/VerifyResultsDisclaimer.vue';
@@ -16,7 +16,7 @@ import { useInputComposable } from '../../composables/useInputComposable';
 import type { PropType } from 'vue';
 
 /**
- * Console panel for AI chat messages input and info about the Agent.
+ * Console panel for AI chat messages input and AI service's configuration.
  */
 
 const store = useStore();
@@ -27,8 +27,8 @@ const props = defineProps({
     type:    Boolean,
     default: false,
   },
-  agent: {
-    type:     Object as PropType<Agent | null>,
+  llmConfig: {
+    type:     Object as PropType<LLMConfig | null>,
     default:  null,
   }
 });
@@ -45,6 +45,25 @@ const text = computed(() => {
   }
 
   return inputText.value;
+});
+
+const llmModelDisplayName = computed(() => {
+  if (!!props.llmConfig) {
+    return t('ai.configurations.label', {
+      name:  props.llmConfig.name,
+      model: props.llmConfig.model
+    }, true);
+  }
+
+  return t('ai.configurations.models.unknown');
+});
+
+const llmModelTooltip = computed(() => {
+  if (!!props.llmConfig && props.llmConfig.model?.length > 20) {
+    return props.llmConfig.model;
+  }
+
+  return '';
 });
 
 function onInputMessage(event: Event) {
@@ -143,13 +162,13 @@ watch(() => text.value, () => {
     </div>
     <div class="chat-console-row chat-console-chat-text-info">
       <span
-        v-clean-tooltip="!!props.agent && props.agent.model?.length > 20 ? props.agent.model : ''"
+        v-clean-tooltip="llmModelTooltip"
         class="chat-model label text-deemphasized"
       >
-        {{ !!props.agent ? t('ai.agent.label', { name: props.agent.name, model: props.agent.model }, true) : t('ai.agent.unknown') }}
+        {{ llmModelDisplayName }}
       </span>
       <TextLabelPopover
-        :label="t('ai.agent.verifyResults.button.label')"
+        :label="t('ai.configurations.verifyResults.button.label')"
         :disabled="props.disabled"
       >
         <VerifyResultsDisclaimer />
