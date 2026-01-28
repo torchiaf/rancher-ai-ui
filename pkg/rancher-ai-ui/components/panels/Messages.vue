@@ -62,7 +62,7 @@ const formattedMessages = computed<FormattedMessage[]>(() => {
 const errorMessages = computed<FormattedMessage[]>(() => {
   return props.errors.map((error) => ({
     role:                    Role.System,
-    formattedMessageContent: error.message || t(error.key),
+    formattedMessageContent: error.message || t(error.key as string),
     timestamp:               new Date(),
     completed:               true,
     isError:                 true,

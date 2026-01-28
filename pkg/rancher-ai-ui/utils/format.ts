@@ -7,6 +7,7 @@ import {
   HistoryChatMessage,
   ChatMetadata,
   ConfirmationStatus,
+  AgentMetadata,
 } from '../types';
 import { validateActionResource } from './validator';
 
@@ -51,7 +52,23 @@ export function formatChatMetadata(data: string): ChatMetadata | null {
   if (data.startsWith(Tag.ChatMetadataStart) && data.endsWith(Tag.ChatMetadataEnd)) {
     const cleaned = data.replaceAll(Tag.ChatMetadataStart, '').replaceAll(Tag.ChatMetadataEnd, '').trim();
 
+    try {
+      return JSON.parse(cleaned);
+    } catch (error) {
+      console.error('Failed to parse chat metadata:', error); /* eslint-disable-line no-console */
+    }
+  }
+
+  return null;
+}
+
+export function formatAgentMetadata(data: string): AgentMetadata | null {
+  const cleaned = data.replaceAll(Tag.AgentMetadataStart, '').replaceAll(Tag.AgentMetadataEnd, '').trim();
+
+  try {
     return JSON.parse(cleaned);
+  } catch (error) {
+    console.error('Failed to parse agent metadata:', error); /* eslint-disable-line no-console */
   }
 
   return null;

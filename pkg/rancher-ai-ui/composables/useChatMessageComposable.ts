@@ -12,7 +12,8 @@ import {
 import {
   formatWSInputMessage, formatMessageRelatedResourcesActions, formatConfirmationAction, formatSuggestionActions, formatFileMessages,
   formatErrorMessage, formatSourceLinks,
-  formatChatMetadata
+  formatChatMetadata,
+  formatAgentMetadata
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 
@@ -86,8 +87,11 @@ export function useChatMessageComposable(chatId: string, agentId: ComputedRef<st
       agent:   agentId.value,
     }));
 
+    const agentMetadata = { agent: agentId.value };
+
     addMessage({
       role,
+      agentMetadata,
       summaryContent,
       messageContent,
       contextContent
@@ -164,7 +168,7 @@ export function useChatMessageComposable(chatId: string, agentId: ComputedRef<st
     try {
       if (!messages.value.find((msg) => msg.completed)) {
         setPhase(MessagePhase.Initializing);
-        await processChatMetadata(data);
+        processChatMetadata(data);
         await processWelcomeData(data);
       } else {
         await processMessageData(data);
@@ -181,7 +185,7 @@ export function useChatMessageComposable(chatId: string, agentId: ComputedRef<st
     }
   }
 
-  async function processChatMetadata(data: string) {
+  function processChatMetadata(data: string) {
     const metadata = formatChatMetadata(data);
 
     if (metadata) {
@@ -268,6 +272,16 @@ export function useChatMessageComposable(chatId: string, agentId: ComputedRef<st
       break;
     default:
       setPhase(MessagePhase.GeneratingResponse);
+
+      if (data.startsWith(Tag.AgentMetadataStart) && data.endsWith(Tag.AgentMetadataEnd)) {
+        const metadata = formatAgentMetadata(data);
+
+        if (metadata) {
+          currentMsg.value.agentMetadata = metadata;
+        }
+        break;
+      }
+
       if (currentMsg.value.completed === false && currentMsg.value.thinking === true) {
         if (!currentMsg.value.thinkingContent && data.trim() === '') {
           break;
@@ -275,6 +289,7 @@ export function useChatMessageComposable(chatId: string, agentId: ComputedRef<st
         currentMsg.value.thinkingContent += data;
         break;
       }
+
       if (currentMsg.value.completed === false && currentMsg.value.thinking === false) {
         if (!currentMsg.value.messageContent && data.trim() === '') {
           break;
