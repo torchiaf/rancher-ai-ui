@@ -12,6 +12,8 @@ export const RANCHER_AI = { AI_AGENT_CONFIG: 'ai.cattle.io.aiagentconfig' };
 export const enum Tag {
   ChatMetadataStart = '<chat-metadata>',
   ChatMetadataEnd = '</chat-metadata>',
+  AgentMetadataStart = '<agent-metadata>',
+  AgentMetadataEnd = '</agent-metadata>',
   MessageStart = '<message>',
   MessageEnd = '</message>',
   ThinkingStart = '<think>',
@@ -177,7 +179,7 @@ export interface MessageTemplate {
 export interface Message {
   id?: number | string;
   role: Role;
-  agent?: string;
+  agentMetadata?: AgentMetadata;
   thinkingContent?: string;
   messageContent?: string;
   summaryContent?: string;
@@ -203,6 +205,16 @@ export interface FormattedMessage extends Message {
 
 export interface ChatMetadata {
   chatId: string;
+}
+
+export interface AgentMetadata {
+  agent: string;
+  selectionMode?: AgentSelectionMode; // user messages will not have this field
+}
+
+export const enum AgentSelectionMode {
+  Auto = 'auto',
+  Manual = 'manual',
 }
 
 export interface HistoryChat {
