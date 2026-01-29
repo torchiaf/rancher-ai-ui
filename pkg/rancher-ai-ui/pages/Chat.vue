@@ -44,6 +44,7 @@ const {
 const {
   fetchChats,
   fetchMessages,
+  updateChat: updateHistoryChat,
   deleteChat: deleteHistoryChat,
 } = useChatHistoryComposable();
 
@@ -111,6 +112,14 @@ async function loadChat(chatId: string | null) {
     store.commit('rancher-ai-ui/chat/setMetadata', { activeChatId: chatId });
     connect(chatId);
   });
+}
+
+async function updateChat(args:{ id: string, payload: Partial<HistoryChat> }) {
+  const { id, payload } = args;
+
+  await updateHistoryChat(id, payload);
+
+  chatHistory.value = await fetchChats();
 }
 
 async function deleteChat(id: string) {
@@ -196,6 +205,7 @@ function unmount() {
         @close:panel="showHistory = false"
         @create:chat="loadChat(null)"
         @open:chat="loadChat"
+        @update:chat="updateChat"
         @delete:chat="deleteChat"
       />
     </div>

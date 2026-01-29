@@ -12,10 +12,19 @@ const store = useStore();
 const { t } = useI18n(store);
 
 const emit = defineEmits([
+  'update:chat',
   'delete:chat',
 ]);
 
 const options = ref([
+  {
+    id:          'rename-chat',
+    label:       t('ai.history.menu.items.rename'),
+    icon:        'icon-edit',
+    action:      () => {
+      emit('update:chat');
+    },
+  },
   {
     id:          'delete-chat',
     label:       t('ai.history.menu.items.delete'),
