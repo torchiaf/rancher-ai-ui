@@ -96,6 +96,7 @@ function reset() {
         :disabled="props.disabled"
       >
         <span
+          class="context-trigger-text"
           :class="{ 'ml-5': props.disabled }"
         >
           {{ t('ai.context.add') }}
@@ -168,8 +169,12 @@ function reset() {
 <style lang="scss" scoped>
 .context-trigger {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   min-height: 24px;
+}
+
+.context-trigger-text {
+  margin: 0 4px;
 }
 
 .context-select {

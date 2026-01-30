@@ -52,7 +52,7 @@ const isOpen = ref(false);
 
 <template>
   <div
-    class="agent-select"
+    class="agent-selector-container"
     data-testid="rancher-ai-ui-multi-agent-select"
   >
     <rc-dropdown
@@ -67,10 +67,14 @@ const isOpen = ref(false);
         :disabled="props.disabled"
       >
         <span
-          :class="{ 'ml-5': props.disabled }"
+          class="selected-agent-name"
         >
           {{ options?.find(opt => opt.name === selectedAgentName)?.displayName || t('ai.agents.items.unknown') }}
         </span>
+        <i
+          class="icon icon-chevron-down chevron-icon"
+          :class="{ 'is-open': isOpen }"
+        />
       </rc-dropdown-trigger>
       <template #dropdownCollection>
         <rc-dropdown-item
@@ -91,14 +95,35 @@ const isOpen = ref(false);
   </div>
 </template>
 <style lang="scss" scoped>
-.agent-select {
+.agent-selector-container {
+  align-items: center;
+  cursor: pointer;
+  gap: 4px;
+  color: var(--active-nav);
+  font-weight: 500;
+  min-width: 0;
+  max-width: 100%;
+
   .agent-dropdown {
-    width: max-content;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .agent-trigger {
-    min-width: 200px;
-    justify-content: center;
+    display: flex !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+}
+
+.chevron-icon {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  color: var(--active-nav);
+
+  &.is-open {
+    transform: rotate(180deg);
   }
 }
 
@@ -114,5 +139,15 @@ const isOpen = ref(false);
       visibility: hidden;
     }
   }
+}
+
+.selected-agent-name {
+  margin: 0 4px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 </style>
