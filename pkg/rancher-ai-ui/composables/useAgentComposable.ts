@@ -1,6 +1,6 @@
 import { computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import { Agent, AIAgentConfigCRD, RANCHER_AI } from '../types';
+import { Agent, AIAgentConfigCRD, RANCHER_AI_SCHEMA } from '../types';
 import { formatAgentFromCRD } from '../utils/format';
 
 /**
@@ -10,7 +10,7 @@ export function useAgentComposable(chatId: string) {
   const store = useStore();
 
   const agents = computed<Agent[]>(() => {
-    const all: AIAgentConfigCRD[] = store.getters['management/all'](RANCHER_AI.AI_AGENT_CONFIG);
+    const all: AIAgentConfigCRD[] = store.getters['management/all'](RANCHER_AI_SCHEMA.AI_AGENT_CONFIG);
 
     return all
       .filter((crd) => crd.spec.enabled)
@@ -20,7 +20,7 @@ export function useAgentComposable(chatId: string) {
   const agentName = computed<string>(() => store.getters['rancher-ai-ui/chat/agentName'](chatId));
 
   async function fetchAgents() {
-    await store.dispatch('management/findAll', { type: RANCHER_AI.AI_AGENT_CONFIG });
+    await store.dispatch('management/findAll', { type: RANCHER_AI_SCHEMA.AI_AGENT_CONFIG });
   }
 
   function selectAgent(agentName: string) {
