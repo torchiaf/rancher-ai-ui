@@ -1,4 +1,12 @@
 /* eslint-disable no-unused-vars */
+
+export const enum ChatBotEnum {
+  Local = 'ollama',
+  OpenAI = 'openai',
+  Gemini = 'gemini',
+  Bedrock = 'bedrock',
+}
+
 export enum Settings {
   EMBEDDINGS_MODEL = 'EMBEDDINGS_MODEL',
   ENABLE_RAG = 'ENABLE_RAG',
@@ -22,7 +30,7 @@ export enum Settings {
   AWS_BEARER_TOKEN_BEDROCK= 'AWS_BEARER_TOKEN_BEDROCK'
 }
 
-export interface FormData {
+export interface SettingsFormData {
   [Settings.EMBEDDINGS_MODEL]?: string;
   [Settings.ENABLE_RAG]?: string;
   [Settings.GOOGLE_API_KEY]?: string;
@@ -57,4 +65,22 @@ export interface Workload {
     };
   };
   save: () => Promise<void>;
+}
+
+export const enum AIAgentConfigAuthType {
+  NONE = 'NONE',
+  RANCHER = 'RANCHER',
+  BASIC = 'BASIC'
+}
+
+export interface AiAgentConfigSecretPayload {
+  selected: '_none' | '_basic' | string;
+  privateKey: string;
+  publicKey: string;
+}
+
+export const enum AIAgentConfigValidationType {
+  CREATE = 'CREATE',
+  DELETE = 'DELETE',
+  UPDATE = 'UPDATE'
 }
