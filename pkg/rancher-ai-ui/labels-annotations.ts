@@ -1,0 +1,1 @@
+export const AI_AGENT_LABELS = { MANAGED: 'ai.cattle.io/managed' };
