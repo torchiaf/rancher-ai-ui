@@ -208,12 +208,12 @@ ai:
 aiConfig:
   label: AI Assistant
   form:
-    header: AI Model Configuration
+    header: AI Assistant Configuration
     description: Configure the AI model and provider for your assistant
     section:
       provider:
-        header: AI Chatbot Provider
-        description: Select the AI provider for your chatbot
+        header: AI Provider
+        description: Configure the provider for your personal AI assistant
         banner:
           header: "Privacy Notice:"
           description: 'When using external, third-party providers, please be aware that SUSE does not own or control this LLM and is not responsible for its output. Your prompts and data will be sent to the provider’s servers (e.g., Google’s servers for Gemini). These providers may use your data according to their own privacy policies. The additional risk with public LLMs is the much wider dataset they use for training. Your input data could potentially be incorporated into that dataset, making it accessible to other users or used for future model training.<br><br>For highly sensitive or confidential information, we strongly recommend using a local provider instead.'
@@ -225,6 +225,64 @@ aiConfig:
         header: Langfuse Configuration
         description: Connect to Langfuse to monitor, trace, and debug your AI assistant 
         banner: Langfuse is an open-source tool for monitoring LLM applications. These settings connect your chatbot to a Langfuse server so you can analyze performance and troubleshoot issues. The host is the server address, while the secret and public keys authenticate your application. 
+      aiAgent:
+        header: AI Agents
+        description: Manage all your MCP servers
+        banner:
+          label: 'Because you have multiple AI agents enabled, you will be able to choose between “Adaptive Mode” (the most suitable AI agent will be selected for you automatically) and “Manual Mode” (you have to select a specific AI agent) each time you prompt the AI assistant. Whilst powerful, the “Adaptive Mode” might take longer to respond - in this case, we recommend you to select a faster AI model.'
+        locked: This AI agent is locked - you cannot remove it or change it, but you can enable or disable it.
+        sections:
+          mcp:
+            title: MCP Configuration
+          humanValidationTools:
+            title: Human Validation Tools
+            tooltip: 'Human validation tools allow the AI agent to delegate specific tasks to human operators for verification or approval. This is particularly useful for critical actions that require human judgment to ensure accuracy and prevent errors.'
+          systemPrompt:
+            title: Guidelines
+            tooltip: 'System prompts provide specific instructions or guidelines to the AI agent on how to behave or respond in certain situations. They help shape the agent’s behavior to align with desired outcomes or policies.'
+        fields:
+          displayName:
+            label: Name
+          description:
+            label: Description
+          enabled:
+            label: Enable this agent
+            tooltip: Enable or disable this AI agent without removing its configuration
+          authenticationType:
+            label: Authentication Type
+          authenticationSecret:
+            label: Authentication Secret
+          mcpURL:
+            label: Endpoint
+            placeholder: https://endpoint.mcp
+          humanValidationTools:
+            addLabel: Add Validation Tool
+            fields:
+              name:
+                label: Name
+              type:
+                label: Type
+          systemPrompt:
+            label: System Prompt
+            placeholder: Markdown Instructions
+            uploadButton: Import from MD File
+          toolSet:
+            label: Tool Set
+        options:
+          authenticationType:
+            none: None
+            rancher: Rancher
+          mcp:
+            placeholder: https://my-mcp-server.com
+            validationTypes:
+              create: CREATE
+              update: UPDATE
+              delete: DELETE
+            authOptions:
+              none: No authentication
+              basic: Basic authentication
+              rancher: Rancher authentication
+          
     EMBEDDINGS_MODEL:
       label: Embeddings Model
     ENABLE_RAG:

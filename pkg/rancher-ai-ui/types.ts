@@ -3,7 +3,7 @@
 /**
  * Rancher AI schema types.
  */
-export const RANCHER_AI = { AI_AGENT_CONFIG: 'ai.cattle.io.aiagentconfig' };
+export const RANCHER_AI_SCHEMA = { AI_AGENT_CONFIG: 'ai.cattle.io.aiagentconfig' };
 
 /**
  * Tags used in Rancher AI Chat messages.
@@ -227,14 +227,27 @@ export const enum AgentSelectionMode {
   Manual = 'manual',
 }
 
+export interface AIAgentConfigHumanValidationTools {
+  name: string;
+  type: string;
+}
+
 export interface AIAgentConfigCRD {
   metadata: {
     name: string;
+    namespace: string;
   };
   spec: {
     enabled: boolean;
     displayName: string;
     description?: string;
+    builtIn?: boolean;
+    mcpURL?: string;
+    authenticationType: string;
+    authenticationSecret?: string;
+    humanValidationTools: AIAgentConfigHumanValidationTools[];
+    systemPrompt?: string;
+    toolSet?: string;
   }
 }
 
