@@ -334,6 +334,7 @@ onMounted(() => {
   <div
     v-else
     class="ai-configs-container"
+    data-testid="rancher-ai-ui-settings-container"
   >
     <h1 class="m-0">
       {{ t('aiConfig.form.header') }}
@@ -342,6 +343,7 @@ onMounted(() => {
     <settings-row
       :title="t('aiConfig.form.section.provider.header')"
       :description="t('aiConfig.form.section.provider.description')"
+      data-testid="rancher-ai-ui-settings-ai-agent-settings"
     >
       <AIAgentSettings
         v-if="aiAgentSettings"
@@ -360,6 +362,7 @@ onMounted(() => {
     <settings-row
       :title="t('aiConfig.form.section.aiAgent.header')"
       :description="t('aiConfig.form.section.aiAgent.description')"
+      data-testid="rancher-ai-ui-settings-ai-agent-configs"
     >
       <AIAgentConfigs
         v-if="aiAgentConfigCRDs"
@@ -381,6 +384,7 @@ onMounted(() => {
       <async-button
         v-if="permissions?.create.canCreateAiAgentCRDS || permissions?.create.canCreateSecrets"
         action-label="Apply"
+        data-testid="rancher-ai-ui-settings-save-button"
         :disabled="hasErrors"
         @click="save"
       />
