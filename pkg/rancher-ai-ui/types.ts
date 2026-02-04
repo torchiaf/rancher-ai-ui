@@ -101,7 +101,6 @@ export const enum ConnectionPhase {
 export const enum ActionType {
   Link = 'link',
   Button = 'button',
-  // Add more action types as needed
 }
 
 export interface ActionResource {
@@ -154,7 +153,14 @@ export interface MessageAction {
   label: string;
   tooltip?: string;
   description?: string;
-  resource: ActionResource;
+  resource?: ActionResource;
+  action?: () => MessageActionResult;
+}
+
+export interface MessageActionResult {
+  label: string;
+  icon?: string;
+  confirm: boolean;
 }
 
 export type MessageActionSuggestion = string;
@@ -166,14 +172,17 @@ export interface MessageConfirmation {
 
 export const enum MessageTemplateComponent {
   Welcome = 'welcome',
+  SystemSuggestion = 'system-suggestion',
 }
 
 export interface MessageTemplate {
   component: MessageTemplateComponent;
-  content: {
-    principal: any;
-    message: string;
-  };
+  content: MessageTemplateContent;
+}
+
+export interface MessageTemplateContent {
+  principal?: any;
+  message: string;
 }
 
 export interface Message {
@@ -210,6 +219,7 @@ export interface ChatMetadata {
 export interface AgentMetadata {
   agent: Agent | null;
   selectionMode?: AgentSelectionMode; // user messages will not have this field
+  recommended?: string; // user messages will not have this field
 }
 
 export const enum AgentSelectionMode {

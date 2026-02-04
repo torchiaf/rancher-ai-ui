@@ -22,11 +22,15 @@ interface Chat {
 }
 
 interface State {
+  session:  Record<string, any>;
   metadata: ChatMetadata | null;
   chats: Record<string, Chat>;
 }
 
 const getters = {
+  session: (state: State) => {
+    return state.session;
+  },
   metadata: (state: State) => {
     return state.metadata;
   },
@@ -77,6 +81,13 @@ const mutations = {
     state.chats[chatId] = {
       id:       chatId,
       messages: {},
+    };
+  },
+
+  setSession(state: State, sessionData: Record<string, any>) {
+    state.session = {
+      ...state.session,
+      ...sessionData
     };
   },
 
@@ -220,6 +231,7 @@ const factory = (): CoreStoreSpecifics => {
   return {
     state: (): State => {
       return {
+        session:  {},
         metadata: null,
         chats:    {}
       };
