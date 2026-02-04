@@ -26,7 +26,10 @@ const update = (value: string) => {
 </script>
 
 <template>
-  <div class="toggle-group">
+  <div
+    class="toggle-group"
+    data-testid="rancher-ai-ui-toggle-group"
+  >
     <template
       v-for="item in props.items"
       :key="item.name"
@@ -36,6 +39,7 @@ const update = (value: string) => {
         class="toggle-group-item"
         :class="{ active: modelValue === item.value }"
         :disabled="props.disabled && modelValue !== item.value"
+        :data-testid="`rancher-ai-ui-toggle-group-item-${item.value}`"
         @click="update(item.value)"
       >
         <i :class="['icon', 'icon-2x', item.icon]" />
