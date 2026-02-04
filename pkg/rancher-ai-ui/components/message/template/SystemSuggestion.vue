@@ -53,6 +53,7 @@ function doAction(type: 'confirm' | 'cancel') {
       <div class="chat-system-suggestion-actions">
         <div
           v-if="result"
+          :data-testid="`rancher-ai-ui-chat-message-confirmation-${result.confirm ? 'confirmed' : 'canceled'}`"
           :class="['chat-system-suggestion-actions-result', `status-${result.confirm ? 'confirmed' : 'canceled'}` ]"
         >
           <i
@@ -69,23 +70,25 @@ function doAction(type: 'confirm' | 'cancel') {
           class="chat-system-suggestion-actions-buttons"
         >
           <RcButton
-            v-if="actions.confirm?.action"
-            small
-            secondary
-            @click="doAction('confirm')"
-          >
-            <span class="rc-button-label">
-              {{ actions.confirm?.label }}
-            </span>
-          </RcButton>
-          <RcButton
             v-if="actions.cancel?.action"
             small
             tertiary
+            data-testid="rancher-ai-ui-chat-message-confirmation-cancel-button"
             @click="doAction('cancel')"
           >
             <span class="rc-button-label">
               {{ actions.cancel?.label }}
+            </span>
+          </RcButton>
+          <RcButton
+            v-if="actions.confirm?.action"
+            small
+            secondary
+            data-testid="rancher-ai-ui-chat-message-confirmation-confirm-button"
+            @click="doAction('confirm')"
+          >
+            <span class="rc-button-label">
+              {{ actions.confirm?.label }}
             </span>
           </RcButton>
         </div>
