@@ -20,6 +20,7 @@ import {
 } from './types';
 import { AIAgentConfigCRD, RANCHER_AI_SCHEMA } from '../../types';
 import { AI_AGENT_LABELS } from '../../labels-annotations';
+import Chat from '../../handlers/chat';
 import SettingsRow from './SettingsRow.vue';
 import AIAgentConfigs from './sections/AIAgentConfigs.vue';
 import AIAgentSettings from './sections/AIAgentSettings.vue';
@@ -283,6 +284,11 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
 
       // Redeploy the rancher-ai-agent deployment after save
       await redeployAiAgent();
+
+      // Close chat panel
+      if (Chat.isOpen(store)) {
+        Chat.close(store);
+      }
     }
 
     btnCB(true);
