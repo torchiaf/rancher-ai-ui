@@ -237,6 +237,7 @@ const updateValue = (key: Settings, val: ChatBotEnum | string) => {
         :label="t(`aiConfig.form.${ chatbotConfigKey }.label`)"
         :disabled="readOnly"
         :mode="readOnly ? _VIEW : _EDIT"
+        data-testid="rancher-ai-ui-settings-llm-api-key-input"
         @update:value="(val: string) => updateValue(chatbotConfigKey, val)"
       />
       <label class="text-label">
