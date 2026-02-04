@@ -10,6 +10,7 @@ import {
 import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
 import Welcome from '../message/template/Welcome.vue';
+import SystemSuggestion from '../message/template/SystemSuggestion.vue';
 import ScrollButton from '../ScrollButton.vue';
 import Processing from '../Processing.vue';
 
@@ -76,6 +77,8 @@ function getMessageTemplate(component: MessageTemplateComponent) {
   switch (component) {
   case MessageTemplateComponent.Welcome:
     return Welcome;
+  case MessageTemplateComponent.SystemSuggestion:
+    return SystemSuggestion;
   default:
     return null;
   }
@@ -174,7 +177,6 @@ onBeforeUnmount(() => {
         :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
         :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
         :disabled="disabled"
-        :content="message.templateContent.content"
         :message="message"
         @send:message="emit('send:message', $event)"
       />

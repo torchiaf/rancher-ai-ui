@@ -7,7 +7,9 @@ import debounce from 'lodash/debounce';
 import { NORMAN } from '@shell/config/types';
 import { useContextComposable } from './useContextComposable';
 import {
+  ActionType,
   Agent,
+  AgentSelectionMode,
   ChatError, ConfirmationResponse, ConfirmationStatus, Message, MessagePhase, MessageTag, MessageTemplateComponent, Role, Tag
 } from '../types';
 import {
@@ -19,6 +21,7 @@ import {
 import { downloadFile } from '@shell/utils/download';
 
 const EXPAND_THINKING = false;
+const DISMISS_RECOMMENDED_AGENT_KEY = 'dismissed-agent-recommendation';
 
 /**
  * Composable for managing chat messages within the AI chat.
@@ -30,7 +33,12 @@ const EXPAND_THINKING = false;
  *
  * @returns Composable for managing chat messages within the AI chat.
  */
-export function useChatMessageComposable(chatId: string, agents: ComputedRef<Agent[]>, agentName: ComputedRef<string>) {
+export function useChatMessageComposable(
+  chatId: string,
+  agents: ComputedRef<Agent[]>,
+  agentName: ComputedRef<string>,
+  selectAgent: (name: string) => void // eslint-disable-line no-unused-vars
+) {
   const store = useStore();
   const { t } = useI18n(store);
 
@@ -137,6 +145,71 @@ export function useChatMessageComposable(chatId: string, agents: ComputedRef<Age
     });
   }
 
+  function buildMessage(): Message {
+    return {
+      role:                     Role.Assistant,
+      thinkingContent: '',
+      messageContent:  '',
+      showThinking:             EXPAND_THINKING,
+      thinking:                 false,
+      completed:                false
+    };
+  }
+
+  function buildWelcomeMessage(): Message {
+    return {
+      role:            Role.System,
+      templateContent: {
+        component: MessageTemplateComponent.Welcome,
+        content:   {
+          principal,
+          message: t('ai.message.system.welcome.info'),
+        }
+      },
+      completed: false,
+    };
+  }
+
+  function buildSystemSuggestionMessage(agent?: Agent): Message {
+    return {
+      role:            Role.System,
+      completed:       true,
+      templateContent: {
+        component: MessageTemplateComponent.SystemSuggestion,
+        content:   { message: t('ai.message.system.switchAgent.info', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true) }
+      },
+      actions: [
+        {
+          label:  t('ai.message.system.switchAgent.actions.confirm'),
+          type:   ActionType.Button,
+          action: () => {
+            selectAgent(currentMsg.value.agentMetadata?.recommended || '');
+
+            return {
+              label:   t('ai.message.system.switchAgent.results.confirm', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true),
+              icon:    'icon-checkmark',
+              confirm: true
+            };
+          },
+        },
+        {
+          label:  t('ai.message.system.switchAgent.actions.dismiss'),
+          type:   ActionType.Button,
+          action: () => {
+            // Dismiss future recommendations for this session (for all chats)
+            store.commit('rancher-ai-ui/chat/setSession', { [DISMISS_RECOMMENDED_AGENT_KEY]: true });
+
+            return {
+              label:   t('ai.message.system.switchAgent.results.dismiss'),
+              icon:    'icon-close',
+              confirm: false
+            };
+          },
+        }
+      ],
+    };
+  }
+
   function onopen(event: { target: WebSocket }) {
     // Phase is set to processing here because message could be sent outisde of wsSend function (hooks handlers)
     setPhase(MessagePhase.Processing);
@@ -197,17 +270,7 @@ export function useChatMessageComposable(chatId: string, agents: ComputedRef<Age
   async function processWelcomeData(data: string) {
     switch (data) {
     case Tag.MessageStart:
-      const msgId = await addMessage({
-        role:            Role.System,
-        templateContent: {
-          component: MessageTemplateComponent.Welcome,
-          content:   {
-            principal,
-            message: t('ai.message.system.welcome.info'),
-          }
-        },
-        completed: false,
-      });
+      const msgId = await addMessage(buildWelcomeMessage());
 
       currentMsg.value = getMessage(msgId);
       break;
@@ -244,14 +307,7 @@ export function useChatMessageComposable(chatId: string, agents: ComputedRef<Age
     case Tag.MessageStart:
       setPhase(MessagePhase.Working);
 
-      const msgId = await addMessage({
-        role:                     Role.Assistant,
-        thinkingContent: '',
-        messageContent:  '',
-        showThinking:             EXPAND_THINKING,
-        thinking:                 false,
-        completed:                false
-      });
+      const msgId = await addMessage(buildMessage());
 
       currentMsg.value = getMessage(msgId);
       break;
@@ -270,6 +326,18 @@ export function useChatMessageComposable(chatId: string, agents: ComputedRef<Age
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
       currentMsg.value.thinking = false;
       currentMsg.value.completed = true;
+
+      if (
+        !store.getters['rancher-ai-ui/chat/session']?.[DISMISS_RECOMMENDED_AGENT_KEY] &&
+        currentMsg.value.agentMetadata?.recommended &&
+        currentMsg.value.agentMetadata?.selectionMode === AgentSelectionMode.Auto &&
+        Number(currentMsg.value.id) > 10
+      ) {
+        const agent = agents.value.find((a) => a.name === currentMsg.value.agentMetadata?.recommended);
+
+        await addMessage(buildSystemSuggestionMessage(agent));
+      }
+
       break;
     default:
       setPhase(MessagePhase.GeneratingResponse);
