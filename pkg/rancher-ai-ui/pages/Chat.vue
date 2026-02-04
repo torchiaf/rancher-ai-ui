@@ -47,7 +47,7 @@ const {
   resetChatError,
   phase: messagePhase,
   error: messageError
-} = useChatMessageComposable(CHAT_ID, agents, agentName);
+} = useChatMessageComposable(CHAT_ID, agents, agentName, selectAgent);
 
 const {
   fetchChats,

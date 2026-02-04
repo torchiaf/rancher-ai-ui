@@ -16,6 +16,14 @@ ai:
         info: 'Pro tip: you can also interact with the status badges and error messages throughout the Rancher UI to ask me for help. Or, you can resume one of your previous chats - I automatically save them in the main menu for easy access.'
         suggestions:
           label: 'Here are a few suggestions based on your context:'
+      switchAgent:
+        info: '<code>{agent}</code> Agent has been selected in adaptive mode for the last few prompts.<br>Usually, manual selection is best for faster response times.<br><br>Would you like me to switch over to <b>manual</b> agent selection?<br>'
+        actions:
+          confirm: 'Switch to Manual Selection'
+          dismiss: 'Don’t show this again'
+        results:
+          confirm: Switched to <code>{agent}</code> Agent
+          dismiss: Keeping adaptive selection
     assistant:
       thinking:
         completed: Completed

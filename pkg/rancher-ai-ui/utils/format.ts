@@ -79,7 +79,7 @@ export function formatAgentMetadata(data: string, agents: Agent[]): AgentMetadat
     const rawMetadata = JSON.parse(cleaned);
 
     if (rawMetadata) {
-      const { agentName, selectionMode } = rawMetadata;
+      const { agentName, selectionMode, recommended } = rawMetadata;
 
       const agent = agents.find((a) => a.name === agentName);
 
@@ -87,6 +87,7 @@ export function formatAgentMetadata(data: string, agents: Agent[]): AgentMetadat
         return {
           agent,
           selectionMode,
+          recommended,
         };
       }
     }
