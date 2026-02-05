@@ -407,7 +407,7 @@ describe('AIAgentSettings.vue', () => {
         props: { value: { [Settings.ACTIVE_CHATBOT]: ChatBotEnum.Local } },
       });
 
-      await wrapper.setProps({
+      await (wrapper as any).setProps({
         value: {
           [Settings.ACTIVE_CHATBOT]: ChatBotEnum.OpenAI,
           [Settings.OPENAI_API_KEY]: 'sk-xxx',
@@ -429,7 +429,7 @@ describe('AIAgentSettings.vue', () => {
         },
       });
 
-      await wrapper.setProps({
+      await (wrapper as any).setProps({
         value: {
           [Settings.ACTIVE_CHATBOT]: ChatBotEnum.Local,
           [Settings.ENABLE_RAG]:     'true',

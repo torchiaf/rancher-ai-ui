@@ -915,7 +915,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      await wrapper.setProps({ value: [invalidAgent] });
+      await (wrapper as any).setProps({ value: [invalidAgent] });
       await wrapper.vm.$nextTick();
 
       // Invalid agent should have error
@@ -1040,7 +1040,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       };
 
-      await wrapper.setProps({ value: [updatedAgent1, agent2] });
+      await (wrapper as any).setProps({ value: [updatedAgent1, agent2] });
       await wrapper.vm.$nextTick();
 
       expect(vm.agents.filter((a: any) => a.spec.enabled).length).toBeGreaterThan(0);
@@ -1067,7 +1067,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      await wrapper.setProps({ value: [agent1, agent2] });
+      await (wrapper as any).setProps({ value: [agent1, agent2] });
 
       expect(vm.agents.length).toBe(2);
     });
@@ -1571,7 +1571,7 @@ describe('AIAgentConfigs.vue', () => {
 
       expect(vm.readOnlyBanner).toBeNull();
 
-      await wrapper.setProps({ readOnly: true });
+      await (wrapper as any).setProps({ readOnly: true });
 
       expect(vm.readOnlyBanner).toBeTruthy();
       expect(vm.readOnlyBanner.color).toBe('warning');
