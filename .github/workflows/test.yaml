@@ -36,6 +36,8 @@ jobs:
       - name: Start dev UI
         env:
           API: ${{ env.CATTLE_SERVER_URL }}
+          # TODO remove
+          VUE_APP_AGENTS_SETTINGS_ENABLED: 'true'
         run: |
           nohup yarn dev > dev.log 2>&1 & echo $! > dev.pid
 
