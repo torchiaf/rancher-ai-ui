@@ -29,6 +29,9 @@ import AIAgentSettings from './sections/AIAgentSettings.vue';
  * Settings page for configuring Rancher AI assistant.
  */
 
+// TODO: remove
+const AGENTS_ENABLED = process.env.VUE_APP_AGENTS_SETTINGS_ENABLED === 'true'; // eslint-disable-line no-undef
+
 const store = useStore();
 const { t } = useI18n(store);
 
@@ -274,7 +277,7 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
       // Save AI Agent Settings to Secret
       await saveAgentSettings();
 
-      if (permissions?.value?.create.canCreateAiAgentCRDS) {
+      if (AGENTS_ENABLED && permissions?.value?.create.canCreateAiAgentCRDS) {
         // Save AI Agent Config authentication secrets created for the agents
         await saveAiAgentConfigAuthenticationSecrets();
 
@@ -366,6 +369,7 @@ onMounted(() => {
     </settings-row>
 
     <settings-row
+      v-if="AGENTS_ENABLED"
       :title="t('aiConfig.form.section.aiAgent.header')"
       :description="t('aiConfig.form.section.aiAgent.description')"
       data-testid="rancher-ai-ui-settings-ai-agent-configs"
