@@ -11,7 +11,6 @@ import DeleteChat from '../../dialog/DeleteChatCard.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
-const shellApi = useShell();
 
 const props = defineProps({
   chats: {
@@ -71,6 +70,8 @@ function openChat(id: string) {
 }
 
 function openDeleteChatModal(chat: HistoryChat) {
+  const shellApi = useShell();
+
   shellApi.modal.open(DeleteChat, {
     props: {
       name:      chat.name,
