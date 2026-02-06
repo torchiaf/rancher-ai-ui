@@ -170,7 +170,10 @@ function requiredSetup() {
         SelectOrCreateAuthSecret: true,
         FileSelector:             true,
       },
-      directives: { 'clean-tooltip': jest.fn() },
+      directives: {
+        'clean-html':    jest.fn(),
+        'clean-tooltip': jest.fn()
+      },
     }
   };
 }
@@ -180,7 +183,7 @@ describe('AIAgentConfigs.vue', () => {
     it('should render the component with default values', () => {
       const wrapper = mount(AIAgentConfigs, {
         ...requiredSetup(),
-        props: { value: [mockBuiltInAgent()] }
+        props: { value: [mockBuiltInAgent()] },
       });
 
       expect(wrapper.exists()).toBe(true);
@@ -248,15 +251,18 @@ describe('AIAgentConfigs.vue', () => {
   });
 
   describe('Agent Selection and Locking', () => {
-    it('should select first agent by default', () => {
+    it('should select default agent on mount', () => {
+      const customAgent = mockAgent();
+      const defaultAgent = mockBuiltInAgent();
+
       const wrapper = mount(AIAgentConfigs, {
         ...requiredSetup(),
-        props: { value: [mockBuiltInAgent()] }
+        props: { value: [customAgent, defaultAgent] }
       });
 
       const vm = wrapper.vm as any;
 
-      expect(vm.selectedAgent.metadata.name).toBe(DEFAULT_AI_AGENT);
+      expect(vm.selectedAgentName).toBe(DEFAULT_AI_AGENT);
     });
 
     it('should lock built-in agents', () => {
@@ -367,6 +373,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'custom';
+
       vm.removeAgent();
 
       const emitted = wrapper.emitted('update:value');
@@ -376,6 +384,17 @@ describe('AIAgentConfigs.vue', () => {
 
       expect(updatedList.length).toBe(1);
       expect(updatedList[0].metadata.name).toBe(DEFAULT_AI_AGENT);
+    });
+
+    it('should hide remove button for built-in agent', () => {
+      const wrapper = mount(AIAgentConfigs, {
+        ...requiredSetup(),
+        props: { value: [mockBuiltInAgent()] }
+      });
+
+      const tabbedComponent = wrapper.findComponent({ name: 'Tabbed' });
+
+      expect(tabbedComponent.classes()).toContain('remove-btn-disabled');
     });
 
     it('should not remove built-in agent', () => {
@@ -391,7 +410,7 @@ describe('AIAgentConfigs.vue', () => {
       expect(wrapper.emitted('update:value')).toBeUndefined();
     });
 
-    it('should switch to default agent after removal', () => {
+    it('should switch to next agent in the list after removal', () => {
       const agent1 = mockAgent({
         metadata: {
           name:      'agent-1',
@@ -416,7 +435,7 @@ describe('AIAgentConfigs.vue', () => {
       vm.selectedAgentName = 'agent-1';
       vm.removeAgent();
 
-      expect(vm.selectedAgentName).toBe(DEFAULT_AI_AGENT);
+      expect(vm.selectedAgentName).toBe('agent-2');
     });
 
     it('should clear secrets for removed agent', () => {
@@ -434,6 +453,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'custom';
 
       vm.agentSecrets['custom'] = {
         selected:   'test-secret',
@@ -462,6 +483,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'custom';
+
       vm.agentSecrets['custom'] = { selected: 'secret' };
       vm.removeAgent();
 
@@ -479,6 +502,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.updateAgent({
         spec: {
@@ -500,6 +525,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       vm.updateAgent({
         spec: {
           ...vm.selectedAgent.spec,
@@ -519,6 +546,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.updateAgent({
         spec: {
@@ -540,6 +569,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       vm.updateAgent({
         spec: {
           ...vm.selectedAgent.spec,
@@ -559,6 +590,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.updateAgent({
         spec: {
@@ -581,6 +614,8 @@ describe('AIAgentConfigs.vue', () => {
       const vm = wrapper.vm as any;
 
       const newPrompt = 'You are a helpful assistant...';
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.updateAgent({
         spec: {
@@ -611,6 +646,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       vm.updateAuthenticationSecret({ selected: '_none' });
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
@@ -625,6 +662,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       const secretPayload = {
         selected:   '_basic',
@@ -645,6 +684,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       vm.updateAuthenticationSecret({ selected: 'existing-secret' });
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
@@ -659,6 +700,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.updateAuthenticationSecret({ selected: '_none' });
 
@@ -675,6 +718,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = 'test-agent';
 
       vm.agentSecrets['test-agent'] = { selected: '_basic' };
 
@@ -700,6 +745,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       vm.updateValidationTools(0, 'name', 'updated-name');
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
@@ -721,6 +768,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = agent.metadata.name;
 
       vm.updateValidationTools(0, 'type', AIAgentConfigValidationType.UPDATE);
 
@@ -813,6 +862,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      vm.selectedAgentName = 'test-agent';
+
       const fileContent = 'You are a helpful AI assistant...';
 
       vm.onFileSelected(fileContent);
@@ -836,6 +887,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = agent.metadata.name;
 
       vm.onFileSelected('New prompt');
 
@@ -1071,19 +1124,6 @@ describe('AIAgentConfigs.vue', () => {
 
       expect(vm.agents.length).toBe(2);
     });
-
-    it('should update selected agent name when props change', async() => {
-      const agent1 = mockAgent();
-
-      const wrapper = mount(AIAgentConfigs, {
-        ...requiredSetup(),
-        props: { value: [agent1] }
-      });
-
-      const vm = wrapper.vm as any;
-
-      expect(vm.selectedAgentName).toBe('test-agent');
-    });
   });
 
   describe('Multiple Agents', () => {
@@ -1189,6 +1229,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = agent.metadata.name;
 
       vm.removeAgent();
 
@@ -1399,6 +1441,8 @@ describe('AIAgentConfigs.vue', () => {
       });
 
       const vm = wrapper.vm as any;
+
+      vm.selectedAgentName = customAgent.metadata.name;
 
       vm.removeAgent();
 

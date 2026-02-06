@@ -9,7 +9,7 @@ describe('AI Assistant Configuration', () => {
     llm:          'ollama',
     apiKey:       'empty',
     fleetAgent:   'fleet',
-    rancherAgent: 'rancher',
+    rancherAgent: 'rancher', // default built-in agent
   };
 
   const updatedValues = {
@@ -123,7 +123,10 @@ describe('AI Assistant Configuration', () => {
       settingsPage.goTo();
       settingsPage.waitForPage();
 
-      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ updatedValues.customAgent }"]`);
+      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ initValues.rancherAgent }"]`);
+
+      aiAgentConfigs.tabs().clickTabWithName(updatedValues.customAgent);
+
       aiAgentConfigs.mcpUrlInput().value().should('eq', 'http://my-mcp-url:8080');
 
       // Remove the custom AI Agent
