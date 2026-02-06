@@ -30,7 +30,7 @@ import AIAgentSettings from './sections/AIAgentSettings.vue';
  */
 
 // TODO: remove
-const AGENTS_ENABLED = process.env.VUE_APP_AGENTS_SETTINGS_ENABLED === 'true'; // eslint-disable-line no-undef
+const AGENTS_ENABLED = true;
 
 const store = useStore();
 const { t } = useI18n(store);
