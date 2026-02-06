@@ -79,17 +79,21 @@ function handleResendMessage() {
 }
 
 function handleShowCompleteMessage() {
-  props.message.showCompleteMessage = !props.message.showCompleteMessage;
+  const showCompleteMessage = !props.message.showCompleteMessage;
 
-  nextTick(() => {
-    emit('update:message', props.message);
-  });
+  nextTick(() => emit('update:message', {
+    ...props.message,
+    showCompleteMessage
+  }));
 }
 
 function handleShowThinking() {
-  props.message.showThinking = !props.message.showThinking;
+  const showThinking = !props.message.showThinking;
 
-  nextTick(() => emit('update:message', props.message));
+  nextTick(() => emit('update:message', {
+    ...props.message,
+    showThinking
+  }));
 }
 
 onBeforeUnmount(() => {

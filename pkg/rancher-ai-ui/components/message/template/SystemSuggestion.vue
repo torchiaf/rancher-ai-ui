@@ -28,9 +28,12 @@ const actions = computed(() => {
 
 function doAction(type: 'confirm' | 'cancel') {
   if (actions.value[type]?.action) {
-    props.message.confirmation = actions.value[type].action();
+    const confirmation = actions.value[type].action();
 
-    emit('update:message', props.message);
+    emit('update:message', {
+      ...props.message,
+      confirmation
+    });
   }
 }
 </script>
