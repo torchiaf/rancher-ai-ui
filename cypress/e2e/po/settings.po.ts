@@ -1,25 +1,25 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import PagePo from '@rancher/cypress/e2e/po/pages/page.po';
-import { ToggleGroupPO } from './components/toggle-group.po';
+import { ToggleGroupPo } from './components/toggle-group.po';
 import TabbedPo from './components/tabbed.po';
 import CheckboxInputPo from '@rancher/cypress/e2e/po/components/checkbox-input.po';
 import LabeledInputPo from '@rancher/cypress/e2e/po/components/labeled-input.po';
 
-export class SettingsPagePO extends PagePo {
+export class SettingsPagePo extends PagePo {
   private static createPath() {
     return `/c/local/settings/rancher-ai-ui`;
   }
 
   constructor() {
-    super(SettingsPagePO.createPath());
+    super(SettingsPagePo.createPath());
   }
 
   settings() {
-    return new SettingsPO(this.self());
+    return new SettingsPo(this.self());
   }
 }
 
-export class SettingsPO extends ComponentPo {
+export class SettingsPo extends ComponentPo {
   constructor(self: Cypress.Chainable) {
     super('[data-testid="rancher-ai-ui-settings-container"]', self);
   }
@@ -43,7 +43,7 @@ export class AiAgentSettings extends ComponentPo {
   }
 
   llm(llmName: string) {
-    return new ToggleGroupPO().toggleOption(llmName);
+    return new ToggleGroupPo().toggleOption(llmName);
   }
 
   apiKeyInput() {

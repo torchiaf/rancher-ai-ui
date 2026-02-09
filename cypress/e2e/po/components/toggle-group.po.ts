@@ -1,6 +1,6 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 
-export class ToggleOptionPO extends ComponentPo {
+export class ToggleOptionPo extends ComponentPo {
   private optionName: string;
 
   constructor(optionName: string) {
@@ -17,12 +17,12 @@ export class ToggleOptionPO extends ComponentPo {
   }
 }
 
-export class ToggleGroupPO extends ComponentPo {
+export class ToggleGroupPo extends ComponentPo {
   constructor() {
     super('[data-testid="rancher-ai-ui-toggle-group"]');
   }
 
   toggleOption(optionName: string) {
-    return new ToggleOptionPO(optionName);
+    return new ToggleOptionPo(optionName);
   }
 }

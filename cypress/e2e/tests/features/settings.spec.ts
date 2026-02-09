@@ -1,9 +1,9 @@
 import ProductNavPo from '@rancher/cypress/e2e/po/side-bars/product-side-nav.po';
 import { SettingsPagePo as GlobalSettings } from '@rancher/cypress/e2e/po/pages/global-settings/settings.po';
-import { SettingsPagePO } from '@/cypress/e2e/po/settings.po';
+import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
 
 describe('AI Assistant Configuration', () => {
-  const settingsPage = new SettingsPagePO();
+  const settingsPage = new SettingsPagePo();
 
   const initValues = {
     llm:          'ollama',
