@@ -112,6 +112,6 @@ function close() {
   }
 
   .bg-error {
-    background-color: var(--error);
+    background-color: var(--error) !important;
   }
 </style>
