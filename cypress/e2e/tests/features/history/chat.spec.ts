@@ -117,6 +117,19 @@ describe('History Panel', () => {
     }
   });
 
+  it('It should show correct name and tooltip for chat items', () => {
+    history.open();
+
+    const chatItem = history.chatItem(0);
+
+    chatItem.name().contains('Chat 3 - request 1');
+
+    chatItem.showTooltip();
+
+    chatItem.tooltip().containsText('Chat 3 - request 1');
+    chatItem.tooltip().containsText('Started on');
+  });
+
   it('It should rename chats in history', () => {
     history.open();
 
