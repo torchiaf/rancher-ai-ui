@@ -94,6 +94,8 @@ export function useAIServiceComposable() {
   async function checkAgentDeploymentAvailability() {
     if (!store.getters['management/canList'](WORKLOAD_TYPES.DEPLOYMENT)) {
       error.value = { key: 'ai.error.services.deployment.noPermission' };
+
+      return false;
     } else {
       try {
         const agent = await store.dispatch('management/find', {
