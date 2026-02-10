@@ -1,20 +1,27 @@
-import { ref, computed, onMounted, watch } from 'vue';
+import {
+  ref, computed, onMounted, watch, ComputedRef
+} from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
 import debounce from 'lodash/debounce';
 import { NORMAN } from '@shell/config/types';
 import { useContextComposable } from './useContextComposable';
 import {
+  ActionType,
+  Agent,
+  AgentSelectionMode,
   ChatError, ConfirmationResponse, ConfirmationStatus, Message, MessagePhase, MessageTag, MessageTemplateComponent, Role, Tag
 } from '../types';
 import {
   formatWSInputMessage, formatMessageRelatedResourcesActions, formatConfirmationAction, formatSuggestionActions, formatFileMessages,
   formatErrorMessage, formatSourceLinks,
-  formatChatMetadata
+  formatChatMetadata,
+  formatAgentMetadata
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 
-const CHAT_ID = 'default';
 const EXPAND_THINKING = false;
+const DISMISS_RECOMMENDED_AGENT_KEY = 'dismissed-agent-recommendation';
 
 /**
  * Composable for managing chat messages within the AI chat.
@@ -26,18 +33,23 @@ const EXPAND_THINKING = false;
  *
  * @returns Composable for managing chat messages within the AI chat.
  */
-export function useChatMessageComposable() {
+export function useChatMessageComposable(
+  chatId: string,
+  agents: ComputedRef<Agent[]>,
+  agentName: ComputedRef<string>,
+  selectAgent: (name: string) => void // eslint-disable-line no-unused-vars
+) {
   const store = useStore();
-  const t = store.getters['i18n/t'];
+  const { t } = useI18n(store);
 
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
-  const messages = computed(() => Object.values(store.getters['rancher-ai-ui/chat/messages'](CHAT_ID)) as Message[]);
+  const messages = computed(() => Object.values(store.getters['rancher-ai-ui/chat/messages'](chatId)) as Message[]);
   const currentMsg = ref<Message>({} as Message);
-  const error = computed(() => store.getters['rancher-ai-ui/chat/error'](CHAT_ID));
+  const error = computed(() => store.getters['rancher-ai-ui/chat/error'](chatId));
 
   // Get phase from store with debounce to avoid rapid changes
-  const _phase = computed(() => store.getters['rancher-ai-ui/chat/phase'](CHAT_ID));
+  const _phase = computed(() => store.getters['rancher-ai-ui/chat/phase'](chatId));
   const phase = ref(_phase.value || MessagePhase.Initializing);
   const applyPhase = debounce((v: MessagePhase) => {
     phase.value = v;
@@ -48,7 +60,7 @@ export function useChatMessageComposable() {
   // Set phase in store
   const setPhase = (phase: MessagePhase) => {
     store.commit('rancher-ai-ui/chat/setPhase', {
-      chatId: CHAT_ID,
+      chatId,
       phase
     });
   };
@@ -78,10 +90,17 @@ export function useChatMessageComposable() {
       contextContent = msg.contextContent || [];
     } else { /* msg is type of string */ }
 
-    wsSend(ws, formatWSInputMessage(messageContent, selectedContext.value));
+    wsSend(ws, formatWSInputMessage({
+      prompt:  messageContent,
+      context: selectedContext.value,
+      agent:   agentName.value,
+    }));
+
+    const agentMetadata = { agent: agents.value.find((a) => a.name === agentName.value) || {} as Agent };
 
     addMessage({
       role,
+      agentMetadata,
       summaryContent,
       messageContent,
       contextContent
@@ -92,23 +111,26 @@ export function useChatMessageComposable() {
 
   async function addMessage(message: Message) {
     return await store.dispatch('rancher-ai-ui/chat/addMessage', {
-      chatId: CHAT_ID,
+      chatId,
       message
     });
   }
 
-  function updateMessage(message: Message) {
+  function updateMessage(message: Partial<Message>) {
     store.commit('rancher-ai-ui/chat/updateMessage', {
-      chatId: CHAT_ID,
+      chatId,
       message
     });
   }
 
   function confirmMessage({ message, result }: { message: Message; result: boolean }, ws: WebSocket) {
-    wsSend(ws, formatWSInputMessage(result ? ConfirmationResponse.Yes : ConfirmationResponse.No, [], [MessageTag.Confirmation]));
+    wsSend(ws, formatWSInputMessage({
+      prompt: result ? ConfirmationResponse.Yes : ConfirmationResponse.No,
+      tags:   [MessageTag.Confirmation]
+    }));
 
     updateMessage({
-      ...message,
+      id:           message.id,
       confirmation: {
         action: message.confirmation?.action || null,
         status: result ? ConfirmationStatus.Confirmed : ConfirmationStatus.Canceled
@@ -118,9 +140,74 @@ export function useChatMessageComposable() {
 
   function getMessage(messageId: string) {
     return store.getters['rancher-ai-ui/chat/message']({
-      chatId: CHAT_ID,
+      chatId,
       messageId
     });
+  }
+
+  function buildMessage(): Message {
+    return {
+      role:                     Role.Assistant,
+      thinkingContent: '',
+      messageContent:  '',
+      showThinking:             EXPAND_THINKING,
+      thinking:                 false,
+      completed:                false
+    };
+  }
+
+  function buildWelcomeMessage(): Message {
+    return {
+      role:            Role.System,
+      templateContent: {
+        component: MessageTemplateComponent.Welcome,
+        content:   {
+          principal,
+          message: t('ai.message.system.welcome.info', {}, true),
+        }
+      },
+      completed: false,
+    };
+  }
+
+  function buildSystemSuggestionMessage(agent?: Agent): Message {
+    return {
+      role:            Role.System,
+      completed:       true,
+      templateContent: {
+        component: MessageTemplateComponent.SystemSuggestion,
+        content:   { message: t('ai.message.system.switchAgent.info', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true) }
+      },
+      actions: [
+        {
+          label:  t('ai.message.system.switchAgent.actions.confirm'),
+          type:   ActionType.Button,
+          action: () => {
+            selectAgent(currentMsg.value.agentMetadata?.recommended || '');
+
+            return {
+              label:  t('ai.message.system.switchAgent.results.confirm', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true),
+              status: ConfirmationStatus.Confirmed,
+              icon:   'icon-checkmark'
+            };
+          },
+        },
+        {
+          label:  t('ai.message.system.switchAgent.actions.dismiss'),
+          type:   ActionType.Button,
+          action: () => {
+            // Dismiss future recommendations for this session (for all chats)
+            store.commit('rancher-ai-ui/chat/setSession', { [DISMISS_RECOMMENDED_AGENT_KEY]: true });
+
+            return {
+              label:   t('ai.message.system.switchAgent.results.dismiss', {}, true),
+              status:  ConfirmationStatus.Canceled,
+              icon:    'icon-close'
+            };
+          },
+        }
+      ],
+    };
   }
 
   function onopen(event: { target: WebSocket }) {
@@ -140,7 +227,11 @@ export function useChatMessageComposable() {
         - DO NOT ask for any confirmation or additional information.
       `;
 
-      wsSend(ws, formatWSInputMessage(initPrompt, selectedContext.value, [MessageTag.Ephemeral, MessageTag.Welcome]));
+      wsSend(ws, formatWSInputMessage({
+        prompt:  initPrompt,
+        context: selectedContext.value,
+        tags:    [MessageTag.Ephemeral, MessageTag.Welcome]
+      }));
       setPhase(MessagePhase.Processing);
     }
   }
@@ -151,7 +242,7 @@ export function useChatMessageComposable() {
     try {
       if (!messages.value.find((msg) => msg.completed)) {
         setPhase(MessagePhase.Initializing);
-        await processChatMetadata(data);
+        processChatMetadata(data);
         await processWelcomeData(data);
       } else {
         await processMessageData(data);
@@ -160,15 +251,15 @@ export function useChatMessageComposable() {
       // eslint-disable-next-line no-console
       console.error('Error processing messages:', err);
       store.commit('rancher-ai-ui/chat/setError', {
-        chatId: CHAT_ID,
-        error:  { message: `${ t('ai.error.message.processing') } ${ (err as ChatError).message || err || '' }` }
+        chatId,
+        error: { message: `${ t('ai.error.message.processing') } ${ (err as ChatError).message || err || '' }` }
       });
 
       setPhase(MessagePhase.Idle);
     }
   }
 
-  async function processChatMetadata(data: string) {
+  function processChatMetadata(data: string) {
     const metadata = formatChatMetadata(data);
 
     if (metadata) {
@@ -179,17 +270,7 @@ export function useChatMessageComposable() {
   async function processWelcomeData(data: string) {
     switch (data) {
     case Tag.MessageStart:
-      const msgId = await addMessage({
-        role:            Role.System,
-        templateContent: {
-          component: MessageTemplateComponent.Welcome,
-          content:   {
-            principal,
-            message: t('ai.message.system.welcome.info'),
-          }
-        },
-        completed: false,
-      });
+      const msgId = await addMessage(buildWelcomeMessage());
 
       currentMsg.value = getMessage(msgId);
       break;
@@ -226,14 +307,7 @@ export function useChatMessageComposable() {
     case Tag.MessageStart:
       setPhase(MessagePhase.Working);
 
-      const msgId = await addMessage({
-        role:                     Role.Assistant,
-        thinkingContent: '',
-        messageContent:  '',
-        showThinking:             EXPAND_THINKING,
-        thinking:                 false,
-        completed:                false
-      });
+      const msgId = await addMessage(buildMessage());
 
       currentMsg.value = getMessage(msgId);
       break;
@@ -252,9 +326,31 @@ export function useChatMessageComposable() {
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
       currentMsg.value.thinking = false;
       currentMsg.value.completed = true;
+
+      if (
+        !store.getters['rancher-ai-ui/chat/session']?.[DISMISS_RECOMMENDED_AGENT_KEY] &&
+        currentMsg.value.agentMetadata?.recommended &&
+        currentMsg.value.agentMetadata?.selectionMode === AgentSelectionMode.Auto &&
+        Number(currentMsg.value.id) > 10
+      ) {
+        const agent = agents.value.find((a) => a.name === currentMsg.value.agentMetadata?.recommended);
+
+        await addMessage(buildSystemSuggestionMessage(agent));
+      }
+
       break;
     default:
       setPhase(MessagePhase.GeneratingResponse);
+
+      if (data.startsWith(Tag.AgentMetadataStart) && data.endsWith(Tag.AgentMetadataEnd)) {
+        const metadata = formatAgentMetadata(data, agents.value);
+
+        if (metadata) {
+          currentMsg.value.agentMetadata = metadata;
+        }
+        break;
+      }
+
       if (currentMsg.value.completed === false && currentMsg.value.thinking === true) {
         if (!currentMsg.value.thinkingContent && data.trim() === '') {
           break;
@@ -262,6 +358,7 @@ export function useChatMessageComposable() {
         currentMsg.value.thinkingContent += data;
         break;
       }
+
       if (currentMsg.value.completed === false && currentMsg.value.thinking === false) {
         if (!currentMsg.value.messageContent && data.trim() === '') {
           break;
@@ -318,31 +415,31 @@ export function useChatMessageComposable() {
 
   function resetChatError() {
     store.commit('rancher-ai-ui/chat/setError', {
-      chatId: CHAT_ID,
-      error:  null
+      chatId,
+      error: null
     });
   }
 
   function downloadMessages() {
     downloadFile(
-      `Rancher-liz-chat-${ CHAT_ID }_${ new Date().toISOString().slice(0, 10) }.txt`,
+      `Rancher-liz-chat-${ chatId }_${ new Date().toISOString().slice(0, 10) }.txt`,
       formatFileMessages(principal, messages.value)
     );
   }
 
   function loadMessages(messages: Message[]) {
     store.commit('rancher-ai-ui/chat/loadMessages', {
-      chatId: CHAT_ID,
+      chatId,
       messages
     });
   }
 
   function resetMessages() {
-    store.commit('rancher-ai-ui/chat/resetMessages', CHAT_ID);
+    store.commit('rancher-ai-ui/chat/resetMessages', chatId);
   }
 
   onMounted(() => {
-    store.commit('rancher-ai-ui/chat/init', CHAT_ID);
+    store.commit('rancher-ai-ui/chat/init', chatId);
   });
 
   return {

@@ -3,12 +3,14 @@ import {
   ref, computed, watch, nextTick, onMounted, onBeforeUnmount, type PropType,
 } from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
 import {
   Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase
 } from '../../types';
 import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
 import Welcome from '../message/template/Welcome.vue';
+import SystemSuggestion from '../message/template/SystemSuggestion.vue';
 import ScrollButton from '../ScrollButton.vue';
 import Processing from '../Processing.vue';
 
@@ -19,7 +21,7 @@ import Processing from '../Processing.vue';
  */
 
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
 
 const props = defineProps({
   messages: {
@@ -61,7 +63,7 @@ const formattedMessages = computed<FormattedMessage[]>(() => {
 const errorMessages = computed<FormattedMessage[]>(() => {
   return props.errors.map((error) => ({
     role:                    Role.System,
-    formattedMessageContent: error.message || t(error.key),
+    formattedMessageContent: error.message || t(error.key as string),
     timestamp:               new Date(),
     completed:               true,
     isError:                 true,
@@ -75,6 +77,8 @@ function getMessageTemplate(component: MessageTemplateComponent) {
   switch (component) {
   case MessageTemplateComponent.Welcome:
     return Welcome;
+  case MessageTemplateComponent.SystemSuggestion:
+    return SystemSuggestion;
   default:
     return null;
   }
@@ -173,8 +177,8 @@ onBeforeUnmount(() => {
         :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
         :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
         :disabled="disabled"
-        :content="message.templateContent.content"
         :message="message"
+        @update:message="emit('update:message', $event)"
         @send:message="emit('send:message', $event)"
       />
       <MessageComponent
@@ -184,7 +188,7 @@ onBeforeUnmount(() => {
         :message="message"
         :disabled="disabled"
         :pending-confirmation="messagePhase === MessagePhase.AwaitingConfirmation"
-        @update:message="emit('update:message', message)"
+        @update:message="emit('update:message', $event)"
         @confirm:message="emit('confirm:message', $event)"
         @send:message="emit('send:message', $event)"
       />

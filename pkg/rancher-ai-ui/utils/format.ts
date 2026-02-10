@@ -7,8 +7,18 @@ import {
   HistoryChatMessage,
   ChatMetadata,
   ConfirmationStatus,
+  AgentMetadata,
+  AIAgentConfigCRD,
+  Agent,
 } from '../types';
 import { validateActionResource } from './validator';
+
+interface WSInputMessageArgs {
+  prompt: string;
+  agent?: string;
+  context?: Context[];
+  tags?: string[];
+}
 
 const md = new MarkdownIt({
   html:        true,
@@ -24,16 +34,17 @@ export function formatMessageContent(message: string) {
   return raw.replace(/(?:(?:<br\s*\/?>)|\r?\n|\s)+$/gi, '');
 }
 
-export function formatWSInputMessage(prompt: string, selectedContext: Context[], messageTags: string[] = []): string {
-  const context = selectedContext.reduce((acc, ctx) => ({
+export function formatWSInputMessage(args: WSInputMessageArgs): string {
+  const context = (args.context || []).reduce((acc, ctx) => ({
     ...acc,
     [ctx.tag]: ctx.value
   }), {});
 
-  const tags = messageTags.length ? messageTags : undefined;
+  const tags = args.tags?.length ? args.tags : undefined;
 
   return JSON.stringify({
-    prompt,
+    prompt: args.prompt,
+    agent:  args.agent,
     context,
     tags,
   });
@@ -43,7 +54,45 @@ export function formatChatMetadata(data: string): ChatMetadata | null {
   if (data.startsWith(Tag.ChatMetadataStart) && data.endsWith(Tag.ChatMetadataEnd)) {
     const cleaned = data.replaceAll(Tag.ChatMetadataStart, '').replaceAll(Tag.ChatMetadataEnd, '').trim();
 
-    return JSON.parse(cleaned);
+    try {
+      return JSON.parse(cleaned);
+    } catch (error) {
+      console.error('Failed to parse chat metadata:', error); /* eslint-disable-line no-console */
+    }
+  }
+
+  return null;
+}
+
+export function formatAgentFromCRD(config: AIAgentConfigCRD): Agent {
+  return {
+    name:        config.metadata.name,
+    displayName: config.spec.displayName,
+    description: config.spec.description,
+  };
+}
+
+export function formatAgentMetadata(data: string, agents: Agent[]): AgentMetadata | null {
+  const cleaned = data.replaceAll(Tag.AgentMetadataStart, '').replaceAll(Tag.AgentMetadataEnd, '').trim();
+
+  try {
+    const rawMetadata = JSON.parse(cleaned);
+
+    if (rawMetadata) {
+      const { agentName, selectionMode, recommended } = rawMetadata;
+
+      const agent = agents.find((a) => a.name === agentName);
+
+      if (agent) {
+        return {
+          agent,
+          selectionMode,
+          recommended,
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Failed to parse agent metadata:', error); /* eslint-disable-line no-console */
   }
 
   return null;
@@ -178,7 +227,27 @@ export function formatErrorMessage(value: string): { message: string } {
   return { message: 'An error occurred.' };
 }
 
-export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message {
+export function buildMessageFromHistoryMessage(msg: HistoryChatMessage, agents: Agent[]): Message {
+  /**
+   * Parsing agent metadata
+   */
+  let agentMetadata = undefined;
+
+  if (msg.agent?.name) {
+    const { name, mode: selectionMode } = msg.agent;
+
+    const agent = agents.find((a) => a.name === name) || {
+      name,
+      displayName: name,
+      description: 'Unknown agent',
+    };
+
+    agentMetadata = {
+      agent,
+      selectionMode,
+    };
+  }
+
   /**
    * Parsing context
    */
@@ -277,6 +346,7 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage): Message
     completed:         true,
     thinking:          false,
     showThinking:      false,
+    agentMetadata,
     thinkingContent,
     contextContent,
     relatedResourcesActions,

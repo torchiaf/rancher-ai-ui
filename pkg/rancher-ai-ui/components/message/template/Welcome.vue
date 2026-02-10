@@ -1,33 +1,17 @@
 <script setup lang="ts">
 import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
 import { Message } from '../../../types';
 import Suggestions from '../Suggestions.vue';
+import { formatMessageContent } from '../../../utils/format';
 // @ts-expect-error FIXME: Cannot find module '../../../assets/liz-icon.svg'... Remove this comment to see the full error message
 import lizIcon from '../../../assets/liz-icon.svg';
 
-interface Content {
-  principal: {
-    name: string;
-    loginName: string;
-  };
-  message: string;
-}
-
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
 
 const props = defineProps({
-  content: {
-    type:    Object as PropType<Content>,
-    default: () => ({
-      principal: {
-        name:      'User',
-        loginName: 'user'
-      },
-      templateMessage: ''
-    }),
-  },
   message: {
     type:    Object as PropType<Message>,
     default: () => ({} as Message),
@@ -41,10 +25,12 @@ const props = defineProps({
 const emit = defineEmits(['send:message']);
 
 const user = computed(() => {
-  const out = { name: props.content?.principal?.name || 'User' };
+  const principal = props.message.templateContent?.content?.principal;
 
-  if (props.content?.principal?.loginName === 'admin') {
-    out.name = props.content?.principal?.loginName;
+  const out = { name: principal?.name || 'User' };
+
+  if (principal?.loginName === 'admin') {
+    out.name = principal?.loginName;
   }
 
   return out;
@@ -76,7 +62,7 @@ const user = computed(() => {
       </div>
       <div class="chat-welcome-msg-text-panel">
         <span>
-          {{ t('ai.message.system.welcome.greetings.line1') }}
+          {{ t('ai.message.system.welcome.greetings.line1', {}, true) }}
         </span>
         <span>
           {{ t('ai.message.system.welcome.greetings.line2') }}
@@ -84,13 +70,13 @@ const user = computed(() => {
       </div>
     </div>
     <div
-      v-if="props.content.message"
+      v-if="props.message.templateContent?.content?.message"
       class="chat-welcome-msg-bubble"
     >
       <div class="chat-welcome-msg-text">
-        <span>
-          {{ props.content.message }}
-        </span>
+        <span
+          v-clean-html="formatMessageContent(props.message.templateContent?.content?.message || '')"
+        />
       </div>
     </div>
     <div

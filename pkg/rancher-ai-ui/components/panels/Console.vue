@@ -2,41 +2,54 @@
 import {
   ref, computed, nextTick,
   onMounted,
-  watch,
-  onUpdated
+  watch
 } from 'vue';
-import { Agent } from '../../types';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
+import type { PropType } from 'vue';
+import { Agent, LLMConfig } from '../../types';
 import RcButton from '@components/RcButton/RcButton.vue';
-import TextLabelPopover from '../popover/TextLabel.vue';
-import VerifyResultsDisclaimer from '../../static/VerifyResultsDisclaimer.vue';
+import SelectAgent from '../agent/SelectAgent.vue';
+import LlmModelLabel from '../console/LlmModelLabel.vue';
+import VerifyResultsDisclaimer from '../console/VerifyResultsDisclaimer.vue';
 import { useInputComposable } from '../../composables/useInputComposable';
 
-import type { PropType } from 'vue';
-
 /**
- * Console panel for AI chat messages input and info about the Agent.
+ * Console panel for AI chat messages input and AI service's configuration.
  */
 
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
 
 const props = defineProps({
+  llmConfig: {
+    type:     Object as PropType<LLMConfig | null>,
+    default:  null,
+  },
+  agents: {
+    type:     Array as PropType<Agent[]>,
+    default:  () => [],
+  },
+  agentName: {
+    type:    String,
+    default: '',
+  },
   disabled: {
     type:    Boolean,
     default: false,
   },
-  agent: {
-    type:     Object as PropType<Agent | null>,
-    default:  null,
-  }
 });
 
-const emit = defineEmits(['input:content']);
+const emit = defineEmits([
+  'input:content',
+  'select:agent'
+]);
 
 const { inputText, updateInput, cleanInput } = useInputComposable();
 
 const promptTextarea = ref<HTMLTextAreaElement | null>(null);
+const isFocused = ref(false);
+const MAX_HEIGHT = 200;
 
 const text = computed(() => {
   if (props.disabled) {
@@ -48,7 +61,7 @@ const text = computed(() => {
 
 function onInputMessage(event: Event) {
   updateInput((event?.target as HTMLTextAreaElement)?.value);
-  autoResizePrompt();
+  nextTick(autoResizePrompt);
 }
 
 function handleTextareaKeydown(event: KeyboardEvent) {
@@ -68,35 +81,36 @@ function sendContent(event: Event) {
   }
 
   updateInput('');
+  nextTick(autoResizePrompt);
 }
 
-function autoResizePrompt(height?: number) {
+function selectAgent(agentName: string) {
+  emit('select:agent', agentName);
+  nextTick(() => {
+    promptTextarea.value?.focus();
+  });
+}
+
+function autoResizePrompt() {
   const textarea = promptTextarea.value;
 
   if (textarea) {
-    textarea.style.overflow = parseInt(textarea.style.height) > 90 ? 'auto' : 'hidden';
-    textarea.style.height = 'auto';
-    textarea.style.height = `${ height || textarea.scrollHeight }px`;
+    textarea.style.height = '36px';
+
+    const scrollHeight = textarea.scrollHeight;
+    const newHeight = scrollHeight > MAX_HEIGHT ? MAX_HEIGHT : scrollHeight;
+
+    textarea.style.height = `${ newHeight }px`;
+    textarea.style.overflowY = scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden';
   }
 }
 
 onMounted(() => {
   nextTick(() => {
     promptTextarea.value?.focus();
+    autoResizePrompt();
   });
 });
-
-onUpdated(() => {
-  nextTick(() => {
-    promptTextarea.value?.focus();
-  });
-});
-
-watch(promptTextarea, (el) => {
-  if (el) {
-    nextTick(() => el.focus());
-  }
-}, {});
 
 watch(() => text.value, () => {
   nextTick(() => {
@@ -111,12 +125,12 @@ watch(() => text.value, () => {
     data-testid="rancher-ai-ui-chat-console"
   >
     <div
-      class="chat-console-row"
+      class="chat-input-wrapper"
+      :class="{ focused: isFocused, disabled: props.disabled }"
     >
       <textarea
         ref="promptTextarea"
         class="chat-input"
-        :class="{ disabled: props.disabled }"
         rows="1"
         :value="text"
         :placeholder="props.disabled ? '' : t('ai.prompt.placeholder')"
@@ -125,34 +139,39 @@ watch(() => text.value, () => {
         data-testid="rancher-ai-ui-chat-input-textarea"
         @input="onInputMessage"
         @keydown="handleTextareaKeydown"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
       />
-      <div
-        class="chat-input-send"
-        :class="{ disabled: props.disabled }"
-      >
-        <RcButton
-          small
-          :disabled="!cleanInput(text) || props.disabled"
-          @click="sendContent"
-          @keydown.enter="sendContent"
+      <div class="chat-input-actions">
+        <SelectAgent
+          v-if="props.agents.length > 1"
+          :agents="props.agents"
+          :agent-name="props.agentName"
+          :disabled="props.disabled"
+          @select="selectAgent"
+        />
+        <div
+          class="chat-input-send"
+          :class="{ disabled: props.disabled }"
         >
-          <i class="icon icon-lg icon-send" />
-        </RcButton>
+          <RcButton
+            class="send-button"
+            :disabled="!cleanInput(text) || props.disabled"
+            @click="sendContent"
+            @keydown.enter="sendContent"
+          >
+            <i class="icon icon-lg icon-send" />
+          </RcButton>
+        </div>
       </div>
     </div>
     <div class="chat-console-row chat-console-chat-text-info">
-      <span
-        v-clean-tooltip="!!props.agent && props.agent.model?.length > 20 ? props.agent.model : ''"
-        class="chat-model label text-deemphasized"
-      >
-        {{ !!props.agent ? t('ai.agent.label', { name: props.agent.name, model: props.agent.model }, true) : t('ai.agent.unknown') }}
-      </span>
-      <TextLabelPopover
-        :label="t('ai.agent.verifyResults.button.label')"
+      <LlmModelLabel
+        :llm-config="props.llmConfig"
+      />
+      <VerifyResultsDisclaimer
         :disabled="props.disabled"
-      >
-        <VerifyResultsDisclaimer />
-      </TextLabelPopover>
+      />
     </div>
   </div>
 </template>
@@ -161,56 +180,95 @@ watch(() => text.value, () => {
 .chat-console {
   display: flex;
   flex-direction: column;
-  padding: 16px 16px 16px 16px;
+  padding: 16px;
   gap: 0.75rem;
   border-top: 1px solid var(--border);
-  min-height: 70px;
+  height: auto;
 }
 
-.chat-model {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  font-size: 12px;
+.chat-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  transition: border-color 0.2s;
+  /* The wrapper follows the height of its child */
+  height: auto;
+  min-height: min-content;
+
+  &.focused {
+    border: solid 1px var(--active-nav);
+  }
+
+  &.disabled {
+    background-color: var(--disabled-bg);
+  }
+}
+
+.chat-input {
+  display: block;
+  border: none;
+  background: transparent;
+  padding: 12px 16px 0 16px;
+  font-size: 1rem;
+  outline: none;
+  color: var(--input-text);
+  width: 100%;
+  resize: none;
+  min-height: 36px;
+  max-height: 200px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.chat-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  min-height: 36px;
+}
+
+.chat-input-send {
+  .send-button {
+    height: 32px;
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--accent-btn);
+    color: var(--active-nav);
+    border-radius: 4px;
+    border: none;
+
+    &:disabled {
+      background-color: transparent;
+      color: var(--primary);
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #c6dcff;
+    }
+  }
 }
 
 .chat-console-row {
   display: flex;
-  align-items: end;
+  align-items: center;
   gap: 8px;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.chat-input {
-  flex: 1;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 1rem;
-  outline: none;
-  color: var(--input-text);
-  transition: border 0.2s;
-  width: auto;
-  outline-offset: 0;
-  resize: none;
-  overflow: auto;
-  min-height: 36px;
-  max-height: 90px;
-}
-
-.chat-input:focus {
-  border: solid 1.5px var(--secondary-border, var(--primary));
-}
-
-.chat-input-send {
-  .btn {
-    height: 36px;
-  }
 }
 
 .chat-console-chat-text-info {
+  font-family: Lato;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
   justify-content: flex-start;
 }
 </style>

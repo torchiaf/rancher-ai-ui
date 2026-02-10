@@ -15,19 +15,27 @@ import {
 interface Chat {
   id: string;
   msgIdCnt?: number;
+  agentName?: string;
   messages: Record<string, Message>;
   phase?: MessagePhase;
   error?: MessageError | null;
 }
 
 interface State {
+  session:  Record<string, any>;
   metadata: ChatMetadata | null;
   chats: Record<string, Chat>;
 }
 
 const getters = {
+  session: (state: State) => {
+    return state.session;
+  },
   metadata: (state: State) => {
     return state.metadata;
+  },
+  agentName: (state: State) => (chatId: string) => {
+    return state.chats[chatId]?.agentName;
   },
   messages: (state: State) => (chatId: string) => {
     return state.chats[chatId]?.messages || {};
@@ -38,7 +46,10 @@ const getters = {
   phase: (state: State) => (chatId: string) => {
     const messages = Object.values(state.chats[chatId]?.messages || {});
 
-    if (messages.length && messages[messages.length - 1]?.confirmation?.status === ConfirmationStatus.Confirmed) {
+    if (
+      messages.length && messages[messages.length - 1]?.role === Role.Assistant &&
+      messages[messages.length - 1]?.confirmation?.status === ConfirmationStatus.Confirmed
+    ) {
       return MessagePhase.Confirming;
     }
 
@@ -76,11 +87,28 @@ const mutations = {
     };
   },
 
+  setSession(state: State, sessionData: Record<string, any>) {
+    state.session = {
+      ...state.session,
+      ...sessionData
+    };
+  },
+
   setMetadata(state: State, metadata: ChatMetadata) {
     state.metadata = {
       ...state.metadata,
       ...metadata
     };
+  },
+
+  setAgentName(state: State, args: { chatId: string; agentName: string }) {
+    const { chatId, agentName } = args;
+
+    if (!chatId || !state.chats[chatId]) {
+      return;
+    }
+
+    state.chats[chatId].agentName = agentName;
   },
 
   addMessage(state: State, args: { chatId: string; message: Message }) {
@@ -104,16 +132,17 @@ const mutations = {
     };
   },
 
-  updateMessage(state: State, args: { chatId: string; message: Message }) {
+  updateMessage(state: State, args: { chatId: string; message: Partial<Message> }) {
     const { chatId, message } = args;
 
-    if (!chatId || !state.chats[chatId] || !message.id) {
+    if (!chatId || !state.chats[chatId] || !message.id || !state.chats[chatId].messages[message.id]) {
       return;
     }
 
-    if (state.chats[chatId].messages[message.id]) {
-      Object.assign(state.chats[chatId].messages[message.id], message);
-    }
+    Object.assign(state.chats[chatId].messages[message.id], {
+      ...state.chats[chatId].messages[message.id],
+      ...message
+    });
   },
 
   loadMessages(state: State, args: { chatId: string; messages: Message[] }) {
@@ -206,6 +235,7 @@ const factory = (): CoreStoreSpecifics => {
   return {
     state: (): State => {
       return {
+        session:  {},
         metadata: null,
         chats:    {}
       };

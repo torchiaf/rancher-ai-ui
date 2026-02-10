@@ -3,6 +3,7 @@ import {
   computed, nextTick, onBeforeUnmount, ref, type PropType
 } from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
 import { FormattedMessage, MessagePhase, Role as RoleEnum } from '../../types';
 import Processing from '../Processing.vue';
 import Actions from './action/index.vue';
@@ -15,7 +16,7 @@ import SystemAvatar from './avatar/SystemAvatar.vue';
 import RcButton from '@components/RcButton/RcButton.vue';
 
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
 
 const props = defineProps({
   message: {
@@ -78,17 +79,21 @@ function handleResendMessage() {
 }
 
 function handleShowCompleteMessage() {
-  props.message.showCompleteMessage = !props.message.showCompleteMessage;
+  const showCompleteMessage = !props.message.showCompleteMessage;
 
-  nextTick(() => {
-    emit('update:message', props.message);
-  });
+  nextTick(() => emit('update:message', {
+    ...props.message,
+    showCompleteMessage
+  }));
 }
 
 function handleShowThinking() {
-  props.message.showThinking = !props.message.showThinking;
+  const showThinking = !props.message.showThinking;
 
-  nextTick(() => emit('update:message', props.message));
+  nextTick(() => emit('update:message', {
+    ...props.message,
+    showThinking
+  }));
 }
 
 onBeforeUnmount(() => {
@@ -160,6 +165,18 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div class="chat-msg-text">
+          <div
+            v-if="props.message.role === RoleEnum.Assistant && props.message.agentMetadata?.agent"
+            class="chat-msg-selected-agent"
+          >
+            <span
+              v-clean-tooltip="props.message.agentMetadata?.agent?.description"
+              class="chat-msg-selected-agent-label"
+              :data-testid="`rancher-ai-ui-chat-message-selected-agent-label-${ props.message.agentMetadata?.agent?.name }`"
+            >
+              {{ t('ai.agents.selectedAgent.label', { agent: props.message.agentMetadata?.agent?.displayName }) }} {{ t(`ai.agents.selectionMode.${ props.message.agentMetadata?.selectionMode || 'none' }`) }}
+            </span>
+          </div>
           <div v-if="!props.disabled && isThinking">
             <Processing
               data-testid="rancher-ai-ui-chat-message-thinking-label"
@@ -471,5 +488,17 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
+}
+
+.chat-msg-selected-agent {
+  margin-bottom: 4px;
+}
+.chat-msg-selected-agent-label {
+  color: #BFC1D3;
+  font-family: Lato;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 21px; /* 150% */
 }
 </style>

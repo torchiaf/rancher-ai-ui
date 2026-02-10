@@ -1,5 +1,38 @@
 /* eslint-disable no-unused-vars */
 
+/**
+ * Rancher AI schema types.
+ */
+export const RANCHER_AI = { AI_AGENT_CONFIG: 'ai.cattle.io.aiagentconfig' };
+
+/**
+ * Tags used in Rancher AI Chat messages.
+ */
+
+export const enum Tag {
+  ChatMetadataStart = '<chat-metadata>',
+  ChatMetadataEnd = '</chat-metadata>',
+  AgentMetadataStart = '<agent-metadata>',
+  AgentMetadataEnd = '</agent-metadata>',
+  MessageStart = '<message>',
+  MessageEnd = '</message>',
+  ThinkingStart = '<think>',
+  ThinkingEnd = '</think>',
+  McpResultStart = '<mcp-response>',
+  McpResultEnd = '</mcp-response>',
+  ConfirmationStart = '<confirmation-response>',
+  ConfirmationEnd = '</confirmation-response>',
+  SuggestionsStart = '<suggestion>',
+  SuggestionsEnd = '</suggestion>',
+  DocLinkStart = '<mcp-doclink>',
+  DocLinkEnd = '</mcp-doclink>',
+  ErrorStart = '<error>',
+  ErrorEnd = '</error>',
+}
+
+/**
+ * Types used in Rancher AI Chat UI.
+ */
 export interface ChatError {
   key?:     string;
   message?: string;
@@ -29,35 +62,45 @@ export const enum PanelState {
   Ready = 'ready',
 }
 
-export const enum Tag {
-  ChatMetadataStart = '<chat-metadata>',
-  ChatMetadataEnd = '</chat-metadata>',
-  MessageStart = '<message>',
-  MessageEnd = '</message>',
-  ThinkingStart = '<think>',
-  ThinkingEnd = '</think>',
-  McpResultStart = '<mcp-response>',
-  McpResultEnd = '</mcp-response>',
-  ConfirmationStart = '<confirmation-response>',
-  ConfirmationEnd = '</confirmation-response>',
-  SuggestionsStart = '<suggestion>',
-  SuggestionsEnd = '</suggestion>',
-  DocLinkStart = '<mcp-doclink>',
-  DocLinkEnd = '</mcp-doclink>',
-  ErrorStart = '<error>',
-  ErrorEnd = '</error>',
-}
-
 export const enum Role {
   User = 'user',
   Assistant = 'assistant',
   System = 'system',
 }
 
+export const enum ContextTag {
+  CLUSTER   = 'cluster',
+  NAMESPACE = 'namespace',
+}
+
+export const enum HookContextTag {
+  SortableTableRow = '__sortable-table-row',
+  DetailsState = '__details-state',
+  StatusBanner = '__details-state-banner',
+}
+
+export const enum MessagePhase {
+  Idle = 'idle',
+  Initializing = 'initializing',
+  Thinking = 'thinking',
+  Working = 'working',
+  Processing = 'processing',
+  AwaitingConfirmation = 'awaitingConfirmation',
+  GeneratingResponse = 'generatingResponse',
+  Confirming = 'confirming',
+  Finalizing = 'finalizing',
+}
+
+export const enum ConnectionPhase {
+  Idle = 'idle',
+  Connecting = 'connecting',
+  Connected = 'connected',
+  Disconnected = 'disconnected'
+}
+
 export const enum ActionType {
   Link = 'link',
   Button = 'button',
-  // Add more action types as needed
 }
 
 export interface ActionResource {
@@ -99,42 +142,49 @@ export const enum MessageTag {
   Confirmation = 'confirmation',
 }
 
+export interface MessageAction {
+  type: ActionType | string;
+  label: string;
+  tooltip?: string;
+  description?: string;
+  resource?: ActionResource;
+  action?: () => MessageConfirmation;
+}
+
+export type MessageActionSuggestion = string;
+
+export interface MessageConfirmation {
+  action?: MessageConfirmationAction | null;
+  status: ConfirmationStatus;
+  label?: string;
+  icon?: string;
+}
+
 export interface MessageConfirmationAction {
   type: ConfirmationType | string;
   payload?: OperationPayload[];
   resource: ActionResource;
 }
 
-export interface MessageAction {
-  type: ActionType | string;
-  label: string;
-  tooltip?: string;
-  description?: string;
-  resource: ActionResource;
-}
-
-export type MessageActionSuggestion = string;
-
-export interface MessageConfirmation {
-  action: MessageConfirmationAction | null;
-  status: ConfirmationStatus;
-}
-
 export const enum MessageTemplateComponent {
   Welcome = 'welcome',
+  SystemSuggestion = 'system-suggestion',
 }
 
 export interface MessageTemplate {
   component: MessageTemplateComponent;
-  content: {
-    principal: any;
-    message: string;
-  };
+  content: MessageTemplateContent;
+}
+
+export interface MessageTemplateContent {
+  principal?: any;
+  message: string;
 }
 
 export interface Message {
   id?: number | string;
   role: Role;
+  agentMetadata?: AgentMetadata;
   thinkingContent?: string;
   messageContent?: string;
   summaryContent?: string;
@@ -162,6 +212,28 @@ export interface ChatMetadata {
   chatId: string;
 }
 
+export interface AgentMetadata {
+  agent: Agent | null;
+  selectionMode?: AgentSelectionMode; // user messages will not have this field
+  recommended?: string; // user messages will not have this field
+}
+
+export const enum AgentSelectionMode {
+  Auto = 'auto',
+  Manual = 'manual',
+}
+
+export interface AIAgentConfigCRD {
+  metadata: {
+    name: string;
+  };
+  spec: {
+    enabled: boolean;
+    displayName: string;
+    description?: string;
+  }
+}
+
 export interface HistoryChat {
   id: string;
   name?: string;
@@ -171,6 +243,10 @@ export interface HistoryChat {
 export interface HistoryChatMessage {
   chatId: string;
   role: string | Role;
+  agent: {
+    name: string;
+    mode: AgentSelectionMode;
+  }
   message: string;
   context?: string;
   tags?: string[];
@@ -178,7 +254,7 @@ export interface HistoryChatMessage {
   createdAt: string;
 }
 
-export interface Agent {
+export interface LLMConfig {
   id?: string;
   name: string;
   model: string; // model + version
@@ -193,32 +269,8 @@ export interface Context {
   icon?: string;
 }
 
-export const enum ContextTag {
-  CLUSTER   = 'cluster',
-  NAMESPACE = 'namespace',
-}
-
-export const enum HookContextTag {
-  SortableTableRow = '__sortable-table-row',
-  DetailsState = '__details-state',
-  StatusBanner = '__details-state-banner',
-}
-
-export const enum MessagePhase {
-  Idle = 'idle',
-  Initializing = 'initializing',
-  Thinking = 'thinking',
-  Working = 'working',
-  Processing = 'processing',
-  AwaitingConfirmation = 'awaitingConfirmation',
-  GeneratingResponse = 'generatingResponse',
-  Confirming = 'confirming',
-  Finalizing = 'finalizing',
-}
-
-export const enum ConnectionPhase {
-  Idle = 'idle',
-  Connecting = 'connecting',
-  Connected = 'connected',
-  Disconnected = 'disconnected'
+export interface Agent {
+  name: string;
+  displayName: string;
+  description?: string;
 }

@@ -13,9 +13,17 @@ ai:
           line1: I'm Liz, your personal AI assistant.
           line2: How can I help you?
           line3: 'Hi, {name}!'
-        info: 'Pro tip: you can also interact with the status badges and error messages throughout the Rancher UI to ask me for help. Or, you can resume one of your previous chats - I automatically save them in the main menu for easy access.'
+        info: '<b>Pro tip</b>: you can also interact with the status badges and error messages throughout the Rancher UI to ask me for help. Or, you can resume one of your previous chats - I automatically save them in the main menu for easy access.'
         suggestions:
           label: 'Here are a few suggestions based on your context:'
+      switchAgent:
+        info: '<code>{agent}</code> Agent has been selected in adaptive mode for the last few prompts.<br>Usually, manual selection is best for faster response times.<br><br>Would you like me to switch over to <b>manual</b> agent selection?<br>'
+        actions:
+          confirm: 'Switch to Manual Selection'
+          dismiss: 'Don’t show this again'
+        results:
+          confirm: Switched to <code>{agent}</code> Agent
+          dismiss: Keeping adaptive selection
     assistant:
       thinking:
         completed: Completed
@@ -68,8 +76,8 @@ ai:
     resources:
       cluster: Cluster
       namespace: Namespace
-  agent:
-    label: Uses AI (running {name} {model}).
+  configurations:
+    label: Uses AI, running {name} ({model}).
     verifyResults:
       button:
         label: Verify the results.
@@ -88,7 +96,8 @@ ai:
       openai: ChatGPT
       gemini: Gemini
       bedrock: Bedrock
-    unknown: Unknown Agent
+      unknown: Unknown Model
+  installation:
     goToInstall: View Charts
     goToDeployment: View Agent Deployment
   hooks:
@@ -142,7 +151,7 @@ ai:
       generic: WebSocket error occurred. Please try again later.
       connection: Failed to connect to Rancher AI Agent. Please try again later.
       disconnected: Connection closed.
-    agent:
+    services:
       secret:
         noPermission: You do not have permission to access the Rancher AI Agent configuration. Please contact your administrator.
         missingConfig: Rancher AI Agent configuration is missing. Please go to Global [Settings > AI Assistant] and configure the agent.
@@ -150,20 +159,21 @@ ai:
         noPermission: You do not have permission to access the Rancher AI Agent. Please contact your administrator.
         notFound: Rancher AI Agent not found. Please ensure the agent chart is installed.
         notActive: Rancher AI Agent is not active. Please ensure the agent is running properly.
-  options:
-    chat:
-      reset:
-        label: Reset Chat
-        description: Clear the current chat and start a new conversation
-      download:
-        label: Download Messages
-        description: Download the current messages to a text file
-      help:
-        label: Chat Help
-        description: Get assistance with using the chat features
-      config:
-        label: Edit Configuration
-        description: Configure the AI model and provider for your assistant
+  menu:
+    options:
+      chat:
+        reset:
+          label: Reset Chat
+          description: Clear the current chat and start a new conversation
+        download:
+          label: Download Messages
+          description: Download the current messages to a text file
+        help:
+          label: Chat Help
+          description: Get assistance with using the chat features
+        config:
+          label: Edit Configuration
+          description: Configure the AI model and provider for your assistant
   history:
     chat:
       create: Start a New Chat
@@ -181,6 +191,20 @@ ai:
       items:
         rename: Rename Chat
         delete: Delete Chat
+  agents:
+    selectAgent:
+      tooltip: 'Select an Agent to handle your request or use "Adaptive Agent Selection" to let the system choose the best agent based on your context and needs.'
+    selectedAgent:
+      label: "Agent: {agent}"
+    selectionMode:
+      none: ''
+      auto: (Adaptive Mode)
+      manual: ''
+    items:
+      default:
+        displayName: Adaptive Agent Selection
+        description: Automatically selects the best available agent based on your configuration and environment
+      unknown: Unknown Agent
 
   generic:
     opensInNewTab: Opens in a new tab

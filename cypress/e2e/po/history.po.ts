@@ -45,6 +45,10 @@ export class HistoryChatItemPo extends ComponentPo {
     return cy.get('[data-testid="rancher-ai-ui-chat-history-item-name-input"]');
   }
 
+  tooltip() {
+    return cy.get('.v-popper__popper .v-popper__inner');
+  }
+
   menu() {
     this.self().realMouseUp();
 
@@ -53,6 +57,10 @@ export class HistoryChatItemPo extends ComponentPo {
 
   select() {
     this.self().click();
+  }
+
+  showTooltip() {
+    this.self().realMouseUp();
   }
 }
 

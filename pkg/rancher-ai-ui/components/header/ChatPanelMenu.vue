@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useStore } from 'vuex';
+import { useI18n } from '@shell/composables/useI18n';
 import {
   RcDropdown,
   RcDropdownTrigger,
@@ -8,7 +9,7 @@ import {
 } from '@components/RcDropdown';
 
 const store = useStore();
-const t = store.getters['i18n/t'];
+const { t } = useI18n(store);
 
 const props = defineProps({
   disabled: {
@@ -25,24 +26,24 @@ const emit = defineEmits([
 
 const options = ref([
   {
-    label:       t('ai.options.chat.download.label'),
-    description: t('ai.options.chat.download.description'),
+    label:       t('ai.menu.options.chat.download.label'),
+    description: t('ai.menu.options.chat.download.description'),
     icon:        'icon-download',
     action:      () => {
       emit('download:chat');
     },
   },
   {
-    label:       t('ai.options.chat.config.label'),
-    description: t('ai.options.chat.config.description'),
+    label:       t('ai.menu.options.chat.config.label'),
+    description: t('ai.menu.options.chat.config.description'),
     icon:        'icon-gear',
     action:      () => {
       emit('config:chat');
     },
   },
   // {
-  //   label: t('ai.options.chat.help.label'),
-  //   description: t('ai.options.chat.help.description'),
+  //   label: t('ai.menu.options.chat.help.label'),
+  //   description: t('ai.menu.options.chat.help.description'),
   //   icon:  'icon-question-mark',
   //   action: () => {
   //     emit('show:help');
