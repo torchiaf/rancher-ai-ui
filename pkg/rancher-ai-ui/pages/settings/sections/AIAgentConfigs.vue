@@ -371,7 +371,7 @@ watch(validationErrors, (errors) => {
         :key="agent.metadata?.name"
         :label="agent.spec.displayName || agent.metadata?.name"
         :name="agent.metadata?.name"
-        :label-icon="agent?.spec?.enabled ? 'icon-confirmation-alt' : ''"
+        :label-icon="agent?.spec?.enabled ? 'icon-confirmation-alt' : 'icon-close'"
         :weight="99 - index"
         :show-header="false"
         :error="validationErrors[agent.metadata?.name]"
@@ -518,7 +518,7 @@ watch(validationErrors, (errors) => {
             </template>
             <template #empty>
               <div class="row">
-                <span class="col span-12 text-label">
+                <span class="col span-12 text-label tools-empty-label">
                   {{ t('aiConfig.form.section.aiAgent.fields.humanValidationTools.emptyLabel') }}
                 </span>
               </div>
@@ -613,6 +613,10 @@ watch(validationErrors, (errors) => {
   }
 }
 
+.tools-empty-label {
+  font-size: 14px;
+}
+
 :deep(.select-or-create-auth-secret .mt-20) {
   margin-top: 0 !important;
 }
@@ -620,6 +624,10 @@ watch(validationErrors, (errors) => {
 :deep(.tab) {
   a {
     padding-left: 8px !important;
+  }
+
+  .icon-close {
+    visibility: hidden;
   }
 }
 </style>

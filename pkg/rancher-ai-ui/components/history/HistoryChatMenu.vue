@@ -44,7 +44,6 @@ const isOpen = ref(false);
     data-testid="rancher-ai-ui-chat-history-chat-item-menu-button"
   >
     <rc-dropdown
-      class="menu-dropdown"
       placement="top-end"
       @update:open="isOpen = $event"
     >
