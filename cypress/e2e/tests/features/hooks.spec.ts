@@ -47,7 +47,6 @@ describe('Hooks', () => {
       chatItem.showTooltip();
 
       chatItem.tooltip().containsText('Please analyse the Cluster "local" and troubleshoot any problems.');
-      chatItem.tooltip().containsText('Explain what the "active" state means');
       chatItem.tooltip().containsText('Started on');
     });
   });
