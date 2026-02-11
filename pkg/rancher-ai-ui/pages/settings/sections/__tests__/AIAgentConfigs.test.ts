@@ -1,113 +1,20 @@
-import { mount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 import AIAgentConfigs from '../AIAgentConfigs.vue';
 import { AIAgentConfigCRD, AIAgentConfigHumanValidationTools } from '../../../../types';
 import { AIAgentConfigAuthType, AIAgentConfigValidationType } from '../../types';
 
-// Mock components
-jest.mock('@shell/components/Tabbed/index.vue', () => ({
-  default: {
-    name:     'Tabbed',
-    template: '<div class="tabbed"><slot /></div>',
-    props:    ['sideTabs', 'weight', 'useHash', 'showTabsAddRemove', 'defaultTab'],
-    emits:    ['changed', 'addTab', 'removeTab']
-  }
-}));
-
-jest.mock('@shell/components/Tabbed/Tab.vue', () => ({
-  default: {
-    name:     'Tab',
-    template: '<div class="tab"><slot /></div>',
-    props:    ['label', 'name', 'weight', 'showHeader', 'error'],
-  }
-}));
-
-jest.mock('@shell/components/form/ArrayList.vue', () => ({
-  default: {
-    name:     'ArrayList',
-    template: '<div class="array-list"><slot name="column-headers" /><slot name="columns" :row="{ value: {} }" :i="0" /></div>',
-    props:    ['value', 'disabled', 'removeAllowed', 'addAllowed', 'showHeader', 'addLabel'],
-    emits:    ['remove']
-  }
-}));
-
-jest.mock('@components/Form/LabeledInput/LabeledInput.vue', () => ({
-  default: {
-    name:     'LabeledInput',
-    template: '<input class="labeled-input" />',
-    props:    ['value', 'label', 'rules', 'required', 'disabled', 'placeholder'],
-    emits:    ['update:value']
-  }
-}));
-
-jest.mock('@shell/components/form/LabeledSelect.vue', () => ({
-  default: {
-    name:     'LabeledSelect',
-    template: '<select class="labeled-select"></select>',
-    props:    ['value', 'label', 'options', 'disabled'],
-    emits:    ['update:value']
-  }
-}));
-
-jest.mock('@components/Form/Checkbox/Checkbox.vue', () => ({
-  default: {
-    name:     'Checkbox',
-    template: '<input type="checkbox" class="checkbox" />',
-    props:    ['value', 'label', 'tooltip', 'disabled'],
-    emits:    ['update:value']
-  }
-}));
-
-jest.mock('@components/Banner/Banner.vue', () => ({
-  default: {
-    name:     'Banner',
-    template: '<div class="banner">{{ label }}</div>',
-    props:    ['color', 'label']
-  }
-}));
-
-jest.mock('@components/Form/TextArea/TextAreaAutoGrow.vue', () => ({
-  default: {
-    name:     'TextAreaAutoGrow',
-    template: '<textarea class="text-area-auto-grow"></textarea>',
-    props:    ['value', 'disabled', 'placeholder', 'maxHeight', 'minHeight'],
-    emits:    ['update:value']
-  }
-}));
-
-jest.mock('@shell/components/form/SelectOrCreateAuthSecret.vue', () => ({
-  default: {
-    name:     'SelectOrCreateAuthSecret',
-    template: '<div class="select-or-create-auth-secret"></div>',
-    props:    ['value', 'namespace', 'allowSsh', 'delegateCreateToParent', 'cacheSecrets', 'preSelect', 'registerBeforeHook'],
-    emits:    ['inputauthval']
-  }
-}));
-
-jest.mock('@shell/components/form/FileSelector.vue', () => ({
-  default: {
-    name:     'FileSelector',
-    template: '<button class="file-selector">{{ label }}</button>',
-    props:    ['role', 'label'],
-    emits:    ['selected']
-  }
-}));
-
 // Mock Vuex
-jest.mock('vuex', () => ({
-  useStore: () => ({
-    getters: {},
-    state:   {}
-  })
-}));
+jest.mock('vuex', () => {
+  const actual = jest.requireActual('vuex');
+
+  return {
+    ...actual,
+    useStore: jest.fn()
+  };
+});
 
 // Mock i18n
 jest.mock('@shell/composables/useI18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-
-// Mock validators
-jest.mock('@shell/utils/validators/formRules', () => ({
-  __esModule: true,
-  default:    () => ({ required: (value: any) => !value ? 'required' : undefined })
-}));
 
 const DEFAULT_AI_AGENT = 'rancher';
 
@@ -157,31 +64,17 @@ const mockValidationTool = (overrides = {}): AIAgentConfigHumanValidationTools =
 
 function requiredSetup() {
   return {
-    global: {
-      stubs: {
-        Tabbed:                   true,
-        Tab:                      true,
-        ArrayList:                true,
-        LabeledInput:             true,
-        LabeledSelect:            true,
-        Checkbox:                 true,
-        Banner:                   true,
-        TextAreaAutoGrow:         true,
-        SelectOrCreateAuthSecret: true,
-        FileSelector:             true,
-      },
-      directives: {
-        'clean-html':    jest.fn(),
-        'clean-tooltip': jest.fn()
-      },
-    }
+    directives: {
+      'clean-html':    jest.fn(),
+      'clean-tooltip': jest.fn()
+    },
   };
 }
 
 describe('AIAgentConfigs.vue', () => {
   describe('Component Initialization', () => {
     it('should render the component with default values', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -190,7 +83,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should render with empty agent list', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [] }
       });
@@ -215,7 +108,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [builtIn, custom1, custom2] }
       });
@@ -237,7 +130,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [otherBuiltIn, custom, defaultAgent] }
       });
@@ -252,7 +145,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Agent Selection and Locking', () => {
     it('should select first agent by default', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -263,7 +156,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should lock built-in agents', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -274,7 +167,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should not lock custom agents', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -298,7 +191,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -315,7 +208,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Agent Creation', () => {
     it('should add new custom agent', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -335,7 +228,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should set correct default values for new agent', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -363,7 +256,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtInAgent = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [customAgent, builtInAgent] }
       });
@@ -382,7 +275,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should hide remove button for built-in agent', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -393,7 +286,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should not remove built-in agent', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -420,7 +313,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2, builtIn] }
       });
@@ -442,7 +335,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [customAgent, builtIn] }
       });
@@ -469,7 +362,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [customAgent, builtIn] }
       });
@@ -487,7 +380,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Field Updates', () => {
     it('should update displayName', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -507,7 +400,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update description', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -527,7 +420,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update enabled status', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -547,7 +440,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update mcpURL', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -567,7 +460,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update authenticationType', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -587,7 +480,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update systemPrompt', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -611,7 +504,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Authentication Secret Management', () => {
     it('should clear secret when _none is selected', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value: [mockAgent({
@@ -633,7 +526,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should store new secret in agentSecrets when _basic is selected', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -652,7 +545,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should use selected secret directly when existing secret selected', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -667,7 +560,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should emit update:authentication-secrets event', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -683,7 +576,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should clear agentSecrets when existing secret selected', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -707,7 +600,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -729,7 +622,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -753,7 +646,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -778,7 +671,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -802,7 +695,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -820,7 +713,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('System Prompt', () => {
     it('should update system prompt from file upload', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockAgent()] }
       });
@@ -844,7 +737,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -869,7 +762,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -887,7 +780,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -906,7 +799,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -945,7 +838,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -979,7 +872,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1008,7 +901,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1036,7 +929,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1065,7 +958,7 @@ describe('AIAgentConfigs.vue', () => {
     it('should update agents list when props change', async() => {
       const agent1 = mockAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1] }
       });
@@ -1110,7 +1003,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1140,7 +1033,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1168,7 +1061,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Tab Integration', () => {
     it('should emit addTab event when adding agent', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [mockBuiltInAgent()] }
       });
@@ -1184,7 +1077,7 @@ describe('AIAgentConfigs.vue', () => {
       const agent = mockAgent();
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent, builtIn] }
       });
@@ -1210,7 +1103,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2] }
       });
@@ -1232,7 +1125,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -1250,7 +1143,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent] }
       });
@@ -1280,7 +1173,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: { value: [agent1, agent2, agent3] }
       });
@@ -1298,7 +1191,7 @@ describe('AIAgentConfigs.vue', () => {
 
   describe('Read-only Mode', () => {
     it('should render read-only banner when readOnly prop is true', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1313,7 +1206,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should not render read-only banner when readOnly prop is false', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1327,7 +1220,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should prevent adding agent when readOnly is true', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockBuiltInAgent()],
@@ -1343,7 +1236,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should allow adding agent when readOnly is false', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockBuiltInAgent()],
@@ -1367,7 +1260,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [customAgent, builtIn],
@@ -1391,7 +1284,7 @@ describe('AIAgentConfigs.vue', () => {
       });
       const builtIn = mockBuiltInAgent();
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [customAgent, builtIn],
@@ -1407,7 +1300,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should disable input fields when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1426,7 +1319,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should disable checkbox fields when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1446,7 +1339,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should disable ArrayList when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value: [mockAgent({
@@ -1473,7 +1366,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should disable TextAreaAutoGrow when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value: [mockAgent({
@@ -1498,7 +1391,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should hide SelectOrCreateAuthSecret when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value: [mockAgent({
@@ -1520,7 +1413,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should hide FileSelector when readOnly is true', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1536,7 +1429,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should accept readOnly true without errors', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1548,7 +1441,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should accept readOnly false without errors', () => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1560,7 +1453,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should update readOnlyBanner when readOnly prop changes', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [mockAgent()],
@@ -1600,7 +1493,7 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value:    [agent1, agent2],
@@ -1615,7 +1508,7 @@ describe('AIAgentConfigs.vue', () => {
     });
 
     it('should prevent updateAuthenticationSecret when readOnly is true and BASIC auth is set', async() => {
-      const wrapper = mount(AIAgentConfigs, {
+      const wrapper = shallowMount(AIAgentConfigs, {
         ...requiredSetup(),
         props: {
           value: [mockAgent({

@@ -1,19 +1,11 @@
-import { mount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 import Settings from '../Settings.vue';
 import { SECRET } from '@shell/config/types';
 import { AGENT_NAMESPACE, AGENT_CONFIG_SECRET_NAME, AGENT_NAME } from '../../../product';
 import { Settings as SettingsEnum, AIAgentConfigAuthType } from '../types';
 import { AIAgentConfigCRD } from '../../../types';
 
-// Mock components
-jest.mock('../SettingsRow.vue', () => ({
-  default: {
-    name:     'SettingsRow',
-    template: '<div class="settings-row"><slot /></div>',
-    props:    ['title', 'description']
-  }
-}));
-
+// Mock components with external dependencies
 jest.mock('../sections/AIAgentSettings.vue', () => ({
   default: {
     name:     'AIAgentSettings',
@@ -23,47 +15,10 @@ jest.mock('../sections/AIAgentSettings.vue', () => ({
   }
 }));
 
-jest.mock('../sections/AIAgentConfigs.vue', () => ({
-  default: {
-    name:     'AIAgentConfigs',
-    template: '<div class="ai-agent-configs"><slot /></div>',
-    props:    ['value'],
-    emits:    ['update:value', 'update:authentication-secrets', 'update:validation-error']
-  }
-}));
-
-jest.mock('@shell/components/AsyncButton.vue', () => ({
-  default: {
-    name:     'AsyncButton',
-    template: '<button class="async-button" @click="$emit(\'click\')">{{ actionLabel }}</button>',
-    props:    ['actionLabel', 'disabled'],
-    emits:    ['click']
-  }
-}));
-
-jest.mock('@shell/components/Loading.vue', () => ({
-  default: {
-    name:     'Loading',
-    template: '<div class="loading">Loading...</div>'
-  }
-}));
-
 jest.mock('dayjs', () => ({
   __esModule: true,
   default:    () => ({ toISOString: () => '2026-01-01T00:00:00.000Z' })
 }));
-
-jest.mock('@shell/utils/crypto', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports, no-undef
-  const b64 = require('buffer');
-
-  return {
-    base64Encode: (value: string) => b64.Buffer.from(value).toString('base64'),
-    base64Decode: (value: string) => b64.Buffer.from(value, 'base64').toString()
-  };
-});
-
-jest.mock('@shell/composables/useI18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 
 jest.mock('vuex', () => {
   const actual = jest.requireActual('vuex');
@@ -160,18 +115,11 @@ const initSettings = (options: any = {}) => {
   (useStore as jest.Mock).mockReturnValue(storeMock);
 
   return {
-    props:  options.props || {},
-    global: {
+    props:   options.props || {},
+    global:  {
       mocks: {
         ...mocks,
         $store: storeMock
-      },
-      stubs: {
-        SettingsRow:     true,
-        AIAgentSettings: true,
-        AIAgentConfigs:  true,
-        AsyncButton:     true,
-        Loading:         true
       }
     }
   };
@@ -184,13 +132,13 @@ describe('Settings.vue', () => {
 
   describe('Component Initialization', () => {
     it('should render the component', () => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
 
       expect(wrapper.exists()).toBe(true);
     });
 
     it('should initialize all required data properties', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
 
       await wrapper.vm.$nextTick();
 
@@ -230,7 +178,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -239,13 +187,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -256,7 +197,7 @@ describe('Settings.vue', () => {
     });
 
     it('should not redirect when user can list secrets', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
 
       await wrapper.vm.$nextTick();
 
@@ -281,7 +222,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await wrapper.vm.$nextTick();
 
@@ -300,7 +241,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -323,7 +264,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await wrapper.vm.$nextTick();
 
@@ -347,7 +288,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await wrapper.vm.$nextTick();
 
@@ -366,7 +307,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await wrapper.vm.$nextTick();
 
@@ -400,7 +341,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
 
       await wrapper.vm.$nextTick();
 
@@ -424,7 +365,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       vm.aiAgentSettings = { [SettingsEnum.MODEL]: 'gpt-4' };
@@ -450,7 +391,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       vm.aiAgentSettings = { [SettingsEnum.MODEL]: 'gpt-4' };
@@ -481,7 +422,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       // The vm should have redeployAiAgent method
@@ -509,7 +450,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       await expect(vm.redeployAiAgent()).resolves.not.toThrow();
@@ -518,7 +459,7 @@ describe('Settings.vue', () => {
 
   describe('Data Binding', () => {
     it('should update aiAgentSettings when modified', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
       const vm = wrapper.vm as any;
 
       const newSettings = { [SettingsEnum.MODEL]: 'gpt-4o' };
@@ -529,7 +470,7 @@ describe('Settings.vue', () => {
     });
 
     it('should update aiAgentConfigCRDs when modified', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
       const vm = wrapper.vm as any;
 
       const newCRDs = [mockAiAgentConfigCRD()];
@@ -540,7 +481,7 @@ describe('Settings.vue', () => {
     });
 
     it('should update authenticationSecrets when modified', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
       const vm = wrapper.vm as any;
 
       const secrets = {
@@ -557,7 +498,7 @@ describe('Settings.vue', () => {
     });
 
     it('should track validation errors', async() => {
-      const wrapper = mount(Settings, initSettings());
+      const wrapper = shallowMount(Settings, initSettings());
       const vm = wrapper.vm as any;
 
       expect(vm.hasErrors).toBe(false);
@@ -579,7 +520,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      mount(Settings, initSettings({ dispatch }));
+      shallowMount(Settings, initSettings({ dispatch }));
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(dispatch).toHaveBeenCalledWith(expect.stringContaining('management/find'), expect.anything());
@@ -597,7 +538,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      mount(Settings, initSettings({ dispatch }));
+      shallowMount(Settings, initSettings({ dispatch }));
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(dispatch).toHaveBeenCalledWith(expect.stringContaining('management/findAll'), expect.anything());
@@ -618,7 +559,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       vm.aiAgentSettings = { [SettingsEnum.MODEL]: 'gpt-4' };
@@ -642,7 +583,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       const callback = jest.fn();
@@ -670,7 +611,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -679,13 +620,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -713,7 +647,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -722,13 +656,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -759,7 +686,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -768,13 +695,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -806,7 +726,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -815,13 +735,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -858,7 +771,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -867,13 +780,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -911,7 +817,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -920,13 +826,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -952,7 +851,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -961,13 +860,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -990,7 +882,7 @@ describe('Settings.vue', () => {
         return Promise.resolve(null);
       });
 
-      const wrapper = mount(Settings, initSettings({ dispatch }));
+      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
       const vm = wrapper.vm as any;
 
       vm.hasErrors = true;
@@ -1029,7 +921,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -1038,13 +930,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
@@ -1089,7 +974,7 @@ describe('Settings.vue', () => {
 
       (useStore as jest.Mock).mockReturnValue(store);
 
-      const wrapper = mount(Settings, {
+      const wrapper = shallowMount(Settings, {
         global: {
           mocks: {
             $store: store,
@@ -1098,13 +983,6 @@ describe('Settings.vue', () => {
               name:  { endsWith: () => false }
             }
           },
-          stubs: {
-            SettingsRow:     true,
-            AIAgentSettings: true,
-            AIAgentConfigs:  true,
-            AsyncButton:     true,
-            Loading:         true
-          }
         }
       });
 
