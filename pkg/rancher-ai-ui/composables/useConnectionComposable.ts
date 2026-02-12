@@ -14,16 +14,17 @@ import { ConnectionPhase } from '../types';
  * @returns Composable for managing the AI connection state.
  */
 export function useConnectionComposable(options: {
-  onopen: (event: { target: WebSocket }) => void // eslint-disable-line no-unused-vars
-  onmessage: (event: MessageEvent) => Promise<void>, // eslint-disable-line no-unused-vars
+  onopen?: (event: { target: WebSocket }) => void // eslint-disable-line no-unused-vars
+  onmessage?: (event: MessageEvent) => Promise<void>, // eslint-disable-line no-unused-vars
   onclose?: (event: CloseEvent) => void, // eslint-disable-line no-unused-vars
-}) {
+} = {}) {
   const store = useStore();
 
-  const ws = computed(() => store.getters['rancher-ai-ui/connection/ws']);
-  const phase = ref<ConnectionPhase>(ConnectionPhase.Idle); // Not handled at the moment
+  const ws = computed(() => store.state['rancher-ai-ui/connection'].ws);
+  const phase = computed(() => store.getters['rancher-ai-ui/connection/phase']);
   const error = computed(() => store.getters['rancher-ai-ui/connection/error']);
 
+  // const baseUrl = `ws://localhost:8000/${ AGENT_WS_API_PATH }`;
   const baseUrl = `wss://${ window.location.host }/api/v1/namespaces/${ AGENT_NAMESPACE }/services/http:${ AGENT_NAME }:80/proxy/${ AGENT_WS_API_PATH }`;
 
   async function connect(chatId?: string | null) {
@@ -35,18 +36,18 @@ export function useConnectionComposable(options: {
       url,
       onopen,
       onmessage,
-      onclose: onclose || (() => {
-        store.commit('rancher-ai-ui/connection/setError', { key: 'ai.error.websocket.disconnected' });
-      })
+      onclose,
     });
+
+    setPhase(ConnectionPhase.Idle);
   }
 
-  function disconnect(args: { showError?: boolean } = { showError: true }) {
-    if (args && args.showError !== undefined && !options.onclose && !args.showError) {
-      ws.value.onclose = null;
-    }
+  function disconnect(args: { retry?: boolean, showError?: boolean } = { retry: false, showError: true }) {
+    store.commit('rancher-ai-ui/connection/close', args);
+  }
 
-    store.commit('rancher-ai-ui/connection/close');
+  function setPhase(phase: ConnectionPhase) {
+    store.commit('rancher-ai-ui/connection/setPhase', phase);
   }
 
   return {
@@ -54,6 +55,7 @@ export function useConnectionComposable(options: {
     phase,
     error,
     connect,
-    disconnect
+    disconnect,
+    setPhase
   };
 }

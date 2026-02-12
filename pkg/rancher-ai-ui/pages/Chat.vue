@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
 import {
-  onMounted, onBeforeUnmount, computed, nextTick, ref
+  onMounted, onBeforeUnmount, computed, nextTick, ref,
+  watch
 } from 'vue';
 import { PRODUCT_NAME } from '../product';
 import { HistoryChat, MessagePhase } from '../types';
@@ -26,7 +27,7 @@ import Chat from '../handlers/chat';
 const CHAT_ID = 'default';
 const store = useStore();
 
-const { llmConfig, error: aiServiceError } = useAIServiceComposable();
+const { deployState, llmConfig, error: aiServiceError } = useAIServiceComposable();
 
 const {
   agents,
@@ -60,10 +61,15 @@ const {
   ws,
   connect,
   disconnect,
+  setPhase,
+  phase: connectionPhase,
   error: wsError
 } = useConnectionComposable({
   onopen,
   onmessage,
+  onclose: async (event) => {
+    console.log('WebSocket closed', event);
+  }
 });
 
 const { context } = useContextComposable();
@@ -114,7 +120,7 @@ async function loadChat(chatId: string | null) {
   }
 
   resetChatError();
-  disconnect({ showError: false });
+  disconnect();
   loadMessages(chatId ? await fetchMessages(chatId) : []);
   nextTick(() => {
     store.commit('rancher-ai-ui/chat/setMetadata', { activeChatId: chatId });
@@ -165,6 +171,17 @@ function unmount() {
   }
   restore();
 }
+
+watch(() => deployState.value, (newState, oldState) => {
+  console.log('--- Deployment state changed', { newState, oldState } , connectionPhase.value);
+  if (newState && oldState && newState === 'active' && oldState !== 'active') {
+    const chatId = store.getters['rancher-ai-ui/chat/metadata']?.activeChatId;
+
+    console.log('Deployment is active, reconnecting WebSocket', { chatId });
+
+    connect(chatId);
+  }
+});
 </script>
 
 <template>
@@ -192,6 +209,7 @@ function unmount() {
         :messages="messages"
         :errors="errors"
         :message-phase="messagePhase"
+        :connection-phase="connectionPhase"
         @update:message="updateMessage"
         @confirm:message="confirmMessage($event, ws)"
         @send:message="sendMessage($event, ws)"

@@ -5,7 +5,8 @@ import {
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import {
-  Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase
+  Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase,
+  ConnectionPhase
 } from '../../types';
 import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
@@ -33,6 +34,10 @@ const props = defineProps({
     default: () => [],
   },
   messagePhase: {
+    type:    String,
+    default: '',
+  },
+  connectionPhase: {
     type:    String,
     default: '',
   }
@@ -71,7 +76,7 @@ const errorMessages = computed<FormattedMessage[]>(() => {
   }));
 });
 
-const disabled = computed(() => props.errors.length > 0);
+const disabled = computed(() => props.errors.length > 0 || props.connectionPhase !== ConnectionPhase.Idle);
 
 function getMessageTemplate(component: MessageTemplateComponent) {
   switch (component) {
@@ -206,6 +211,14 @@ onBeforeUnmount(() => {
         'sticky-bottom': formattedMessages.filter((m: Message) => m.role === Role.User).length > 0
       }"
       :phase="messagePhase"
+    />
+    <Processing
+      class="chat-message-processing-label text-label"
+      :class="{
+        /* It avoids pushing the System messages up (Welcome template) */
+        'sticky-bottom': formattedMessages.filter((m: Message) => m.role === Role.User).length > 0
+      }"
+      :phase="connectionPhase"
     />
     <ScrollButton
       v-if="fastScrollEnabled && !disabled"

@@ -18,11 +18,12 @@ import {
   SettingsFormData, Settings, Workload, AiAgentConfigSecretPayload, AIAgentConfigAuthType,
   SettingsPermissions
 } from './types';
-import { AIAgentConfigCRD, RANCHER_AI_SCHEMA } from '../../types';
+import { AIAgentConfigCRD, ConnectionPhase, RANCHER_AI_SCHEMA } from '../../types';
 import { AI_AGENT_LABELS } from '../../labels-annotations';
 import SettingsRow from './SettingsRow.vue';
 import AIAgentConfigs from './sections/AIAgentConfigs.vue';
 import AIAgentSettings from './sections/AIAgentSettings.vue';
+import { useConnectionComposable } from '../../composables/useConnectionComposable';
 
 /**
  * Settings page for configuring Rancher AI assistant.
@@ -30,6 +31,11 @@ import AIAgentSettings from './sections/AIAgentSettings.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
+
+const {
+  setPhase,
+  disconnect,
+} = useConnectionComposable();
 
 const aiAgentSettings = ref<SettingsFormData | null>(null);
 const aiAgentConfigCRDs = ref<AIAgentConfigCRD[] | null>(null);
@@ -283,6 +289,9 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
 
       // Redeploy the rancher-ai-agent deployment after save
       await redeployAiAgent();
+
+      disconnect({ retry: true, showError: false });
+      setPhase(ConnectionPhase.Reconnecting);
     }
 
     btnCB(true);

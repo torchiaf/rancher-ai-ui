@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { base64Decode } from '@shell/utils/crypto';
@@ -21,6 +21,12 @@ export function useAIServiceComposable() {
 
   const llmConfig = ref<LLMConfig | null>(null);
   const error = ref<ChatError | null>(null);
+
+  const deployState = computed(() => {
+    const d =  store.state['management'].types[WORKLOAD_TYPES.DEPLOYMENT].list.find((item: any) => item.metadata.name === AGENT_NAME && item.metadata.namespace === AGENT_NAMESPACE);
+   
+    return d.state;
+  });
 
   function decodeLLM(ACTIVE_LLM: string): string {
     try {
@@ -103,6 +109,8 @@ export function useAIServiceComposable() {
           id:   `${ AGENT_NAMESPACE }/${ AGENT_NAME }`
         });
 
+        console.log('Fetched agent deployment:', store.state);
+
         if (agent && agent.state !== 'active') {
           error.value = {
             key:    'ai.error.services.deployment.notActive',
@@ -175,6 +183,7 @@ export function useAIServiceComposable() {
   });
 
   return {
+    deployState,
     llmConfig,
     error
   };

@@ -1,6 +1,6 @@
 import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
-import { ConnectionError, ConnectionParams } from '../types';
+import { ConnectionError, ConnectionParams, ConnectionPhase } from '../types';
 
 /**
  * Manages the state of WebSocket connections within the Rancher AI UI.
@@ -8,11 +8,13 @@ import { ConnectionError, ConnectionParams } from '../types';
 
 interface State {
   ws: WebSocket | null;
+  phase: ConnectionPhase;
   error: ConnectionError | null;
 }
 
 const getters = {
   ws:    (state: State) => state.ws,
+  phase: (state: State) => state.phase,
   error: (state: State) => state.error,
 };
 
@@ -23,13 +25,22 @@ const mutations = {
     }
     state.ws = ws;
   },
+  setPhase(state: State, phase: ConnectionPhase) {
+    state.phase = phase;
+  },
   send(state: State, message: string) {
     if (state.ws) {
       state.ws.send(message);
     }
   },
-  close(state: State) {
+  close(state: State, args: { retry?: boolean, showError?: boolean } = { retry: false, showError: true }) {
+    const { retry, showError } = args;
+
+    console.log('Closing WebSocket connection', { retry, showError });
+
     if (state.ws) {
+      // (state.ws as any)._isManualClose = !retry;
+      // (state.ws as any)._retry = retry;
       state.ws.close();
     }
     state.ws = null;
@@ -41,6 +52,9 @@ const mutations = {
 
 const actions = {
   async open({ commit, state }: { commit: Function, state: State }, params: ConnectionParams) {
+    
+    console.log('Attempting to open WebSocket connection', state.ws);
+    
     if (state.ws) {
       return;
     }
@@ -85,6 +99,7 @@ const factory = (): CoreStoreSpecifics => {
     state: (): State => {
       return {
         ws:    null,
+        phase: ConnectionPhase.Idle,
         error: null
       };
     },

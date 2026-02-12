@@ -94,6 +94,7 @@ export const enum MessagePhase {
 export const enum ConnectionPhase {
   Idle = 'idle',
   Connecting = 'connecting',
+  Reconnecting = 'reconnecting',
   Connected = 'connected',
   Disconnected = 'disconnected'
 }
