@@ -10,24 +10,36 @@ type ToggleGroupItem = {
 
 const modelValue = defineModel<string>();
 
-defineProps < { items: ToggleGroupItem[]}>();
+const props = defineProps<{
+  items: ToggleGroupItem[],
+  disabled?: boolean,
+}>();
 
 const update = (value: string) => {
+  if (props.disabled) {
+    return;
+  }
+
   modelValue.value = value;
 };
 
 </script>
 
 <template>
-  <div class="toggle-group">
+  <div
+    class="toggle-group"
+    data-testid="rancher-ai-ui-toggle-group"
+  >
     <template
-      v-for="item in items"
+      v-for="item in props.items"
       :key="item.name"
     >
       <rc-button
         ghost
         class="toggle-group-item"
         :class="{ active: modelValue === item.value }"
+        :disabled="props.disabled && modelValue !== item.value"
+        :data-testid="`rancher-ai-ui-toggle-group-item-${item.value}`"
         @click="update(item.value)"
       >
         <i :class="['icon', 'icon-2x', item.icon]" />
@@ -61,11 +73,14 @@ button {
     gap: 0.75rem;
 
     min-width: 16rem;
-    padding: 14px 0;
     border: 2px solid var(--input-border);
     border-radius: 0.5rem;
     background: var(--body-bg);
     line-height: initial;
+
+    &.btn-medium {
+      padding: 14px 0;
+    }
   }
 
   &.active {

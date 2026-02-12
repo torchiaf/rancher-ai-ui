@@ -57,7 +57,6 @@ const isOpen = ref(false);
 <template>
   <div class="chat-console-menu-container">
     <rc-dropdown
-      class="menu-dropdown"
       placement="top-end"
       @update:open="isOpen = $event"
     >

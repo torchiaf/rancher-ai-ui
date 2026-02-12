@@ -1,5 +1,6 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import ChatPo from '@/cypress/e2e/po/chat.po';
+import TooltipPo from './components/tooltip.po';
 
 export class HistoryChatItemMenuActionPo extends ComponentPo {
   constructor(actionId: string) {
@@ -46,7 +47,7 @@ export class HistoryChatItemPo extends ComponentPo {
   }
 
   tooltip() {
-    return cy.get('.v-popper__popper .v-popper__inner');
+    return new TooltipPo();
   }
 
   menu() {
