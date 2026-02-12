@@ -24,6 +24,10 @@ const store = useStore();
 const { t } = useI18n(store);
 
 const props = defineProps({
+  activeChatId: {
+    type:    String,
+    default: '',
+  },
   messages: {
     type:    Array as PropType<Message[]>,
     default: () => [],
@@ -104,6 +108,19 @@ function scrollToBottom() {
 
   messagesView.value.scrollTop = messagesView.value.scrollHeight;
 }
+
+// Watch activeChatId to handle auto-scroll and scroll button visibility when switching between chats
+watch(
+  () => props.activeChatId,
+  (newVal, oldVal) => {
+    if (oldVal && newVal !== oldVal) {
+      nextTick(() => {
+        handleScroll();
+        scrollToBottom();
+      });
+    }
+  }
+);
 
 // Watch both messages and messagePhase to handle auto-scroll when new messages arrive or phase changes
 watch(

@@ -189,6 +189,7 @@ function unmount() {
         @toggle:history="toggleHistoryPanel"
       />
       <Messages
+        :active-chat-id="activeChatId"
         :messages="messages"
         :errors="errors"
         :message-phase="messagePhase"
