@@ -291,7 +291,7 @@ function unmount() {
     />
     <div
       class="chat-panel"
-      :data-testid="`rancher-ai-ui-chat-panel-${ isChatInitialized ? 'ready' : 'not-ready' }`"
+      :data-testid="`rancher-ai-ui-chat-panel-${ isChatInitialized && ws?.readyState === 1 ? 'ready' : 'not-ready' }`"
     >
       <Header
         :disabled="disabled"
