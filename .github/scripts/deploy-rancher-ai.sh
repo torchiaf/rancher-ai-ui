@@ -6,6 +6,17 @@
 
 KUBECONFIG_PATH=$1
 
+if [ -z "$2" ]; then
+  WAIT_FOR_AI_SERVICE_READY=true
+else
+  WAIT_FOR_AI_SERVICE_READY=$2
+fi
+
+HELM_WAIT_FLAGS=""
+if [ "$WAIT_FOR_AI_SERVICE_READY" = "true" ]; then
+  HELM_WAIT_FLAGS="--wait --timeout 2m"
+fi
+
 if [ -z "$KUBECONFIG_PATH" ]; then
   echo "ERROR: kubeconfig path required (arg or KUBECONFIG env)"
   usage
@@ -58,7 +69,9 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --set llmMock.url=http://llm-mock \
   --set insecureSkipTls=true \
   --set log.level=debug \
-  --wait --timeout 2m
+  $HELM_WAIT_FLAGS
 
-kubectl -n cattle-ai-agent-system rollout status deployment/rancher-ai-agent --timeout=2m
-kubectl -n cattle-ai-agent-system wait --for=condition=available --timeout=2m deployment/rancher-ai-agent
+if [ "$WAIT_FOR_AI_SERVICE_READY" = "true" ]; then
+  kubectl -n cattle-ai-agent-system rollout status deployment/rancher-ai-agent --timeout=2m
+  kubectl -n cattle-ai-agent-system wait --for=condition=available --timeout=2m deployment/rancher-ai-agent
+fi
