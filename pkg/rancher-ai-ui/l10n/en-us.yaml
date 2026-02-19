@@ -159,7 +159,7 @@ ai:
         missingConfig: Rancher AI Agent configuration is missing. Please go to Global [Settings > AI Assistant] and configure the agent.
       deployment:
         noPermission: You do not have permission to access the Rancher AI Agent. Please contact your administrator.
-        notFound: Rancher AI Agent not found. Please ensure the Rancher AI chart is installed.
+        notFound: Rancher AI Agent pod not found. Please ensure the Rancher AI assistant services are correctly installed.
     agent:
       unavailable:
         label: 'This AI agent is currently unavailable.<br>{message}'
