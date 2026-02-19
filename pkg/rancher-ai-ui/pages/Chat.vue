@@ -189,6 +189,7 @@ function unmount() {
         @toggle:history="toggleHistoryPanel"
       />
       <Messages
+        :active-chat-id="activeChatId"
         :messages="messages"
         :errors="errors"
         :message-phase="messagePhase"
@@ -230,6 +231,11 @@ function unmount() {
   height: calc(100vh - 55px);
   position: relative;
   z-index: 20;
+
+  :deep(.disabled-panel) {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .chat-panel {
@@ -258,12 +264,5 @@ function unmount() {
     background: var(--primary);
     opacity: 1;
   }
-}
-</style>
-
-<style lang='scss'>
-.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
 </style>
