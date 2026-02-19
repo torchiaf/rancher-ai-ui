@@ -93,6 +93,8 @@ const agents = computed(() => {
   ];
 });
 
+const availableAgentsCount = computed(() => agents.value.filter((c) => c.spec.enabled && !c.stateDescription).length);
+
 const selectedAgentName = ref(agents.value[0]?.metadata?.name || '');
 const selectedAgent = computed(() => agents.value.find((a) => a.metadata?.name === selectedAgentName.value) || agents.value[0]);
 const isAgentLocked = computed(() => selectedAgent.value?.spec.builtIn);
@@ -150,34 +152,6 @@ const validationErrors = computed(() => {
 
     return acc;
   }, {} as Record<string, boolean>);
-});
-
-const adaptiveModeBanner = computed(() => {
-  if (props.readOnly) {
-    return null;
-  }
-
-  const show = agents.value.filter((c: AIAgentConfigCRD) => c.spec.enabled && !c.stateDescription).length > 1;
-
-  if (show) {
-    return {
-      color: 'info',
-      label: t('aiConfig.form.section.aiAgent.adaptiveModeBanner.label', {}, true)
-    };
-  }
-
-  return null;
-});
-
-const readOnlyBanner = computed(() => {
-  if (props.readOnly) {
-    return {
-      color: 'warning',
-      label: t('aiConfig.form.section.aiAgent.noPermission.edit')
-    };
-  }
-
-  return null;
 });
 
 function getAgentErrorMessage(agent: AIAgentConfigCRD) {
@@ -357,22 +331,33 @@ watch(validationErrors, (errors) => {
 
 <template>
   <div class="ai-agent-container">
-    <div v-if="adaptiveModeBanner">
+    <div v-if="availableAgentsCount === 0">
       <Banner
         class="m-0"
-        :color="adaptiveModeBanner.color"
+        :color="'error'"
       >
         <span
-          v-clean-html="adaptiveModeBanner.label"
+          v-clean-html="t('aiConfig.form.section.aiAgent.allAgentsFailedBanner', {}, true)"
         />
       </Banner>
     </div>
 
-    <div v-if="readOnlyBanner">
+    <div v-if="!props.readOnly && availableAgentsCount > 1">
       <Banner
         class="m-0"
-        :color="readOnlyBanner.color"
-        :label="readOnlyBanner.label"
+        :color="'info'"
+      >
+        <span
+          v-clean-html="t('aiConfig.form.section.aiAgent.adaptiveModeBanner', {}, true)"
+        />
+      </Banner>
+    </div>
+
+    <div v-if="props.readOnly">
+      <Banner
+        class="m-0"
+        :color="'warning'"
+        :label="t('aiConfig.form.section.aiAgent.noPermission.edit')"
       />
     </div>
 
