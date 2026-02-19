@@ -138,6 +138,39 @@ describe('Multi Agent Chat', () => {
     cy.deleteAgentConfig(invalidAgentConfig);
   });
 
+  it('It should not show the adaptive agent selection when only one agent is enabled and active', () => {
+    cy.updateAgentConfig({
+      ...harvesterAgentConfig,
+      spec: { mcpURL: 'invalid-mcp' }
+    });
+
+    chat.console().selectAgent().checkExists();
+
+    const selectAgent = chat.console().selectAgent();
+
+    selectAgent.open();
+
+    // Verify that the adaptive agent selection option is not shown when only one agent is available (Rancher)
+    selectAgent.self().should('not.contain', 'Adaptive Agent Selection');
+
+    // Verify that the only available agent is the rancher agent and it is selected
+    const harvesterAgent = selectAgent.agentItem('rancher');
+
+    harvesterAgent.checkSelected();
+
+    // Restore the harvester agent config to have 2 active agents
+    cy.updateAgentConfig(harvesterAgentConfig);
+
+    // Verify that the adaptive agent selection option is shown again and is selected by default
+    selectAgent.self().contains('Adaptive Agent Selection');
+
+    selectAgent.open();
+
+    const adaptiveOption = selectAgent.agentItem('__adaptive__');
+
+    adaptiveOption.checkSelected();
+  });
+
   it('It should show an error message if all enabled agents are not available', () => {
     // Delete custom agent
     cy.deleteAgentConfig(harvesterAgentConfig);

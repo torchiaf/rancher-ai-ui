@@ -14,6 +14,6 @@ export default class TabbedPo extends DefaultTabbedPo {
   }
 
   assertTabHasLabelIcon(selector: string, iconName: string) {
-    return this.self().find(`${ selector } > a > .tab-label-icon.${ iconName }`).should('exist');
+    return this.self().find(`${ selector } > a > .conditions-alert-icon.${ iconName }`).should('exist');
   }
 }

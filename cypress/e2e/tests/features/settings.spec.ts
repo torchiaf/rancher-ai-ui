@@ -121,7 +121,7 @@ describe('AI Assistant Configuration', () => {
       settingsPage.settings().saveButton().click();
 
       // Check that the new agent tab is showing error status due to invalid MCP URL
-      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-endpoints_disconnected');
+      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-error');
 
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
@@ -131,7 +131,7 @@ describe('AI Assistant Configuration', () => {
       aiAgentConfigs.mcpUrlInput().value().should('eq', 'http://my-mcp-url:8080');
 
       // Check that the new agent tab is showing error status due to invalid MCP URL
-      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-endpoints_disconnected');
+      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-error');
 
       // Remove the custom AI Agent
       aiAgentConfigs.tabs().removeTab();
