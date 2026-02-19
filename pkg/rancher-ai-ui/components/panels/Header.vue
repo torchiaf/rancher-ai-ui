@@ -53,7 +53,7 @@ function toggleHistory() {
             @keydown.space.enter.stop="toggleHistory"
           >
             <i
-              class="icon icon-menu"
+              :class="props.disabled ? 'icon icon-ai' : 'icon icon-menu'"
             />
           </RcButton>
         </div>
@@ -146,7 +146,7 @@ function toggleHistory() {
   margin: 0 !important;
 }
 
-.icon-close, .icon-menu {
+.icon {
   width: 32px;
 }
 </style>
