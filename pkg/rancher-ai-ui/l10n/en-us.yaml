@@ -360,3 +360,11 @@ aiConfig:
     AWS_BEARER_TOKEN_BEDROCK:
       label: AWS Bedrock Bearer Token
       description: (Optional) The bearer token to authenticate requests to AWS Bedrock
+  dialog:
+    applySettings:
+      title: Are you sure?
+      cancel: Cancel
+      confirm: Confirm
+      warning:
+        unknownStorage: 'If the AI Agent is using in-memory storage, <b>all messages might be lost</b> after applying the new settings.<br>Do you want to continue?'
+        inMemory: 'The AI agent is using in-memory storage, <b>all messages will be lost</b> after applying the new settings.<br>Do you want to continue?'

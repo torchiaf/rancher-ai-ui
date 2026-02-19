@@ -7,8 +7,8 @@ import ExtensionsPagePo from '@rancher/cypress/e2e/po/pages/extensions.po';
 import ProductNavPo from '@rancher/cypress/e2e/po/side-bars/product-side-nav.po';
 import { SettingsPagePo as GlobalSettings } from '@rancher/cypress/e2e/po/pages/global-settings/settings.po';
 import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
-
 import ChatPo from '@/cypress/e2e/po/chat.po';
+import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 
 describe('Chat', () => {
   const chat = new ChatPo();
@@ -121,6 +121,8 @@ describe('Chat', () => {
 
       settingsPage.settings().saveButton().click();
 
+      new ApplySettingsPromptPo().confirm();
+
       // Check for the reconnecting phase
       chat.isNotReady();
       chat.phase('Reconnecting').should('be.visible');
@@ -173,6 +175,8 @@ describe('Chat', () => {
 
       settingsPage.settings().saveButton().click();
 
+      new ApplySettingsPromptPo().confirm();
+
       // Check for the reconnecting phase
       chat.isNotReady();
       chat.phase('Reconnecting').should('be.visible');
@@ -216,7 +220,7 @@ describe('Chat', () => {
       chat.isNotReady();
       chat.phase('Disconnected').should('be.visible');
 
-      chat.getErrorMessage(1).containsText('Rancher AI Agent not found. Please ensure the Rancher AI chart is installed.');
+      chat.getErrorMessage(1).containsText('Rancher AI Agent pod not found. Please ensure the Rancher AI assistant services are correctly installed.');
 
       // Check for the reconnecting phase
       chat.isNotReady();
