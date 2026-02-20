@@ -388,7 +388,7 @@ onMounted(() => {
         @update:value="aiAgentSettings = $event"
       />
       <Banner
-        v-else
+        v-else-if="!permissions?.list.canListSecrets"
         class="m-0"
         color="warning"
         :label="t('aiConfig.form.section.provider.noPermission.list')"
@@ -409,7 +409,7 @@ onMounted(() => {
         @update:validation-error="hasErrors = $event"
       />
       <Banner
-        v-else
+        v-else-if="!permissions?.list.canListAiAgentCRDS"
         class="m-0"
         color="warning"
         :label="t('aiConfig.form.section.aiAgent.noPermission.list')"
