@@ -311,6 +311,10 @@ export interface HistoryChatMessage {
   createdAt: string;
 }
 
+export interface AgentSettings {
+  storageType: StorageType;
+}
+
 export interface LLMConfig {
   id?: string;
   name: string;

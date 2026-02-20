@@ -13,7 +13,7 @@ import { useChatMessageComposable } from '../composables/useChatMessageComposabl
 import { useContextComposable } from '../composables/useContextComposable';
 import { useHeaderComposable } from '../composables/useHeaderComposable';
 import { useAIServiceComposable } from '../composables/useAIServiceComposable';
-import { useChatHistoryComposable } from '../composables/useChatHistoryComposable';
+import { useChatApiComposable } from '../composables/useChatApiComposable';
 import { useAgentComposable } from '../composables/useAgentComposable';
 import Header from '../components/panels/Header.vue';
 import Messages from '../components/panels/Messages.vue';
@@ -64,7 +64,7 @@ const {
   fetchMessages,
   updateChat: updateHistoryChat,
   deleteChat: deleteHistoryChat,
-} = useChatHistoryComposable(agents);
+} = useChatApiComposable(agents);
 
 const {
   ws,
