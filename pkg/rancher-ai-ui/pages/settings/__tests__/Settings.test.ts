@@ -24,6 +24,9 @@ jest.mock('vuex', () => {
 });
 jest.mock('@shell/apis', () => ({ useShell: jest.fn(() => ({ modal: { open: jest.fn() } })) }));
 
+// Mock global fetch for all tests
+globalThis.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve() })) as jest.Mock;
+
 jest.mock('../../../utils/log', () => ({ warn: jest.fn() }));
 
 const mockSecret = (overrides = {}) => ({
@@ -627,7 +630,8 @@ describe('Settings.vue', () => {
       vm.aiAgentSettings = { [SettingsEnum.MODEL]: 'gpt-4' };
       const callback = jest.fn();
 
-      vm.openApplySettingsDialog(callback);
+      await vm.openApplySettingsDialog(callback);
+
       await capturedOnConfirm();
 
       expect(secret.save).toHaveBeenCalled();

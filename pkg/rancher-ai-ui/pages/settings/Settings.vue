@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import {
   ref, onBeforeMount,
   onMounted,
-  computed
 } from 'vue';
 import { useStore } from 'vuex';
 import { useShell } from '@shell/apis';
@@ -20,12 +19,13 @@ import {
   SettingsFormData, Settings, Workload, AiAgentConfigSecretPayload, AIAgentConfigAuthType,
   SettingsPermissions
 } from './types';
-import { AIAgentConfigCRD, RANCHER_AI_SCHEMA, StorageType } from '../../types';
+import { AIAgentConfigCRD, RANCHER_AI_SCHEMA } from '../../types';
 import { AI_AGENT_LABELS } from '../../labels-annotations';
 import SettingsRow from './SettingsRow.vue';
 import AIAgentConfigs from './sections/AIAgentConfigs.vue';
 import AIAgentSettings from './sections/AIAgentSettings.vue';
 import ApplySettings from '../../dialog/ApplySettingsCard.vue';
+import { useChatApiComposable } from '../../composables/useChatApiComposable';
 
 /**
  * Settings page for configuring Rancher AI assistant.
@@ -35,10 +35,11 @@ const store = useStore();
 const { t } = useI18n(store);
 const shellApi = useShell();
 
+const { fetchSettings } = useChatApiComposable();
+
 const aiAgentSettings = ref<SettingsFormData | null>(null);
 const aiAgentConfigCRDs = ref<AIAgentConfigCRD[] | null>(null);
 const authenticationSecrets = ref<Record<string, AiAgentConfigSecretPayload | null>>({});
-const storageType = computed<StorageType | undefined>(() => store.getters['rancher-ai-ui/chat/metadata']?.storageType);
 
 const permissions = ref<SettingsPermissions | null>(null);
 const hasErrors = ref<boolean>(false);
@@ -304,10 +305,12 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
   }
 };
 
-function openApplySettingsDialog(btnCB: (arg: boolean) => void) { // eslint-disable-line no-unused-vars
+async function openApplySettingsDialog(btnCB: (arg: boolean) => void) { // eslint-disable-line no-unused-vars
+  const chatSettings = await fetchSettings();
+
   shellApi.modal.open(ApplySettings, {
     props: {
-      storageType: storageType.value || '',
+      storageType: chatSettings?.storageType || '',
       onConfirm:   () => {
         buttonProps.value.successLabel = t('asyncButton.done.success');
         buttonProps.value.successColor = 'bg-success';
