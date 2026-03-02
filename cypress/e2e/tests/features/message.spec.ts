@@ -338,7 +338,9 @@ describe('Messages', () => {
     confirmationRequestMessage.cancelButton().click();
     confirmationRequestMessage.isCanceled();
     confirmationRequestMessage.containsText('Canceled');
+  });
 
+  after(() => {
     cy.clearLLMResponses();
   });
 });
