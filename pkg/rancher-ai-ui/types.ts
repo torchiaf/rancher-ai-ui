@@ -215,6 +215,7 @@ export interface Message {
   confirmation?: MessageConfirmation;
   sourceLinks?: string[];
   timestamp?: Date;
+  isError?: boolean;
 }
 
 export interface FormattedMessage extends Message {

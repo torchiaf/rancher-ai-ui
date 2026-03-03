@@ -2,7 +2,7 @@ import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
 import {
   ChatMetadata,
-  ConfirmationStatus, Message, MessageError, MessagePhase, Role
+  ConfirmationStatus, Message, MessagePhase, Role
 } from '../types';
 
 /**
@@ -18,7 +18,6 @@ interface Chat {
   agentName?: string;
   messages: Record<string, Message>;
   phase?: MessagePhase;
-  error?: MessageError | null;
 }
 
 interface State {
@@ -70,9 +69,6 @@ const getters = {
 
     return MessagePhase.Idle;
   },
-  error: (state: State) => (chatId: string) => {
-    return state.chats[chatId]?.error || null;
-  }
 };
 
 const mutations = {
@@ -188,16 +184,6 @@ const mutations = {
 
     state.chats[chatId].phase = phase;
   },
-
-  setError(state: State, args: { chatId: string; error: MessageError | null }) {
-    const { chatId, error } = args;
-
-    if (!chatId || !state.chats[chatId]) {
-      return;
-    }
-
-    state.chats[chatId].error = error;
-  }
 };
 
 const actions = {

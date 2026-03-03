@@ -32,7 +32,7 @@ const props = defineProps({
     type:    Array as PropType<Message[]>,
     default: () => [],
   },
-  errors: {
+  systemErrors: {
     type:    Array as PropType<ChatError[]>,
     default: () => [],
   },
@@ -68,8 +68,8 @@ const formattedMessages = computed<FormattedMessage[]>(() => {
     .sort((a, b) => ((Number(a.timestamp) || 0) - (Number(b.timestamp) || 0)) || (`${ a.id  }`).localeCompare(`${ b.id  }`));
 });
 
-const errorMessages = computed<FormattedMessage[]>(() => {
-  return props.errors.map((error) => ({
+const systemErrorMessages = computed<FormattedMessage[]>(() => {
+  return props.systemErrors.map((error) => ({
     role:                    Role.System,
     formattedMessageContent: error.message || t(error.key as string),
     timestamp:               new Date(),
@@ -149,13 +149,13 @@ watch(
   }
 );
 
-const stopErrorWatcher = watch(
-  () => props.errors,
+const stopSystemErrorsWatcher = watch(
+  () => props.systemErrors,
   (neu, old) => {
     nextTick(() => {
       if (messagesView.value && (neu || []).length > (old || []).length) {
         messagesView.value.scrollTop = messagesView.value.scrollHeight;
-        stopErrorWatcher();
+        stopSystemErrorsWatcher();
       }
     });
   },
@@ -213,9 +213,9 @@ onBeforeUnmount(() => {
       />
     </template>
     <MessageComponent
-      v-for="(error, i) in errorMessages"
+      v-for="(error, i) in systemErrorMessages"
       :key="i"
-      :data-testid="`rancher-ai-ui-chat-error-message-box-${ i + 1 }`"
+      :data-testid="`rancher-ai-ui-chat-system-error-message-box-${ i + 1 }`"
       :message="error"
     />
     <Processing
