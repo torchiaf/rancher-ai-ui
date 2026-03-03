@@ -54,6 +54,7 @@ const {
   downloadMessages,
   loadMessages,
   selectContext,
+  clearMessageBox,
   isChatInitialized,
   phase: messagePhase,
 } = useChatMessageComposable(CHAT_ID, agents, agentName, selectAgent);
@@ -252,12 +253,31 @@ watch(() => [
   messageBox.value,
   isChatInitialized.value,
   disabled.value
-], ([
-  newMessage,
-  isChatInitialized,
-  disabled
-]) => {
-  if (!disabled && isChatInitialized && newMessage) {
+], (newValues, oldValues) => {
+  const [oldMessage, oldIsChatInitialized, oldDisabled] = oldValues || []; // eslint-disable-line no-unused-vars
+  const [newMessage, newIsChatInitialized, newDisabled] = newValues;
+
+  const isChatOpenAndNotReady = (newDisabled === true && oldDisabled === newDisabled) &&
+    (newIsChatInitialized === false && oldIsChatInitialized === newIsChatInitialized);
+
+  /**
+   * If the chat is open but not ready (e.g. waiting for AI agent deployment),
+   * clear the message box so that the message is not sent when the chat becomes ready
+   *
+   * This is false when the chat is closed and then is open with the message box already filled.
+   */
+  if (isChatOpenAndNotReady) {
+    if (newMessage) {
+      clearMessageBox();
+    }
+
+    return;
+  }
+
+  /**
+   * If the chat is ready and the message box has content, send the message
+   */
+  if (!newDisabled && newIsChatInitialized && newMessage) {
     ensureConnectionAndSendMessage(newMessage);
   }
 }, {
