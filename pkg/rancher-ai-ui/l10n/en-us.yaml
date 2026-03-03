@@ -330,10 +330,10 @@ aiConfig:
       description: The AI model to use for generating responses
     OLLAMA_MODEL:
       label: Model
-      description: 'The AI model list fetched from your Ollama instance. Make sure to add a <b>valid Ollama URL</b> to fetch the models or try to <refreshModels>refresh</refreshModels>.'
+      description: 'Make sure you provide a <b>valid Ollama URL</b> to fetch the available models. <refreshModels>Refresh now</refreshModels>'
     BEDROCK_MODEL:
       label: Model
-      description: 'The AI model list fetched from your Bedrock instance. Make sure to add a <b>valid AWS Region and Bearer Token</b> to fetch the models or try to <refreshModels>refresh</refreshModels>.'
+      description: 'Make sure you provide a <b>valid Region and Bearer Token</b> to fetch the available models. <refreshModels>Refresh now</refreshModels>'
     OLLAMA_URL:
       label: Ollama URL
       description: The URL where your Ollama instance is hosted

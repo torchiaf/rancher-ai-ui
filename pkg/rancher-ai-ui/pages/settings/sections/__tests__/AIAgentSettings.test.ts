@@ -744,5 +744,61 @@ describe('AIAgentSettings.vue', () => {
       // Error banner should exist or not exist based on validation state
       expect(errorBanners.length).toBeGreaterThanOrEqual(0);
     });
+
+    it('should display error under model field when refreshModels is clicked on Bedrock', async() => {
+      const wrapper = shallowMount(AIAgentSettings, {
+        ...requiredSetup(),
+        props: {
+          value: {
+            [Settings.ACTIVE_CHATBOT]:           ChatBotEnum.Bedrock,
+            [Settings.AWS_BEARER_TOKEN_BEDROCK]: 'aws-token',
+            [Settings.AWS_REGION]:               'us-east-1',
+            [Settings.BEDROCK_MODEL]:            'anthropic',
+          } as SettingsFormData,
+        },
+      });
+
+      const vm = wrapper.vm as any;
+
+      // Initially errorField[ChatBotEnum.Bedrock] should be empty
+      expect(vm.errorField[ChatBotEnum.Bedrock]).toStrictEqual({});
+
+      // Simulate refreshModels being called for Bedrock
+      vm.refreshModels();
+
+      // errorField should be set with BEDROCK_MODEL for Bedrock chatbot
+      expect(vm.errorField[ChatBotEnum.Bedrock][Settings.BEDROCK_MODEL]).toBe(true);
+
+      // When errorField sets BEDROCK_MODEL to true, Region and Token error fields should remain undefined
+      expect(vm.errorField[ChatBotEnum.Bedrock][Settings.AWS_REGION]).toBeUndefined();
+      expect(vm.errorField[ChatBotEnum.Bedrock][Settings.AWS_BEARER_TOKEN_BEDROCK]).toBeUndefined();
+    });
+
+    it('should display error under model field when refreshModels is clicked on Ollama', async() => {
+      const wrapper = shallowMount(AIAgentSettings, {
+        ...requiredSetup(),
+        props: {
+          value: {
+            [Settings.ACTIVE_CHATBOT]: ChatBotEnum.Local,
+            [Settings.OLLAMA_URL]:     'http://localhost:11434',
+            [Settings.OLLAMA_MODEL]:   'ollama-model',
+          } as SettingsFormData,
+        },
+      });
+
+      const vm = wrapper.vm as any;
+
+      // Initially errorField[ChatBotEnum.Local] should be empty
+      expect(vm.errorField[ChatBotEnum.Local]).toStrictEqual({});
+
+      // Simulate refreshModels being called for Ollama/Local
+      vm.refreshModels();
+
+      // errorField should be set with OLLAMA_MODEL for Local chatbot
+      expect(vm.errorField[ChatBotEnum.Local][Settings.OLLAMA_MODEL]).toBe(true);
+
+      // When errorField sets OLLAMA_MODEL to true, URL field error should remain undefined
+      expect(vm.errorField[ChatBotEnum.Local][Settings.OLLAMA_URL]).toBeUndefined();
+    });
   });
 });

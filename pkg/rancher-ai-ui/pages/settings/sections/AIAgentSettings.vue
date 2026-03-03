@@ -22,12 +22,6 @@ import { useChatApiComposable } from '../../../composables/useChatApiComposable'
 interface ModelValidationPayload {
   status?: ValidationStatus;
   message?: string;
-  touched?: boolean;
-}
-
-const enum ErrorField {
-  BedrockRegion = 'bedrock-region', // eslint-disable-line no-unused-vars
-  BedrockToken = 'bedrock-token', // eslint-disable-line no-unused-vars
 }
 
 const validators = (key: string) => formRulesGenerator(t, { key });
@@ -107,11 +101,24 @@ const modelValidation = ref([
   acc[key] = {
     status:  ValidationStatus.VALIDATING,
     message: '',
-    touched: false
   };
 
   return acc;
 }, {} as Record<ChatBotEnum, ModelValidationPayload>));
+
+/**
+ *  Chatbot providers like Bedrock require multiple fields to be filled in,
+ *  but we want to show the error message on the specific field that is missing/invalid
+ */
+const errorField = ref([
+  ChatBotEnum.Bedrock,
+  ChatBotEnum.Local,
+  ChatBotEnum.OpenAI,
+  ChatBotEnum.Gemini
+].reduce((acc, key) => ({
+  ...acc,
+  [key]: {}
+}), {} as Record<ChatBotEnum, Record<string, boolean>>));
 
 const isModelsAvailable = computed(() => {
   if (isModelsLoading.value) {
@@ -132,12 +139,6 @@ const isModelsLoading = computed(() => {
 
   return false;
 });
-
-/**
- *  Some chatbot providers like Bedrock require multiple fields to be filled in,
- *  but we want to show the error message on the specific field that is missing/invalid
- */
-const errorField = ref<ErrorField | null>(null);
 
 const isRequiredRule = (key: string) => {
   const validator = validators(t(key));
@@ -229,12 +230,10 @@ function validateSettings(updatedForm: SettingsFormData) {
 function updateModelValidation(key: ChatBotEnum, payload: ModelValidationPayload = {}) {
   const status = payload.status || modelValidation.value[key].status;
   const message = payload.message || '';
-  const touched = payload.touched ?? modelValidation.value[key].touched;
 
   modelValidation.value[key] = {
     status,
     message,
-    touched
   };
 }
 
@@ -273,7 +272,11 @@ async function fetchModels(chatbot: ChatBotEnum, options: Record<string, any> = 
         status:  ValidationStatus.ERROR,
         message: (error as Error).message || t('aiConfig.form.validation.failed', {}, true)
       });
-      if (modelValidation.value[chatbot].touched) {
+      /**
+       * If fetching models fails, we want to clear the model field value,
+       * but only if those fields are being edited (touched)
+       */
+      if (Object.keys(errorField.value[chatbot] || {}).some((v) => v)) {
         formData.value[getModelKey(chatbot)] = '';
       }
     }
@@ -292,8 +295,18 @@ async function fetchModels(chatbot: ChatBotEnum, options: Record<string, any> = 
  * Marks the model field as touched to trigger validation and then fetches the models again.
  */
 function refreshModels() {
-  updateModelValidation(formData.value[Settings.ACTIVE_CHATBOT] as ChatBotEnum, { touched: true });
-  fetchModels(formData.value[Settings.ACTIVE_CHATBOT] as ChatBotEnum);
+  const activeChatbot = formData.value[Settings.ACTIVE_CHATBOT] as ChatBotEnum;
+
+  switch (activeChatbot) {
+  case ChatBotEnum.Bedrock:
+    errorField.value[ChatBotEnum.Bedrock] = { [Settings.BEDROCK_MODEL]: true };
+    break;
+  case ChatBotEnum.Local:
+    errorField.value[ChatBotEnum.Local] = { [Settings.OLLAMA_MODEL]: true };
+    break;
+  }
+
+  fetchModels(activeChatbot);
 }
 
 /**
@@ -354,16 +367,14 @@ const updateChatbotValue = async(val: ChatBotEnum) => {
  * @param val The new Bedrock region value.
  */
 const updateBedrockRegion = debounce((val: string) => {
-  errorField.value = ErrorField.BedrockRegion;
+  // We don't want to show the error message until the user starts filling the Bedrock-required fields.
+  if (!!formData.value[Settings.AWS_REGION] || !!formData.value[Settings.AWS_BEARER_TOKEN_BEDROCK]) {
+    errorField.value[ChatBotEnum.Bedrock] = { [Settings.AWS_REGION]: true };
+  }
 
   updateValue(Settings.AWS_REGION, val);
 
-  // If the region was empty, we don't want to trigger a model fetch since the credentials are likely not filled, which would cause an unnecessary error message.
-  if (!!formData.value[Settings.AWS_REGION]) {
-    updateModelValidation(ChatBotEnum.Bedrock, { touched: true });
-
-    fetchModels(ChatBotEnum.Bedrock, { region: val });
-  }
+  fetchModels(ChatBotEnum.Bedrock, { region: val });
 }, 500);
 
 /**
@@ -371,11 +382,9 @@ const updateBedrockRegion = debounce((val: string) => {
  * @param val The new value for the AWS credential.
  */
 const updateBedrockTokenValue = debounce((val: string) => {
-  errorField.value = ErrorField.BedrockToken;
+  errorField.value[ChatBotEnum.Bedrock] = { [Settings.AWS_BEARER_TOKEN_BEDROCK]: true };
 
   updateValue(Settings.AWS_BEARER_TOKEN_BEDROCK, val);
-
-  updateModelValidation(ChatBotEnum.Bedrock, { touched: true });
 
   fetchModels(ChatBotEnum.Bedrock, { bearerToken: val });
 }, 500);
@@ -385,9 +394,9 @@ const updateBedrockTokenValue = debounce((val: string) => {
  * @param val The new Ollama URL value.
  */
 const updateOllamaUrlValue = debounce((val: string) => {
-  updateValue(Settings.OLLAMA_URL, val);
+  errorField.value[ChatBotEnum.Local] = { [Settings.OLLAMA_URL]: true };
 
-  updateModelValidation(ChatBotEnum.Local, { touched: true });
+  updateValue(Settings.OLLAMA_URL, val);
 
   fetchModels(ChatBotEnum.Local, { url: val });
 }, 500);
@@ -463,7 +472,7 @@ onMounted(() => {
         @update:value="(val: string) => updateOllamaUrlValue(val)"
       />
       <Banner
-        v-if="modelValidation[ChatBotEnum.Local].touched && modelValidation[ChatBotEnum.Local].status === ValidationStatus.ERROR"
+        v-if="errorField[ChatBotEnum.Local][Settings.OLLAMA_URL] && modelValidation[ChatBotEnum.Local].status === ValidationStatus.ERROR"
         class="m-0"
         color="error"
       >
@@ -503,7 +512,7 @@ onMounted(() => {
           @update:value="(val: string) => updateBedrockRegion(val)"
         />
         <Banner
-          v-if="errorField === ErrorField.BedrockRegion && modelValidation[ChatBotEnum.Bedrock].touched && modelValidation[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR"
+          v-if="errorField[ChatBotEnum.Bedrock][Settings.AWS_REGION] && modelValidation[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR"
           class="m-0"
           color="error"
         >
@@ -522,7 +531,7 @@ onMounted(() => {
           @update:value="(val: string) => updateBedrockTokenValue(val)"
         />
         <Banner
-          v-if="errorField === ErrorField.BedrockToken && modelValidation[ChatBotEnum.Bedrock].touched && modelValidation[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR"
+          v-if="errorField[ChatBotEnum.Bedrock][Settings.AWS_BEARER_TOKEN_BEDROCK] && modelValidation[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR"
           class="m-0"
           color="error"
         >
@@ -544,6 +553,20 @@ onMounted(() => {
         :required="true"
         @update:value="(val: string) => updateValue(getModelKey(formData[Settings.ACTIVE_CHATBOT]), val)"
       />
+      <Banner
+        v-if="errorField[ChatBotEnum.Bedrock][getModelKey(ChatBotEnum.Bedrock)] && formData[Settings.ACTIVE_CHATBOT] === ChatBotEnum.Bedrock && modelValidation[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR"
+        class="m-0"
+        color="error"
+      >
+        {{ modelValidation[ChatBotEnum.Bedrock].message }}
+      </Banner>
+      <Banner
+        v-if="errorField[ChatBotEnum.Local][getModelKey(ChatBotEnum.Local)] && formData[Settings.ACTIVE_CHATBOT] === ChatBotEnum.Local && modelValidation[ChatBotEnum.Local].status === ValidationStatus.ERROR"
+        class="m-0"
+        color="error"
+      >
+        {{ modelValidation[ChatBotEnum.Local].message }}
+      </Banner>
       <RichTranslation
         :k="`aiConfig.form.${ getModelKey(formData[Settings.ACTIVE_CHATBOT]) }.description`"
         class="text-label"
@@ -682,7 +705,7 @@ onMounted(() => {
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .form-sub {
