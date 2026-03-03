@@ -53,10 +53,8 @@ const {
   downloadMessages,
   loadMessages,
   selectContext,
-  resetErrors: resetMessageErrors,
   isChatInitialized,
   phase: messagePhase,
-  error: messageError
 } = useChatMessageComposable(CHAT_ID, agents, agentName, selectAgent);
 
 const {
@@ -105,28 +103,22 @@ const chatAgents = computed<Agent[]>(() => {
   });
 });
 
-// AI service's errors are priority over websocket and message errors
-const errors = computed(() => {
+// AI service's errors are priority over websocket
+const systemErrors = computed(() => {
   if (aiServiceError.value) {
     return [aiServiceError.value];
   } else {
     return [
-      wsError.value,
-      messageError.value
+      wsError.value
     ].filter((e) => e);
   }
 });
 
 const disabled = computed(() => {
   return aiAgentDeploymentState.value !== AIServiceState.Active ||
-    errors.value.length > 0 ||
+    systemErrors.value.length > 0 ||
     messagePhase.value === MessagePhase.AwaitingConfirmation;
 });
-
-function close() {
-  resetMessageErrors();
-  closePanel();
-}
 
 async function toggleHistoryPanel() {
   if (disabled.value) {
@@ -163,8 +155,6 @@ async function ensureReconnectionAndLoadChat(chatId: string | null) {
     return;
   }
 
-  resetMessageErrors();
-
   const initChat = async() => {
     loadMessages(chatId ? await fetchMessages(chatId) : []);
     nextTick(() => {
@@ -192,7 +182,6 @@ async function ensureReconnectionAndLoadChat(chatId: string | null) {
 
 function ensureConnectionAndSendMessage(data: string) {
   if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
-    resetMessageErrors();
     setPhase(ConnectionPhase.Reconnecting);
 
     const unwatch = watch(
@@ -228,8 +217,6 @@ watch(() => aiAgentDeploymentState.value, (newState, oldState) => {
    * AI agent became active on mount or after a service state update - connect to the existing chat if there is one in memory, otherwise start a new one
    */
   if (oldState !== AIServiceState.Active && newState === AIServiceState.Active) {
-    resetMessageErrors();
-
     connect(storageType === StorageType.InMemory ? null : chatId);
   }
 
@@ -295,7 +282,7 @@ function unmount() {
     >
       <Header
         :disabled="disabled"
-        @close:chat="close"
+        @close:chat="closePanel"
         @config:chat="routeToSettings"
         @download:chat="downloadMessages"
         @toggle:history="toggleHistoryPanel"
@@ -303,8 +290,8 @@ function unmount() {
       <Messages
         :active-chat-id="chatMetadata.chatId"
         :messages="messages"
-        :errors="errors"
-        :disabled="errors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active"
+        :system-errors="systemErrors"
+        :disabled="systemErrors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active"
         :message-phase="messagePhase"
         @update:message="updateMessage"
         @confirm:message="confirmMessage($event, ws)"
@@ -320,7 +307,7 @@ function unmount() {
         ].includes(connectionPhase)"
       />
       <Context
-        :value="context"
+        :value="systemErrors.length ? [] : context"
         :disabled="disabled"
         @select="selectContext"
       />
