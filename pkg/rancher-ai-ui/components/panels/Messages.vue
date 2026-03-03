@@ -5,7 +5,8 @@ import {
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import {
-  Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase
+  Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase,
+  MessageInternalSource
 } from '../../types';
 import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
@@ -74,7 +75,7 @@ const systemErrorMessages = computed<FormattedMessage[]>(() => {
     formattedMessageContent: error.message || t(error.key as string),
     timestamp:               new Date(),
     completed:               true,
-    isError:                 true,
+    source:                  MessageInternalSource.Error,
     actions:                 error.action ? [error.action] : []
   }));
 });

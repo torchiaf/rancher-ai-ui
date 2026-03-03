@@ -2,7 +2,7 @@ import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
 import {
   ChatMetadata,
-  ConfirmationStatus, Message, MessagePhase, Role
+  ConfirmationStatus, Message, MessageInternalSource, MessagePhase, Role
 } from '../types';
 
 /**
@@ -20,10 +20,13 @@ interface Chat {
   phase?: MessagePhase;
 }
 
+type MessageBox = Record<string, Message>;
+
 interface State {
   session:  Record<string, any>;
   metadata: ChatMetadata | null;
   chats: Record<string, Chat>;
+  messageBox: MessageBox
 }
 
 const getters = {
@@ -68,6 +71,9 @@ const getters = {
     }
 
     return MessagePhase.Idle;
+  },
+  messageBox: (state: State) => (chatId: string) => {
+    return state.messageBox[chatId];
   },
 };
 
@@ -184,6 +190,27 @@ const mutations = {
 
     state.chats[chatId].phase = phase;
   },
+
+  addToMessageBox(state: State, args: { chatId: string; message: Message }) {
+    const { chatId, message } = args;
+
+    if (!chatId) {
+      return;
+    }
+
+    state.messageBox[chatId] = {
+      ...message,
+      source: MessageInternalSource.MessageBox
+    };
+  },
+
+  clearMessageBox(state: State, chatId: string) {
+    if (!chatId || !state.messageBox[chatId]) {
+      return;
+    }
+
+    delete state.messageBox[chatId];
+  },
 };
 
 const actions = {
@@ -221,9 +248,10 @@ const factory = (): CoreStoreSpecifics => {
   return {
     state: (): State => {
       return {
-        session:  {},
-        metadata: null,
-        chats:    {}
+        session:    {},
+        metadata:   null,
+        chats:      {},
+        messageBox: {},
       };
     },
     getters:   { ...getters },
