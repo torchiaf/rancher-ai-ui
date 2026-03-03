@@ -6,7 +6,7 @@ import {
 } from 'vue';
 import { PRODUCT_NAME } from '../product';
 import {
-  Agent, AgentState, AIServiceState, ChatMetadata, ConnectionPhase, HistoryChat, MessagePhase, StorageType
+  Agent, AgentState, AIServiceState, ChatMetadata, ConnectionPhase, HistoryChat, Message, MessagePhase, StorageType
 } from '../types';
 import { useConnectionComposable } from '../composables/useConnectionComposable';
 import { useChatMessageComposable } from '../composables/useChatMessageComposable';
@@ -44,6 +44,7 @@ const {
 
 const {
   messages,
+  messageBox,
   onopen,
   onmessage,
   onclose,
@@ -180,7 +181,7 @@ async function ensureReconnectionAndLoadChat(chatId: string | null) {
   }
 }
 
-function ensureConnectionAndSendMessage(data: string) {
+function ensureConnectionAndSendMessage(data: string | Message) {
   if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
     setPhase(ConnectionPhase.Reconnecting);
 
@@ -245,6 +246,23 @@ watch(() => aiAgentDeploymentState.value, (newState, oldState) => {
   } else if (newState !== AIServiceState.Active) {
     setPhase(!oldState || oldState === AIServiceState.NotFound ? ConnectionPhase.Connecting : ConnectionPhase.Reconnecting);
   }
+});
+
+watch(() => [
+  messageBox.value,
+  isChatInitialized.value,
+  disabled.value
+], ([
+  newMessage,
+  isChatInitialized,
+  disabled
+]) => {
+  if (!disabled && isChatInitialized && newMessage) {
+    ensureConnectionAndSendMessage(newMessage);
+  }
+}, {
+  immediate: true,
+  deep:      true,
 });
 
 onMounted(() => {
