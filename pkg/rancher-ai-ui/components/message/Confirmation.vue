@@ -37,7 +37,7 @@ const confirmationText = computed(() => {
           kind, name, namespace, cluster
         } = action?.resource || {};
 
-        if (kind && name && namespace && cluster) {
+        if (kind && name && cluster) {
           switch (actionType) {
           case ConfirmationActionType.Create:
             out += `${ t(`ai.confirmation.message.operation.create.description`, {
@@ -163,6 +163,9 @@ const confirmationText = computed(() => {
 <style lang='scss' scoped>
 .confirmation-message {
   margin-bottom: 12px;
+  word-break: break-word;
+  white-space: pre-line;
+  list-style-position: inside;
 
   &:deep(code) {
     padding: initial;
@@ -172,11 +175,29 @@ const confirmationText = computed(() => {
     color: #025937;
   }
 
+  &:deep(ul) {
+    white-space: normal;
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  &:deep(th) {
+    text-align: left;
+  }
+
+  &:deep(pre) {
+    margin: 8px 0;
+  }
+
   span {
     word-break: break-word;
     white-space: pre-line;
     list-style-position: inside;
   }
+}
+
+.theme-dark .confirmation-message :deep(code) {
+  color: #C0EFDE;
 }
 
 .confirmation-buttons, .standard-confirmation, .delete-confirmation {
