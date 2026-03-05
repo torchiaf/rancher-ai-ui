@@ -470,6 +470,7 @@ watch(validationErrors, (errors) => {
           <div class="row mb-16">
             <div class="col span-12">
               <LabeledInput
+                data-testid="rancher-ai-ui-settings-ai-agent-configs-description"
                 :value="selectedAgent.spec.description"
                 :disabled="isAgentLocked || props.readOnly"
                 :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.description.label')"
@@ -494,6 +495,7 @@ watch(validationErrors, (errors) => {
           <div class="row textarea-with-validation">
             <TextAreaAutoGrow
               :key="selectedAgent.metadata.name"
+              data-testid="rancher-ai-ui-settings-ai-agent-configs-system-prompt"
               :value="selectedAgent.spec.systemPrompt || ''"
               :disabled="isAgentLocked || props.readOnly"
               :placeholder="t('aiConfig.form.section.aiAgent.fields.systemPrompt.placeholder')"
