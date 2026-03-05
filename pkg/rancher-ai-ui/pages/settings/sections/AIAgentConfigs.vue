@@ -91,16 +91,13 @@ const isAgentUnavailable = computed(() => {
 
 const agentSecrets = ref<Record<string, AiAgentConfigSecretPayload | null>>({});
 
-const mcpUrlRules = () => {
-  const validator = validators(t('aiConfig.form.section.aiAgent.sections.mcp.title'));
+const systemPromptValidationStatus = ref({
+  touched: false,
+  focused: false
+});
 
-  return [
-    validator.required,
-  ];
-};
-
-const nameRules = () => {
-  const validator = validators(t('aiConfig.form.section.aiAgent.fields.displayName.label'));
+const isRequiredRule = (key: string) => {
+  const validator = validators(t(key));
 
   return [
     validator.required,
@@ -109,19 +106,17 @@ const nameRules = () => {
 
 const validationErrors = computed(() => {
   return agents.value.reduce((acc, agent) => {
-    for (const rule of mcpUrlRules()) {
-      const res = rule(agent.spec.mcpURL);
+    const rule = isRequiredRule('_placeholder_')[0];
 
-      if (res) {
-        return {
-          ...acc,
-          [agent.metadata?.name || '']: true
-        };
-      }
-    }
+    const requiredFields = [
+      agent.spec.displayName,
+      agent.spec.description,
+      agent.spec.mcpURL,
+      agent.spec.systemPrompt
+    ];
 
-    for (const rule of nameRules()) {
-      const res = rule(agent.spec.displayName);
+    for (const field of requiredFields) {
+      const res = rule(field);
 
       if (res) {
         return {
@@ -366,7 +361,7 @@ watch(validationErrors, (errors) => {
               <LabeledInput
                 :value="selectedAgent.spec.displayName"
                 :label="t('aiConfig.form.section.aiAgent.fields.displayName.label')"
-                :rules="nameRules()"
+                :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.displayName.label')"
                 required
                 :disabled="isAgentLocked || props.readOnly"
                 @update:value="(val: string) => updateAgent({ spec: { ...selectedAgent.spec, displayName: val } })"
@@ -377,11 +372,13 @@ watch(validationErrors, (errors) => {
                 :value="selectedAgent.spec.description"
                 :disabled="isAgentLocked || props.readOnly"
                 :label="t('aiConfig.form.section.aiAgent.fields.description.label')"
+                :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.description.label')"
                 @update:value="(val: string) => updateAgent({ spec: { ...selectedAgent.spec, description: val } })"
               />
             </div>
           </div>
           <Checkbox
+            class="form-value-checkbox"
             :value="selectedAgent.spec.enabled"
             :label="t('aiConfig.form.section.aiAgent.fields.enabled.label')"
             :tooltip="t('aiConfig.form.section.aiAgent.fields.enabled.tooltip')"
@@ -399,7 +396,7 @@ watch(validationErrors, (errors) => {
               <LabeledInput
                 required
                 :value="selectedAgent.spec.mcpURL"
-                :rules="mcpUrlRules()"
+                :rules="isRequiredRule('aiConfig.form.section.aiAgent.sections.mcp.title')"
                 :disabled="isAgentLocked || props.readOnly"
                 :label="t('aiConfig.form.section.aiAgent.fields.mcpURL.label')"
                 :placeholder="t('aiConfig.form.section.aiAgent.fields.mcpURL.placeholder')"
@@ -470,20 +467,32 @@ watch(validationErrors, (errors) => {
         <div class="form-values-row">
           <h3 class="m-0">
             {{ t('aiConfig.form.section.aiAgent.sections.systemPrompt.title') }}
+            <span
+              class="required"
+              aria-hidden="true"
+            >*</span>
             <i
               v-clean-tooltip="t('aiConfig.form.section.aiAgent.sections.systemPrompt.tooltip')"
               class="icon icon-info tooltip-icon"
             />
           </h3>
-          <div class="row">
+          <div class="row textarea-with-validation">
             <TextAreaAutoGrow
               :key="selectedAgent.metadata.name"
               :value="selectedAgent.spec.systemPrompt || ''"
               :disabled="isAgentLocked || props.readOnly"
               :placeholder="t('aiConfig.form.section.aiAgent.fields.systemPrompt.placeholder')"
+              :rules="isRequiredRule('aiConfig.form.section.aiAgent.sections.systemPrompt.title')"
               :max-height="200"
               :min-height="200"
               @update:value="(val: string) => updateAgent({ spec: { ...selectedAgent.spec, systemPrompt: val } })"
+              @focus="systemPromptValidationStatus.focused = true"
+              @blur="systemPromptValidationStatus.touched = true; systemPromptValidationStatus.focused = false"
+            />
+            <i
+              v-if="systemPromptValidationStatus.touched && !systemPromptValidationStatus.focused && !selectedAgent.spec.systemPrompt"
+              v-clean-tooltip="t('aiConfig.form.section.aiAgent.sections.systemPrompt.requiredTooltip')"
+              class="icon icon-warning textarea-validation-icon"
             />
           </div>
           <div
@@ -526,6 +535,10 @@ watch(validationErrors, (errors) => {
   gap: 16px
 }
 
+.form-value-checkbox {
+  width: fit-content;
+}
+
 .array-list-headers {
   display: grid;
   grid-template-columns: auto 75px;
@@ -544,6 +557,19 @@ watch(validationErrors, (errors) => {
   color: var(--input-label);
   margin-left: 8px;
   cursor: pointer;
+}
+
+.textarea-with-validation {
+  position: relative;
+
+  .textarea-validation-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--error);
+    cursor: pointer;
+    z-index: 10;
+  }
 }
 
 .remove-btn-disabled {
@@ -584,5 +610,9 @@ watch(validationErrors, (errors) => {
 
 :deep(.conditions-alert-icon) {
   margin-left: auto;
+}
+
+.required {
+  color: var(--error);
 }
 </style>

@@ -275,7 +275,8 @@ aiConfig:
             tooltip: 'Human validation tools allow the AI agent to delegate specific tasks to human operators for verification or approval. This is particularly useful for critical actions that require human judgment to ensure accuracy and prevent errors.'
           systemPrompt:
             title: Guidelines
-            tooltip: 'System prompts provide specific instructions or guidelines to the AI agent on how to behave or respond in certain situations. They help shape the agent’s behavior to align with desired outcomes or policies.'
+            tooltip: 'Guidelines provide specific instructions or guidelines to the AI agent on how to behave or respond in certain situations. They help shape the agent’s behavior to align with desired outcomes or policies.'
+            requiredTooltip: '"Guidelines" is required'
         fields:
           displayName:
             label: Name
