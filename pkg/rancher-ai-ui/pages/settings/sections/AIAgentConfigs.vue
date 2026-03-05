@@ -91,6 +91,11 @@ const isAgentUnavailable = computed(() => {
 
 const agentSecrets = ref<Record<string, AiAgentConfigSecretPayload | null>>({});
 
+const descriptionValidationStatus = ref({
+  touched: false,
+  focused: false
+});
+
 const systemPromptValidationStatus = ref({
   touched: false,
   focused: false
@@ -467,16 +472,24 @@ watch(validationErrors, (errors) => {
               class="icon icon-info tooltip-icon"
             />
           </h3>
-          <div class="row mb-16">
-            <div class="col span-12">
-              <LabeledInput
-                data-testid="rancher-ai-ui-settings-ai-agent-configs-description"
-                :value="selectedAgent.spec.description"
-                :disabled="isAgentLocked || props.readOnly"
-                :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.description.label')"
-                @update:value="(val: string) => updateAgent({ spec: { ...selectedAgent.spec, description: val } })"
-              />
-            </div>
+          <div class="row textarea-with-validation">
+            <TextAreaAutoGrow
+              :key="selectedAgent.metadata.name"
+              data-testid="rancher-ai-ui-settings-ai-agent-configs-description"
+              :value="selectedAgent.spec.description || ''"
+              :disabled="isAgentLocked || props.readOnly"
+              :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.description.label')"
+              :max-height="80"
+              :min-height="60"
+              @update:value="(val: string) => updateAgent({ spec: { ...selectedAgent.spec, description: val } })"
+              @focus="descriptionValidationStatus.focused = true"
+              @blur="descriptionValidationStatus.touched = true; descriptionValidationStatus.focused = false"
+            />
+            <i
+              v-if="descriptionValidationStatus.touched && !descriptionValidationStatus.focused && !selectedAgent.spec.description"
+              v-clean-tooltip="t('aiConfig.form.section.aiAgent.sections.description.requiredTooltip')"
+              class="icon icon-warning textarea-validation-icon"
+            />
           </div>
         </div>
 
@@ -556,13 +569,6 @@ watch(validationErrors, (errors) => {
   width: fit-content;
 }
 
-.array-list-headers {
-  display: grid;
-  grid-template-columns: auto 75px;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
 .text-label {
   font-size: 12px;
   font-style: normal;
@@ -614,10 +620,6 @@ watch(validationErrors, (errors) => {
       white-space: pre-line;
       list-style-position: inside;
     }
-  }
-
-  .icon-endpoints_disconnected {
-    color: var(--error);
   }
 
   .icon-close {

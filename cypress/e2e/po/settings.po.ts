@@ -69,7 +69,7 @@ export class AiAgentConfigs extends ComponentPo {
   }
 
   descriptionInput() {
-    return cy.get('input[data-testid="rancher-ai-ui-settings-ai-agent-configs-description"]').first();
+    return cy.get('textarea[data-testid="rancher-ai-ui-settings-ai-agent-configs-description"]').first();
   }
 
   guidelinesInput() {

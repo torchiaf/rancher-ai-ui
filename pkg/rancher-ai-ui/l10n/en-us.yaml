@@ -269,8 +269,8 @@ aiConfig:
         locked: 'This AI agent is locked - you cannot remove it or change it, but <b>you can enable or disable it</b>.'
         sections:
           description:
-            title: Description
-            tooltip: 'Description is used to identify the most suitable AI agent when "Adaptive Mode" is selected, so make sure to provide a clear and descriptive text.'
+            title: Agent Profile
+            tooltip: 'This is used to identify the most suitable AI agent when "Adaptive Mode" is selected (available only when you have multiple agents enabled). Please make sure you provide a short, clear and relevant description.'
           mcp:
             title: MCP Configuration
           humanValidationTools:
