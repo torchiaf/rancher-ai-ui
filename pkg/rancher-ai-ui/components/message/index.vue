@@ -36,8 +36,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:message', 'confirm:message', 'send:message']);
 
-const isDisabled = computed(() => props.disabled && props.message.source !== MessageInternalSource.Error);
-
 const isThinking = computed(() => props.message.role === RoleEnum.Assistant &&
   !props.message.completed &&
   (props.message.thinking || !props.message.formattedMessageContent)
@@ -111,7 +109,7 @@ onBeforeUnmount(() => {
     class="chat-message"
     :class="{
       'chat-message-user': props.message.role === RoleEnum.User,
-      'disabled-panel': isDisabled
+      'disabled-panel': props.disabled
     }"
   >
     <component
@@ -128,7 +126,7 @@ onBeforeUnmount(() => {
         }"
       >
         <div
-          v-if="!isDisabled"
+          v-if="!props.disabled"
           class="chat-msg-bubble-actions"
         >
           <BubbleButton
@@ -163,7 +161,7 @@ onBeforeUnmount(() => {
               {{ t('ai.agents.selectedAgent.label', { agent: props.message.agentMetadata?.agent?.displayName }) }} {{ t(`ai.agents.selectionMode.${ props.message.agentMetadata?.selectionMode || 'none' }`) }}
             </span>
           </div>
-          <div v-if="!isDisabled && isThinking">
+          <div v-if="!props.disabled && isThinking">
             <Processing
               data-testid="rancher-ai-ui-chat-message-thinking-label"
               :phase="MessagePhase.Thinking"

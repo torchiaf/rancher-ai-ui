@@ -218,6 +218,7 @@ onBeforeUnmount(() => {
       :key="i"
       :data-testid="`rancher-ai-ui-chat-system-error-message-box-${ i + 1 }`"
       :message="error"
+      :disabled="false"
     />
     <Processing
       v-if="!props.disabled"
