@@ -76,7 +76,8 @@ const systemErrorMessages = computed<FormattedMessage[]>(() => {
     timestamp:               new Date(),
     completed:               true,
     source:                  MessageInternalSource.Error,
-    actions:                 error.action ? [error.action] : []
+    actions:                 error.action ? [error.action] : [],
+    sourceLinks:             error.sourceLinks || []
   }));
 });
 
