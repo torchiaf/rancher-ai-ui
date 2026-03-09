@@ -151,11 +151,18 @@ const errorField = ref([
 }), {} as Record<ChatBotEnum, Record<string, boolean>>));
 
 const isModelsAvailable = computed(() => {
+  const activeChatbot = formData.value[Settings.ACTIVE_CHATBOT];
+
+  if (activeChatbot === ChatBotEnum.Bedrock) {
+    return true;
+  }
+
   if (isModelsLoading.value) {
     return false;
   }
+
   // If active chatbot is empty, it means the settings are untouched, so we don't want to disable the model field
-  if (!models.value[formData.value[Settings.ACTIVE_CHATBOT] as ChatBotEnum]?.length && !formData.value[getModelKey(formData.value[Settings.ACTIVE_CHATBOT])]) {
+  if (!models.value[activeChatbot as ChatBotEnum]?.length && !formData.value[getModelKey(activeChatbot)]) {
     return false;
   }
 
@@ -222,6 +229,9 @@ function validateSettings(updatedForm: SettingsFormData) {
     if (!updatedForm[Settings.AWS_BEARER_TOKEN_BEDROCK] || !updatedForm[Settings.AWS_REGION]) {
       hasError = true;
     }
+    if (modelValidation.value[ChatBotEnum.Bedrock].status === ValidationStatus.ERROR) {
+      hasError = true;
+    }
     break;
   }
 
@@ -285,8 +295,11 @@ async function fetchModels(chatbot: ChatBotEnum, options: Record<string, any> = 
       });
       /**
        * If fetching models fails, we want to clear the model field value,
-       * but only if those fields are being edited (touched)
+       * but only if those fields are being edited (touched), and not for Bedrock...
        */
+      if (chatbot === ChatBotEnum.Bedrock) {
+        return;
+      }
       if (Object.keys(errorField.value[chatbot] || {}).some((v) => v)) {
         formData.value[getModelKey(chatbot)] = '';
       }
@@ -476,7 +489,7 @@ onMounted(() => {
         :value="formData[chatbotConfigKey]"
         :label="t(`aiConfig.form.${ chatbotConfigKey }.label`)"
         :disabled="readOnly"
-        :mode="readOnly ? _VIEW : _EDIT"
+        :mode="_EDIT"
         :required="true"
         data-testid="rancher-ai-ui-settings-llm-api-key-input"
         @update:value="(val: string) => updateValue(chatbotConfigKey, val)"
@@ -514,7 +527,7 @@ onMounted(() => {
         <Password
           :value="formData[Settings.AWS_BEARER_TOKEN_BEDROCK]"
           :label="t(`aiConfig.form.${ Settings.AWS_BEARER_TOKEN_BEDROCK}.label`)"
-          :mode="readOnly || !formData[Settings.AWS_REGION] ? _VIEW : _EDIT"
+          :mode="_EDIT"
           :required="true"
           @update:value="(val: string) => updateBedrockTokenValue(val)"
         />
@@ -532,12 +545,15 @@ onMounted(() => {
     </template>
 
     <div class="form-field">
-      <LabeledSelect
+      <component
+        :is="formData[Settings.ACTIVE_CHATBOT] === ChatBotEnum.Bedrock && modelValidation[ChatBotEnum.Bedrock]?.status === ValidationStatus.ERROR ? LabeledInput : LabeledSelect"
         :value="formData[getModelKey(formData[Settings.ACTIVE_CHATBOT])]"
         :label="t(`aiConfig.form.${ getModelKey(formData[Settings.ACTIVE_CHATBOT]) }.label`)"
         :options="models[formData[Settings.ACTIVE_CHATBOT] as ChatBotEnum] || []"
         :loading="isModelsLoading"
         :disabled="readOnly || !isModelsAvailable"
+        :taggable="true"
+        :searchable="true"
         :required="true"
         @update:value="(val: string) => updateValue(getModelKey(formData[Settings.ACTIVE_CHATBOT]), val)"
       />
@@ -669,7 +685,7 @@ onMounted(() => {
           <password
             :value="formData[Settings.LANGFUSE_SECRET_KEY]"
             :label="t(`aiConfig.form.${ Settings.LANGFUSE_SECRET_KEY}.label`)"
-            :mode="readOnly ? _VIEW : _EDIT"
+            :mode="_EDIT"
             @update:value="(val: string) => updateValue(Settings.LANGFUSE_SECRET_KEY, val)"
           />
           <label class="text-label">
