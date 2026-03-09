@@ -18,7 +18,7 @@ export default function(plugin: IPlugin, { store }: any): void {
   const isDev = (plugin as any).builtin; // Running in development mode
   const isPrime = plugin.environment.isPrime;
 
-  if (!isDev && !isPrime) {
+  if (false && !isDev && !isPrime) {
     warn('Rancher Prime subscription required');
 
     plugin.addNavHooks({
