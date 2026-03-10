@@ -391,7 +391,7 @@ onMounted(async() => {
     </h1>
 
     <Banner
-      v-if="!permissions?.list?.canListDeployments || !permissions?.list?.canListConfigMaps"
+      v-if="!permissions?.list?.canListDeployments || !permissions?.list?.canListConfigMaps || !permissions?.list?.canListAiAgentCRDS"
       class="m-0"
       color="warning"
     >
@@ -444,7 +444,6 @@ onMounted(async() => {
       </settings-row>
 
       <settings-row
-        v-if="permissions?.list.canListAiAgentCRDS"
         :title="t('aiConfig.form.section.aiAgent.header')"
         :description="t('aiConfig.form.section.aiAgent.description')"
         data-testid="rancher-ai-ui-settings-ai-agent-configs"
