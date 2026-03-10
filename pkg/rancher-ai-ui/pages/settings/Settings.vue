@@ -338,7 +338,7 @@ async function openApplySettingsDialog(btnCB: (arg: boolean) => void) { // eslin
   });
 }
 
-function setPermissions() {
+function fetchPermissions() {
   const canListConfigMaps = store.getters['management/canList'](CONFIG_MAP);
   const canListSecrets = store.getters['management/canList'](SECRET);
   const canListDeployments = store.getters['management/canList'](WORKLOAD_TYPES.DEPLOYMENT);
@@ -365,7 +365,7 @@ function setPermissions() {
 }
 
 onMounted(async() => {
-  setPermissions();
+  fetchPermissions();
 
   await fetchAiAgentDeployment();
 
