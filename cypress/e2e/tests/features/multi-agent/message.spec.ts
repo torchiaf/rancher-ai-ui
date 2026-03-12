@@ -147,7 +147,7 @@ describe('Multi Agent Messages', () => {
 
     cy.enqueueLLMResponse({
       agent: customAgent.name,
-      text:          [
+      text:  [
         '<think>',
         'Thin',
         'king about the response',
@@ -371,7 +371,7 @@ describe('Multi Agent Messages', () => {
 
     cy.enqueueLLMResponse({
       agent: customAgent.name,
-      text:          'Response from agent.'
+      text:  'Response from agent.'
     });
 
     chat.sendMessage('Request message.');
