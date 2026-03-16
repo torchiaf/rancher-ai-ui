@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, type PropType } from 'vue';
+import { computed, onMounted, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { warn } from '../../../utils/log';
@@ -32,8 +32,6 @@ const to = computed(() => {
 
   return store.getters[`${ inStore }/byId`](convertedType, id);
 });
-
-const tooltip = ref<string>('');
 
 const label = computed(() => {
   if (props.value.label) {
@@ -111,7 +109,6 @@ onMounted(async() => {
     :data-testid="`rancher-ai-ui-chat-message-action-button-${ props.value?.resource?.name }`"
   >
     <RcButton
-      v-clean-tooltip="tooltip"
       small
       secondary
       :disabled="!to"
@@ -125,7 +122,6 @@ onMounted(async() => {
   <span v-if="props.value.type === ActionType.Link">
     <a
       v-if="to"
-      v-clean-tooltip="tooltip"
       class="link"
       @click="goTo"
     >
