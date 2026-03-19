@@ -260,6 +260,16 @@ ai:
   generic:
     opensInNewTab: Opens in a new tab
 
+  staging:
+    title: Edit YAML
+    unknownResource: Unknown Resource
+    showDiff: Show Diff
+    backToEdit: Back to Edit
+    showChanges: Show Changes
+    hideChanges: Hide Changes
+    cancel: Cancel
+    apply: Apply to Cluster
+
 aiConfig:
   label: AI Assistant
   form:
@@ -373,10 +383,11 @@ aiConfig:
             label: Available Tools
             name:
               show-yaml: Show YAML
-              navigate-to: Navigate To
-              show-logs: Show Logs
-              navigate-to-fleet: Navigate to Fleet
               show-yaml-diff: Show YAML Diff
+              navigate-to: Navigate To
+              show-logs: View Logs
+              download-logs: Download Logs
+              navigate-to-fleet: Navigate to Fleet
               rancher-2-13-specific-tool: Rancher 2.13 Specific Tool
               
         search: Search tools...
