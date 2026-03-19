@@ -17,8 +17,9 @@
   "tools": [
     {
       "name": "show-yaml",
-      "description": "Display YAML configuration with syntax highlighting and copy functionality",
-      "category": "code",
+      "description": "Display YAML content of a Kubernetes resource",
+      "prompt": "Display YAML content of a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace} and the yaml file in a yaml editor. The YAML content is: {yaml}. The YAML content should be the same as the content returned in the LLM AI message or even better from the MCP tool call.",
+      "category": "editor",
       "revision": 1,
       "enabled": true,
       "defaultValues": {
@@ -27,15 +28,27 @@
       "properties": {
         "yaml": {
           "type": "string",
-          "description": "YAML content to display"
+          "description": "YAML content to display",
+          "required": true
+        },
+        "resourceKind": {
+          "type": "string",
+          "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+          "required": true
+        },
+        "resourceName": {
+          "type": "string",
+          "description": "The name of the Kubernetes resource",
+          "required": true
+        },
+        "resourceNamespace": {
+          "type": "string",
+          "description": "The namespace of the Kubernetes resource",
+          "required": true
         },
         "title": {
           "type": "string",
           "description": "Display title (e.g., resource name)"
-        },
-        "resource_kind": {
-          "type": "string",
-          "description": "Kubernetes resource kind (Pod, Deployment, etc.)"
         },
         "copyable": {
           "type": "boolean",
@@ -46,17 +59,67 @@
           "description": "Enable inline editing"
         }
       },
-      "required": [
-        "yaml"
-      ],
       "metadata": {
-        "blocking": false,
         "rancher-version": ">=2.13.0"
       }
     },
     {
+      "name": "show-yaml-diff",
+      "description": "Display YAML content differences between an existing Kubernetes resource and a proposed configuration",
+      "prompt": "Display YAML content differences between an existing Kubernetes resource and a proposed configuration for a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace}. The current YAML content is: {currentContent}. The proposed YAML configuration content is: {newContent}. Both current and proposed YAML contents should be the same as the contents returned in the LLM AI message or even better from the MCP tool call.",
+      "category": "editor",
+      "revision": 1,
+      "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
+      "properties": {
+        "currentContent": {
+          "type": "string",
+          "description": "The current YAML content of the resource. It should contain the existing YAML for the resource before changes.",
+          "required": true
+        },
+        "newContent": {
+          "type": "string",
+          "description": "The new YAML content of the resource. It should contain the proposed YAML for the resource after changes.",
+          "required": true
+        },
+        "resourceKind": {
+          "type": "string",
+          "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+          "required": true
+        },
+        "resourceName": {
+          "type": "string",
+          "description": "The name of the Kubernetes resource",
+          "required": true
+        },
+        "resourceNamespace": {
+          "type": "string",
+          "description": "The namespace of the Kubernetes resource",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title (e.g., resource name)"
+        },
+        "copyable": {
+          "type": "boolean",
+          "description": "Enable copy to clipboard"
+        },
+        "editable": {
+          "type": "boolean",
+          "description": "Enable inline editing"
+        }
+      },
+      "metadata": {
+        "interactive": true
+      }
+    },
+    {
       "name": "navigate-to",
-      "description": "Navigate to a Rancher UI page or external resource",
+      "description": "Navigate to a Rancher UI page",
+      "prompt": "Navigate to a Rancher UI page with path {path}.\nThe {label} is the label the Ui will use to display the link to the page, e.g.: 'View Pod', 'View Pods list'; It should be max 50 characters long.\nThe {path} should be built based on the Rancher UI routing structure and should lead to a specific page in the Rancher UI.\nRULES: 1. GLOBAL: '/home', '/clusters', '/prefs'. 2. CLUSTER: Starts with '/c/:cluster/'. 3. RESOURCE MAPPING (CRITICAL): Use Fully Qualified Names for :resource. Examples: Deployments -> 'apps.deployment', StatefulSets -> 'apps.statefulset', CronJobs -> 'batch.cronjob', Secrets -> 'secret', ConfigMaps -> 'configmap'. 4. LIST: '/c/:cluster/explorer/:resource' (e.g., /c/local/explorer/apps.deployment). 5. DETAIL: '/c/:cluster/explorer/:resource/:namespace/:id'. 6. TOOLS: Use shortcuts for installed apps: '/c/:cluster/monitoring', '/c/:cluster/logging', '/c/:cluster/gatekeeper', '/c/:cluster/istio'. 7. MANAGEMENT: For clusters use '/c/:cluster/manager/provisioning.cattle.io.cluster'.",
       "category": "route",
       "revision": 1,
       "enabled": true,
@@ -64,43 +127,61 @@
         "enabled": true
       },
       "properties": {
-        "url": {
+        "path": {
           "type": "string",
-          "description": "URL to navigate to"
+          "description": "Path to navigate to",
+          "required": true
         },
         "label": {
           "type": "string",
-          "description": "Link label text"
-        },
-        "target": {
-          "type": "string",
-          "enum": [
-            "_self",
-            "_blank"
-          ],
-          "description": "Open in same or new tab"
-        },
-        "icon": {
-          "type": "string",
-          "description": "Icon name/emoji"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of where this leads"
+          "description": "Link label text",
+          "required": true
         }
       },
-      "required": [
-        "url",
-        "label"
-      ],
       "metadata": {
         "interactive": true
       }
     },
     {
       "name": "show-logs",
-      "description": "Display container or pod logs with search and filtering",
-      "category": "code",
+      "description": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod",
+      "prompt": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod. The cluster is: {cluster}, the namespace is: {namespace}, the pod name is: {name}, and the container name is: {containerName}.",
+      "category": "console",
+      "revision": 1,
+      "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
+      "properties": {
+        "cluster": {
+          "type": "string",
+          "description": "Cluster where the Pod is running",
+          "required": true
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Namespace of the Pod",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the Pod the container belongs to",
+          "required": true
+        },
+        "containerName": {
+          "type": "string",
+          "description": "Name of the container to show logs for (defaults to first container)",
+          "required": true
+        }
+      },
+      "metadata": {
+      }
+    },
+    {
+      "name": "download-logs",
+      "description": "Download logs from a resource in Rancher as a file",
+      "prompt": "Download logs from a resource in Rancher as a file. The log content is: {logs}. The logs should be the same as the content returned in the LLM AI message or even better from the MCP tool call.",
+      "category": "button",
       "revision": 1,
       "enabled": true,
       "defaultValues": {
@@ -109,40 +190,17 @@
       "properties": {
         "logs": {
           "type": "string",
-          "description": "Log content"
-        },
-        "pod_name": {
-          "type": "string",
-          "description": "Pod name"
-        },
-        "container_name": {
-          "type": "string",
-          "description": "Container name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Kubernetes namespace"
-        },
-        "follow": {
-          "type": "boolean",
-          "description": "Enable live log streaming"
-        },
-        "search_enabled": {
-          "type": "boolean",
-          "description": "Enable search in logs"
+          "description": "Log content",
+          "required": true
         }
       },
-      "required": [
-        "logs"
-      ],
       "metadata": {
-        "supports_streaming": true,
-        "interactive": true
       }
     },
     {
       "name": "navigate-to-fleet",
       "description": "Navigate to a Fleet UI page or external resource",
+      "prompt": "Navigate to a Fleet UI page or external resource",
       "category": "route",
       "revision": 1,
       "enabled": true,
@@ -152,11 +210,13 @@
       "properties": {
         "url": {
           "type": "string",
-          "description": "URL to navigate to"
+          "description": "URL to navigate to",
+          "required": true
         },
         "label": {
           "type": "string",
-          "description": "Link label text"
+          "description": "Link label text",
+          "required": true
         },
         "target": {
           "type": "string",
@@ -175,45 +235,15 @@
           "description": "Description of where this leads"
         }
       },
-      "required": [
-        "url",
-        "label"
-      ],
       "metadata": {
         "interactive": true,
         "product": "fleet"
       }
     },
     {
-      "name": "show-yaml-diff",
-      "description": "Display YAML differences between resources, when creating or updating resources",
-      "category": "editor",
-      "revision": 1,
-      "enabled": true,
-      "defaultValues": {
-        "enabled": true
-      },
-      "properties": {
-        "current-content": {
-          "type": "string",
-          "description": "The original YAML content to compare against. It should contain the existing YAML for the resource or be empty if the resource does not exist yet."
-        },
-        "new-content": {
-          "type": "string",
-          "description": "The new YAML content to compare. It should contain the proposed YAML for the resource."
-        }
-      },
-      "required": [
-        "current-content",
-        "new-content"
-      ],
-      "metadata": {
-        "interactive": true
-      }
-    },
-    {
       "name": "rancher-2-13-specific-tool",
       "description": "Display YAML differences between resources, when creating or updating resources",
+      "prompt": "Display YAML differences between resources, when creating or updating resources",
       "category": "editor",
       "revision": 1,
       "enabled": true,
@@ -223,12 +253,10 @@
       "properties": {
         "test": {
           "type": "string",
-          "description": "test."
+          "description": "test.",
+          "required": true
         }
       },
-      "required": [
-        "test"
-      ],
       "metadata": {
         "rancher-version": "2.13.0"
       }

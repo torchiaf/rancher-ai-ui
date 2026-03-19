@@ -58,22 +58,29 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="chat-tools-container">
+  <div
+    v-if="Object.values(toolComponents).length"
+    class="chat-tools-container"
+  >
     <div class="chat-msg-tools-title">
       <span>{{ props.label || 'TOOLS' }}</span>
     </div>
     <div class="chat-msg-tools-container">
       <div class="chat-msg-tool-tags">
-        <div
+        <template
           v-for="(tool, index) in props.tools"
           :key="index"
-          class="mt-2 chat-msg-tools"
         >
-          <component
-            :is="toolComponents[tool.toolName]"
-            :tool="tool"
-          />
-        </div>
+          <div
+            v-if="toolComponents[tool.toolName]"
+            class="mt-2 chat-msg-tools"
+          >
+            <component
+              :is="toolComponents[tool.toolName]"
+              :tool="tool"
+            />
+          </div>
+        </template>
       </div>
     </div>
   </div>

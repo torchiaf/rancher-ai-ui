@@ -331,11 +331,11 @@ export interface UIToolsConfig {
 export interface UITool {
   name: string;
   description: string;
+  prompt: string;
   category: string;
   revision: number;
   enabled: boolean;
   properties: Record<string, any>;
-  required?: string[];
   metadata: Record<string, any>;
 }
 
