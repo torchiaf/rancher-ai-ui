@@ -14,6 +14,7 @@ import {
   ChatError,
   SourceLinkItem,
 } from '../types';
+import { error } from '../utils/log';
 import { validateActionResource } from './validator';
 
 interface WSInputMessageArgs {
@@ -75,7 +76,7 @@ export function formatChatErrorMessage(data: string): ChatError {
 
       return parsed;
     } catch (e) {
-      console.error('Failed to parse chat error message:', e); /* eslint-disable-line no-console */
+      error('Failed to parse chat error message:', e);
     }
   }
 
@@ -88,8 +89,8 @@ export function formatChatMetadata(data: string): ChatMetadata | null {
 
     try {
       return JSON.parse(cleaned);
-    } catch (error) {
-      console.error('Failed to parse chat metadata:', error); /* eslint-disable-line no-console */
+    } catch (err) {
+      error('Failed to parse chat metadata:', err);
     }
   }
 
@@ -124,8 +125,8 @@ export function formatAgentMetadata(data: string, agents: Agent[]): AgentMetadat
         };
       }
     }
-  } catch (error) {
-    console.error('Failed to parse agent metadata:', error); /* eslint-disable-line no-console */
+  } catch (err) {
+    error('Failed to parse agent metadata:', err);
   }
 
   return null;
@@ -158,8 +159,8 @@ export function formatMessageRelatedResourcesActions(value: string, actionType =
           cluster:   parsed.cluster,
         },
       }));
-    } catch (e) {
-      console.error('Failed to parse MCP response:', e); /* eslint-disable-line no-console */
+    } catch (err) {
+      error('Failed to parse MCP response:', err);
     }
   }
 
@@ -174,8 +175,8 @@ export function formatConfirmationActions(value: string): MessageConfirmationAct
       const parsed = JSON.parse(value);
 
       return parsed;
-    } catch (e) {
-      console.error('Failed to parse confirmation response:', e); /* eslint-disable-line no-console */
+    } catch (err) {
+      error('Failed to parse confirmation response:', err);
     }
   }
 
@@ -251,8 +252,8 @@ export function formatErrorMessage(value: string): ChatError {
       const parsed = JSON.parse(value);
 
       return parsed;
-    } catch (e) {
-      console.error('Failed to parse error message:', e); /* eslint-disable-line no-console */
+    } catch (err) {
+      error('Failed to parse error message:', err);
     }
   }
 
