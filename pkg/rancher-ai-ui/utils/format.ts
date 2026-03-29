@@ -13,6 +13,7 @@ import {
   MessageLabelKey,
   ChatError,
   SourceLinkItem,
+  ToolsConfig,
 } from '../types';
 import { error } from '../utils/log';
 import { validateActionResource } from './validator';
@@ -23,6 +24,7 @@ interface WSInputMessageArgs {
   context?: Context[];
   labels?: Record<MessageLabelKey, string>;
   tags?: string[];
+  tools?: ToolsConfig;
 }
 
 const md = new MarkdownIt({
@@ -50,8 +52,9 @@ export function formatWSInputMessage(args: WSInputMessageArgs): string {
   return JSON.stringify({
     prompt: args.prompt,
     agent:  args.agent,
-    context,
+    tools:  args.tools,
     labels: args.labels,
+    context,
     tags,
   });
 }

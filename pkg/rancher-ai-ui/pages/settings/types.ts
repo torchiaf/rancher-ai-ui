@@ -6,9 +6,11 @@ export interface SettingsPermissions {
     canListConfigMaps: boolean;
     canListDeployments: boolean;
     canListAiAgentCRDS: boolean;
+    canListUiToolsCRDS: boolean;
   };
   create: {
     canCreateAiAgentCRDS: boolean;
+    canCreateUiToolsCRDS: boolean;
     canCreateSecrets: boolean;
   };
 }

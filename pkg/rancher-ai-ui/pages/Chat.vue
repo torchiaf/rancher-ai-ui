@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { useStore } from 'vuex';
-import { useKeyboardShortcutsComposable } from '../composables/useKeyboardShortcutsComposable';
 import {
   onMounted, onBeforeUnmount, computed, nextTick, ref,
   watch
@@ -9,6 +8,8 @@ import { PRODUCT_NAME } from '../product';
 import {
   Agent, AgentState, AIServiceState, ConnectionPhase, FormattedMessage, HistoryChat, Message, MessagePhase, Role, StorageType
 } from '../types';
+import { extractMessageText } from '../utils/label';
+import Chat from '../handlers/chat';
 import { useConnectionComposable } from '../composables/useConnectionComposable';
 import { useChatMessageComposable } from '../composables/useChatMessageComposable';
 import { useContextComposable } from '../composables/useContextComposable';
@@ -16,18 +17,18 @@ import { useHeaderComposable } from '../composables/useHeaderComposable';
 import { useAIServiceComposable } from '../composables/useAIServiceComposable';
 import { useAIAgentApiComposable } from '../composables/useAIAgentApiComposable';
 import { useAgentComposable } from '../composables/useAgentComposable';
-import { extractMessageText } from '../utils/label';
+import { useInputComposable } from '../composables/useInputComposable';
+import { useToolsComposable } from '../composables/useToolsComposable';
+import { useKeyboardShortcutsComposable } from '../composables/useKeyboardShortcutsComposable';
+import AppModal from '@shell/components/AppModal.vue';
 import Header from '../components/panels/Header.vue';
 import Messages from '../components/panels/Messages.vue';
 import Processing from '../components/Processing.vue';
 import Context from '../components/panels/Context.vue';
 import Console from '../components/panels/Console.vue';
 import History from '../components/panels/History.vue';
-import Chat from '../handlers/chat';
 import DeleteChat from '../dialog/DeleteChatCard.vue';
 import KeyboardShortcuts from '../components/header/KeyboardShortcuts.vue';
-import AppModal from '@shell/components/AppModal.vue';
-import { useInputComposable } from '../composables/useInputComposable';
 
 /**
  * Chat panel landing page.
@@ -48,6 +49,8 @@ const {
   agentName,
   selectAgent,
 } = useAgentComposable(CHAT_ID);
+
+const { publishToolsDefinition } = useToolsComposable();
 
 const {
   messages,
@@ -285,7 +288,7 @@ function ensureConnectionAndSendMessage(data: string | Message) {
   }
 }
 
-watch(() => aiAgentDeploymentState.value, (newState, oldState) => {
+watch(() => aiAgentDeploymentState.value, async(newState, oldState) => {
   const {
     chatId = null,
     storageType = StorageType.InMemory
@@ -297,6 +300,7 @@ watch(() => aiAgentDeploymentState.value, (newState, oldState) => {
    * AI agent became active on mount or after a service state update - connect to the existing chat if there is one in memory, otherwise start a new one
    */
   if (oldState !== AIServiceState.Active && newState === AIServiceState.Active) {
+    await publishToolsDefinition();
     connect(storageType === StorageType.InMemory ? null : chatId);
   }
 

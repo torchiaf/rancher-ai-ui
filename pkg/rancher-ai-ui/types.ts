@@ -110,6 +110,11 @@ export const enum ActionType {
   Button = 'button',
 }
 
+export interface ToolsConfig {
+  name: string;
+  tools?: string[];
+}
+
 export interface ActionResource {
   kind?: string;
   type?: string;
@@ -288,6 +293,48 @@ export interface AIAgentConfigCRD {
   }
   state?: string;
   stateDescription?: string;
+}
+
+export interface UIToolsConfigCRD {
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+  spec: {
+    tools: UITool[];
+    config: UIToolsSpecConfig;
+  }
+}
+
+export interface UIToolsSpecConfig {
+  systemPrompt?: string;
+  enabled: boolean;
+  revision: number;
+}
+
+export interface UIToolsConfig {
+  name: string;
+  metadata?: { annotations?: Record<string, string>; };
+  config: UIToolsSpecConfig;
+  tools: UITool[];
+}
+
+export interface UITool {
+  name: string;
+  description: string;
+  category: string;
+  revision: number;
+  enabled: boolean;
+  properties: Record<string, any>;
+  required?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface UIToolsConfigPayload {
+  name: string;
+  metadata?: { annotations: Record<string, string>; };
+  config: UIToolsSpecConfig;
+  tools: UITool[];
 }
 
 export interface HistoryChat {
