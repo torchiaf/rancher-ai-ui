@@ -1,7 +1,8 @@
 import { ComputedRef } from 'vue';
 import { AGENT_NAME, AGENT_NAMESPACE, AGENT_REST_API_PATH } from '../product';
 import {
-  Agent, AgentSettings, HistoryChat, HistoryChatMessage, LLMProvider, Message
+  Agent, AgentSettings, HistoryChat, HistoryChatMessage, LLMProvider, Message,
+  UIToolsConfigPayload
 } from '../types';
 import { error } from '../utils/log';
 import { buildMessageFromHistoryMessage } from '../utils/format';
@@ -201,12 +202,55 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
 
       return [];
     }
+  }
+
+  async function publishTools(payload: UIToolsConfigPayload) {
+    try {
+      const data = await fetch(`${ apiPath }/ui-tools/publish`, {
+        method:  'POST',
+        body:    JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!data.ok) {
+        const errorMessage = await data.text();
+
+        throw new Error(errorMessage);
+      }
+
+      const res = await data.json();
+
+      return res;
+    } catch (err) {
+      error('Failed to publish UI tools:', err);
+    }
+
+    return null;
+  }
+
+  async function fetchTools() {
+    try {
+      const data = await fetch(`${ apiPath }/ui-tools`);
+
+      if (!data.ok) {
+        const errorMessage = await data.text();
+
+        throw new Error(errorMessage);
+      }
+
+      const uiTools = await data.json();
+
+      return uiTools;
+    } catch (err) {
+      error('Failed to fetch UI tools:', err);
 
       return [];
     }
   }
 
   return {
+    publishTools,
+    fetchTools,
     fetchLLMModels,
     fetchSettings,
     saveSettings,

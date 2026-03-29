@@ -1,0 +1,215 @@
+{
+  "metadata": {
+    "annotations": {
+      "description": "Defines UI tools that the Rancher AI assistant."
+    }
+  },
+  "config": {
+    "systemPrompt": "You are a helpful assistant for selecting UI components to enhance user experience",
+    "enabled": true,
+    "maxTools": 5,
+    "revision": 1
+  },
+  "tools": [
+    {
+      "name": "show-yaml",
+      "description": "Display YAML configuration with syntax highlighting and copy functionality",
+      "category": "code",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "yaml": {
+          "type": "string",
+          "description": "YAML content to display"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title (e.g., resource name)"
+        },
+        "resource_kind": {
+          "type": "string",
+          "description": "Kubernetes resource kind (Pod, Deployment, etc.)"
+        },
+        "copyable": {
+          "type": "boolean",
+          "description": "Enable copy to clipboard"
+        },
+        "editable": {
+          "type": "boolean",
+          "description": "Enable inline editing"
+        }
+      },
+      "required": [
+        "yaml"
+      ],
+      "metadata": {
+        "blocking": false,
+        "rancher-version": ">=2.13.0"
+      }
+    },
+    {
+      "name": "navigate-to",
+      "description": "Navigate to a Rancher UI page or external resource",
+      "category": "route",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL to navigate to"
+        },
+        "label": {
+          "type": "string",
+          "description": "Link label text"
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "_self",
+            "_blank"
+          ],
+          "description": "Open in same or new tab"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon name/emoji"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of where this leads"
+        }
+      },
+      "required": [
+        "url",
+        "label"
+      ],
+      "metadata": {
+        "interactive": true
+      }
+    },
+    {
+      "name": "show-logs",
+      "description": "Display container or pod logs with search and filtering",
+      "category": "code",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "logs": {
+          "type": "string",
+          "description": "Log content"
+        },
+        "pod_name": {
+          "type": "string",
+          "description": "Pod name"
+        },
+        "container_name": {
+          "type": "string",
+          "description": "Container name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace"
+        },
+        "follow": {
+          "type": "boolean",
+          "description": "Enable live log streaming"
+        },
+        "search_enabled": {
+          "type": "boolean",
+          "description": "Enable search in logs"
+        }
+      },
+      "required": [
+        "logs"
+      ],
+      "metadata": {
+        "supports_streaming": true,
+        "interactive": true
+      }
+    },
+    {
+      "name": "navigate-to-fleet",
+      "description": "Navigate to a Fleet UI page or external resource",
+      "category": "route",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL to navigate to"
+        },
+        "label": {
+          "type": "string",
+          "description": "Link label text"
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "_self",
+            "_blank"
+          ],
+          "description": "Open in same or new tab"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon name/emoji"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of where this leads"
+        }
+      },
+      "required": [
+        "url",
+        "label"
+      ],
+      "metadata": {
+        "interactive": true,
+        "product": "fleet"
+      }
+    },
+    {
+      "name": "show-yaml-diff",
+      "description": "Display YAML differences between resources, when creating or updating resources",
+      "category": "editor",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "current-content": {
+          "type": "string",
+          "description": "The original YAML content to compare against. It should contain the existing YAML for the resource or be empty if the resource does not exist yet."
+        },
+        "new-content": {
+          "type": "string",
+          "description": "The new YAML content to compare. It should contain the proposed YAML for the resource."
+        }
+      },
+      "required": [
+        "current-content",
+        "new-content"
+      ],
+      "metadata": {
+        "interactive": true
+      }
+    },
+    {
+      "name": "rancher-2-13-specific-tool",
+      "description": "Display YAML differences between resources, when creating or updating resources",
+      "category": "editor",
+      "revision": 1,
+      "enabled": true,
+      "properties": {
+        "test": {
+          "type": "string",
+          "description": "test."
+        }
+      },
+      "required": [
+        "test"
+      ],
+      "metadata": {
+        "rancher-version": "2.13.0"
+      }
+    }
+  ]
+}

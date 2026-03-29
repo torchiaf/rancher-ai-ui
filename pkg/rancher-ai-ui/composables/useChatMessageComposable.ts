@@ -29,6 +29,7 @@ import {
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 import { useContextComposable } from './useContextComposable';
+import { useToolsComposable } from './useToolsComposable';
 
 const EXPAND_THINKING = false;
 const DISMISS_RECOMMENDED_AGENT_KEY = 'dismissed-agent-recommendation';
@@ -53,6 +54,9 @@ export function useChatMessageComposable(
   const store = useStore();
   const { t } = useI18n(store);
 
+  const { selectContext, selectedContext } = useContextComposable();
+  const { defaultToolsSelector } = useToolsComposable();
+
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
   const messageBox = computed(() => store.getters['rancher-ai-ui/chat/messageBox'](chatId));
@@ -72,8 +76,6 @@ export function useChatMessageComposable(
       phase
     });
   };
-
-  const { selectContext, selectedContext } = useContextComposable();
 
   function wsSend(ws: WebSocket, value: string) {
     if (!ws) {
@@ -110,6 +112,7 @@ export function useChatMessageComposable(
       prompt:  messageContent,
       context: selectedContext.value,
       agent:   agentName.value,
+      tools:   defaultToolsSelector.value,
       labels
     }));
 
