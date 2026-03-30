@@ -8,7 +8,11 @@
     "systemPrompt": "You are a helpful assistant for selecting UI components to enhance user experience",
     "enabled": true,
     "maxTools": 5,
-    "revision": 1
+    "revision": 1,
+    "defaultValues": {
+      "enabled": true,
+      "systemPrompt": "You are a helpful assistant for selecting UI components to enhance user experience"
+    }
   },
   "tools": [
     {
@@ -17,6 +21,9 @@
       "category": "code",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "yaml": {
           "type": "string",
@@ -53,6 +60,9 @@
       "category": "route",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "url": {
           "type": "string",
@@ -93,6 +103,9 @@
       "category": "code",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "logs": {
           "type": "string",
@@ -133,6 +146,9 @@
       "category": "route",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "url": {
           "type": "string",
@@ -174,6 +190,9 @@
       "category": "editor",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "current-content": {
           "type": "string",
@@ -198,6 +217,9 @@
       "category": "editor",
       "revision": 1,
       "enabled": true,
+      "defaultValues": {
+        "enabled": true
+      },
       "properties": {
         "test": {
           "type": "string",

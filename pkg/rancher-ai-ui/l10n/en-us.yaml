@@ -161,6 +161,7 @@ ai:
     processing: 'Processing'
     awaitingConfirmation: 'Awaiting confirmation'
     generatingResponse: 'Generating response'
+    processingTools: 'Processing UI tools'
     confirming: 'Confirming'
     finalizing: 'Finalizing results'
     connecting: 'Connecting'
@@ -385,6 +386,19 @@ aiConfig:
         interactive: Interactive
         matched: "{count} tools matched"
         total: "{count} tools total"
+        notifications:
+          error:
+            title: Rancher AI Assistant UI Tools Error
+            message: An error occurred while updating the Rancher AI Assistant UI Tools definition.
+          created:
+            title: Rancher AI Assistant UI Tools Created
+            message: The Rancher AI Assistant UI Tools have been successfully created.
+          updated:
+            title: Rancher AI Assistant UI Tools Updated
+            message: 'UI tools definition have been updated: {message}.'
+          reset:
+            title: Rancher AI Assistant UI Tools Updated
+            message: 'Some user values in the UI tools have been reset: {message}.'
           
     EMBEDDINGS_MODEL:
       label: Embeddings Model
