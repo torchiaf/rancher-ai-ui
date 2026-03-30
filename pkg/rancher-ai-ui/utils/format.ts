@@ -14,6 +14,7 @@ import {
   ChatError,
   SourceLinkItem,
   ToolsConfig,
+  ToolAction,
 } from '../types';
 import { error } from '../utils/log';
 import { validateActionResource } from './validator';
@@ -192,6 +193,35 @@ export function formatSuggestionActions(suggestionActions: string[], remaining: 
 
   return {
     suggestionActions,
+    remaining
+  };
+}
+
+export function formatTools(toolActions: ToolAction[], remaining: string): { toolActions: ToolAction[]; remaining: string } {
+  const re = /<ui-tools\b[^>]*>([\s\S]*?)<\/ui-tools>/i;
+  const match = remaining?.match(re);
+
+  if (match) {
+    const inner = match[1]; // first ui-tools content
+
+    try {
+      const parsed = JSON.parse(inner);
+      const toolsArray = Array.isArray(parsed) ? parsed : [parsed];
+
+      toolActions.push(...toolsArray);
+    } catch (err) {
+      error('Failed to parse ui-tools content:', err);
+    }
+
+    remaining = remaining.replace(match[0], '').trim();
+
+    if (remaining) {
+      return formatTools(toolActions, remaining);
+    }
+  }
+
+  return {
+    toolActions,
     remaining
   };
 }

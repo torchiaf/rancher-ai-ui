@@ -13,6 +13,8 @@ export const enum Tag {
   MessageEnd = '</message>',
   ThinkingStart = '<think>',
   ThinkingEnd = '</think>',
+  ToolsStart = '<ui-tools>',
+  ToolsEnd = '</ui-tools>',
   McpResultStart = '<mcp-response>',
   McpResultEnd = '</mcp-response>',
   ConfirmationStart = '<confirmation-response>',
@@ -85,6 +87,7 @@ export const enum MessagePhase {
   Processing = 'processing',
   AwaitingConfirmation = 'awaitingConfirmation',
   GeneratingResponse = 'generatingResponse',
+  ProcessingTools = 'processingTools',
   Confirming = 'confirming',
   Finalizing = 'finalizing',
 }
@@ -154,6 +157,11 @@ export const enum MessageTag {
   Confirmation = 'confirmation',
 }
 
+export interface ToolAction {
+  toolName: string;
+  input: Record<string, any>;
+}
+
 export interface MessageAction {
   type: ActionType | string;
   label: string;
@@ -219,6 +227,7 @@ export interface Message {
   completed?: boolean;
   showThinking?: boolean;
   showCompleteMessage?: boolean;
+  tools?: ToolAction[];
   actions?: MessageAction[];
   relatedResourcesActions?: MessageAction[];
   suggestionActions?: string[];
@@ -327,7 +336,7 @@ export interface UITool {
   enabled: boolean;
   properties: Record<string, any>;
   required?: string[];
-  metadata?: Record<string, any>;
+  metadata: Record<string, any>;
 }
 
 export interface UIToolsConfigPayload {

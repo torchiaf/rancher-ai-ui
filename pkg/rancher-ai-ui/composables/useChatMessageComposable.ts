@@ -25,7 +25,8 @@ import {
   formatErrorMessage, formatSourceLinks,
   formatChatMetadata,
   formatAgentMetadata,
-  formatChatErrorMessage
+  formatChatErrorMessage,
+  formatTools
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 import { useContextComposable } from './useContextComposable';
@@ -55,7 +56,7 @@ export function useChatMessageComposable(
   const { t } = useI18n(store);
 
   const { selectContext, selectedContext } = useContextComposable();
-  const { defaultToolsSelector } = useToolsComposable();
+  const { toolsConfig, defaultToolsSelector } = useToolsComposable();
 
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
@@ -491,6 +492,19 @@ export function useChatMessageComposable(
 
           currentMsg.value.suggestionActions = suggestionActions;
           currentMsg.value.messageContent = remaining;
+
+          if (toolsConfig.value.config?.enabled) {
+            setPhase(MessagePhase.ProcessingTools);
+          }
+          break;
+        }
+
+        if (currentMsg.value.messageContent?.includes(Tag.ToolsStart) && currentMsg.value.messageContent?.includes(Tag.ToolsEnd)) {
+          const { toolActions, remaining } = formatTools(currentMsg.value.tools || [], currentMsg.value.messageContent);
+
+          currentMsg.value.tools = toolActions;
+          currentMsg.value.messageContent = remaining;
+
           break;
         }
 

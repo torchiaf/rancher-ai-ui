@@ -2,6 +2,7 @@ import { ComputedRef } from 'vue';
 import { AGENT_NAME, AGENT_NAMESPACE, AGENT_REST_API_PATH } from '../product';
 import {
   Agent, AgentSettings, HistoryChat, HistoryChatMessage, LLMProvider, Message,
+  UIToolsConfig,
   UIToolsConfigPayload
 } from '../types';
 import { error } from '../utils/log';
@@ -17,6 +18,15 @@ interface LLMOptions {
 interface LLMConfig {
   name: LLMProvider;
   options: LLMOptions;
+}
+
+interface UIToolsPublishResult {
+  resource?: UIToolsConfig;
+  created?: boolean;
+  updated?: boolean;
+  reset?: boolean;
+  message?: string;
+  error?: string;
 }
 
 /**
@@ -204,7 +214,7 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function publishTools(payload: UIToolsConfigPayload) {
+  async function publishTools(payload: UIToolsConfigPayload): Promise<UIToolsPublishResult | null> {
     try {
       const data = await fetch(`${ apiPath }/ui-tools/publish`, {
         method:  'POST',
