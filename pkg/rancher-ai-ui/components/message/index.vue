@@ -6,6 +6,7 @@ import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { FormattedMessage, MessageInternalSource, MessagePhase, Role as RoleEnum } from '../../types';
 import { extractMessageText } from '../../utils/label';
+import Tools from '../tools/index.vue';
 import Actions from '../tools/actions/index.vue';
 import SourceLinks from '../tools/SourceLinks.vue';
 import Confirmation from '../tools/Confirmation.vue';
@@ -257,6 +258,15 @@ onBeforeUnmount(() => {
         <Actions
           :label="t('ai.message.quickActions.label')"
           :actions="props.message.actions"
+        />
+      </div>
+      <div
+        v-if="props.message.tools?.length"
+        class="chat-msg-section"
+      >
+        <Tools
+          :label="t('ai.message.tools.label')"
+          :tools="props.message.tools"
         />
       </div>
       <div

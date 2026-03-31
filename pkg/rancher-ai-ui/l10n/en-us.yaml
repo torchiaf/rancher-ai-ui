@@ -54,6 +54,8 @@ ai:
       hideCompleteMessage: See Less
     suggestions:
       label: Quick Actions
+    tools:
+      label: TOOLS
     template:
       heyAnalyzeResource: 'Hey Liz, please analyse the resource'
       namespace: 'Namespace'
