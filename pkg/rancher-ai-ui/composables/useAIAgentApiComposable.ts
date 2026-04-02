@@ -1,13 +1,11 @@
 import { ComputedRef } from 'vue';
 import { AGENT_NAME, AGENT_NAMESPACE, AGENT_REST_API_PATH } from '../product';
+import { error } from '../utils/log';
 import {
   Agent, AgentSettings, HistoryChat, HistoryChatMessage, LLMProvider, Message,
-  UIToolsConfig,
-  UIToolsConfigPayload
 } from '../types';
-import { error } from '../utils/log';
-import { buildMessageFromHistoryMessage } from '../utils/format';
 import { Settings } from '../pages/settings/types';
+import { buildMessageFromHistoryMessage } from '../utils/format';
 
 interface LLMOptions {
   url?: string;
@@ -18,15 +16,6 @@ interface LLMOptions {
 interface LLMConfig {
   name: LLMProvider;
   options: LLMOptions;
-}
-
-interface UIToolsPublishResult {
-  resource?: UIToolsConfig;
-  created?: boolean;
-  updated?: boolean;
-  reset?: boolean;
-  message?: string;
-  error?: string;
 }
 
 /**
@@ -214,53 +203,7 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function publishTools(payload: UIToolsConfigPayload): Promise<UIToolsPublishResult | null> {
-    try {
-      const data = await fetch(`${ apiPath }/ui-tools/publish`, {
-        method:  'POST',
-        body:    JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!data.ok) {
-        const errorMessage = await data.text();
-
-        throw new Error(errorMessage);
-      }
-
-      const res = await data.json();
-
-      return res;
-    } catch (err) {
-      error('Failed to publish UI tools:', err);
-    }
-
-    return null;
-  }
-
-  async function fetchTools() {
-    try {
-      const data = await fetch(`${ apiPath }/ui-tools`);
-
-      if (!data.ok) {
-        const errorMessage = await data.text();
-
-        throw new Error(errorMessage);
-      }
-
-      const uiTools = await data.json();
-
-      return uiTools;
-    } catch (err) {
-      error('Failed to fetch UI tools:', err);
-
-      return [];
-    }
-  }
-
   return {
-    publishTools,
-    fetchTools,
     fetchLLMModels,
     fetchSettings,
     saveSettings,

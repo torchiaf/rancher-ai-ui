@@ -25,38 +25,40 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "yaml": {
-          "type": "string",
-          "description": "YAML content to display",
-          "required": true
-        },
-        "resourceKind": {
-          "type": "string",
-          "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
-          "required": true
-        },
-        "resourceName": {
-          "type": "string",
-          "description": "The name of the Kubernetes resource",
-          "required": true
-        },
-        "resourceNamespace": {
-          "type": "string",
-          "description": "The namespace of the Kubernetes resource",
-          "required": true
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title (e.g., resource name)"
-        },
-        "copyable": {
-          "type": "boolean",
-          "description": "Enable copy to clipboard"
-        },
-        "editable": {
-          "type": "boolean",
-          "description": "Enable inline editing"
+      "schema": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "description": "YAML content to display",
+            "required": true
+          },
+          "resourceKind": {
+            "type": "string",
+            "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+            "required": true
+          },
+          "resourceName": {
+            "type": "string",
+            "description": "The name of the Kubernetes resource",
+            "required": true
+          },
+          "resourceNamespace": {
+            "type": "string",
+            "description": "The namespace of the Kubernetes resource",
+            "required": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title (e.g., resource name)"
+          },
+          "copyable": {
+            "type": "boolean",
+            "description": "Enable copy to clipboard"
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "Enable inline editing"
+          }
         }
       },
       "metadata": {
@@ -73,43 +75,45 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "currentContent": {
-          "type": "string",
-          "description": "The current YAML content of the resource. It should contain the existing YAML for the resource before changes.",
-          "required": true
-        },
-        "newContent": {
-          "type": "string",
-          "description": "The new YAML content of the resource. It should contain the proposed YAML for the resource after changes.",
-          "required": true
-        },
-        "resourceKind": {
-          "type": "string",
-          "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
-          "required": true
-        },
-        "resourceName": {
-          "type": "string",
-          "description": "The name of the Kubernetes resource",
-          "required": true
-        },
-        "resourceNamespace": {
-          "type": "string",
-          "description": "The namespace of the Kubernetes resource",
-          "required": true
-        },
-        "title": {
-          "type": "string",
-          "description": "Display title (e.g., resource name)"
-        },
-        "copyable": {
-          "type": "boolean",
-          "description": "Enable copy to clipboard"
-        },
-        "editable": {
-          "type": "boolean",
-          "description": "Enable inline editing"
+      "schema": {
+        "properties": {
+          "currentContent": {
+            "type": "string",
+            "description": "The current YAML content of the resource. It should contain the existing YAML for the resource before changes.",
+            "required": true
+          },
+          "newContent": {
+            "type": "string",
+            "description": "The new YAML content of the resource. It should contain the proposed YAML for the resource after changes.",
+            "required": true
+          },
+          "resourceKind": {
+            "type": "string",
+            "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+            "required": true
+          },
+          "resourceName": {
+            "type": "string",
+            "description": "The name of the Kubernetes resource",
+            "required": true
+          },
+          "resourceNamespace": {
+            "type": "string",
+            "description": "The namespace of the Kubernetes resource",
+            "required": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title (e.g., resource name)"
+          },
+          "copyable": {
+            "type": "boolean",
+            "description": "Enable copy to clipboard"
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "Enable inline editing"
+          }
         }
       },
       "metadata": {
@@ -126,16 +130,18 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "path": {
-          "type": "string",
-          "description": "Path to navigate to",
-          "required": true
-        },
-        "label": {
-          "type": "string",
-          "description": "Link label text",
-          "required": true
+      "schema": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to navigate to",
+            "required": true
+          },
+          "label": {
+            "type": "string",
+            "description": "Link label text",
+            "required": true
+          }
         }
       },
       "metadata": {
@@ -152,26 +158,28 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "cluster": {
-          "type": "string",
-          "description": "Cluster where the Pod is running",
-          "required": true
-        },
-        "namespace": {
-          "type": "string",
-          "description": "Namespace of the Pod",
-          "required": true
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the Pod the container belongs to",
-          "required": true
-        },
-        "containerName": {
-          "type": "string",
-          "description": "Name of the container to show logs for (defaults to first container)",
-          "required": true
+      "schema": {
+        "properties": {
+          "cluster": {
+            "type": "string",
+            "description": "Cluster where the Pod is running",
+            "required": true
+          },
+          "namespace": {
+            "type": "string",
+            "description": "Namespace of the Pod",
+            "required": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the Pod the container belongs to",
+            "required": true
+          },
+          "containerName": {
+            "type": "string",
+            "description": "Name of the container to show logs for (defaults to first container)",
+            "required": true
+          }
         }
       },
       "metadata": {
@@ -187,11 +195,13 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "logs": {
-          "type": "string",
-          "description": "Log content",
-          "required": true
+      "schema": {
+        "properties": {
+          "logs": {
+            "type": "string",
+            "description": "Log content",
+            "required": true
+          }
         }
       },
       "metadata": {
@@ -207,32 +217,34 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "url": {
-          "type": "string",
-          "description": "URL to navigate to",
-          "required": true
-        },
-        "label": {
-          "type": "string",
-          "description": "Link label text",
-          "required": true
-        },
-        "target": {
-          "type": "string",
-          "enum": [
-            "_self",
-            "_blank"
-          ],
-          "description": "Open in same or new tab"
-        },
-        "icon": {
-          "type": "string",
-          "description": "Icon name/emoji"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of where this leads"
+      "schema": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL to navigate to",
+            "required": true
+          },
+          "label": {
+            "type": "string",
+            "description": "Link label text",
+            "required": true
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "_self",
+              "_blank"
+            ],
+            "description": "Open in same or new tab"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon name/emoji"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of where this leads"
+          }
         }
       },
       "metadata": {
@@ -250,11 +262,13 @@
       "defaultValues": {
         "enabled": true
       },
-      "properties": {
-        "test": {
-          "type": "string",
-          "description": "test.",
-          "required": true
+      "schema": {
+        "properties": {
+          "test": {
+            "type": "string",
+            "description": "test.",
+            "required": true
+          }
         }
       },
       "metadata": {

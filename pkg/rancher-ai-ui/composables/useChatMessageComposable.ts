@@ -56,7 +56,7 @@ export function useChatMessageComposable(
   const { t } = useI18n(store);
 
   const { selectContext, selectedContext } = useContextComposable();
-  const { toolsConfig, defaultToolsSelector } = useToolsComposable();
+  const { defaultToolsSelector } = useToolsComposable();
 
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
@@ -493,7 +493,7 @@ export function useChatMessageComposable(
           currentMsg.value.suggestionActions = suggestionActions;
           currentMsg.value.messageContent = remaining;
 
-          if (toolsConfig.value.config?.enabled) {
+          if (defaultToolsSelector.value) {
             setPhase(MessagePhase.ProcessingTools);
           }
           break;

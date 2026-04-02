@@ -308,6 +308,7 @@ export interface UIToolsConfigCRD {
   metadata: {
     name: string;
     namespace: string;
+    annotations?: Record<string, string>;
   };
   spec: {
     tools: UITool[];
@@ -319,13 +320,8 @@ export interface UIToolsSpecConfig {
   systemPrompt?: string;
   enabled: boolean;
   revision: number;
-}
-
-export interface UIToolsConfig {
-  name: string;
-  metadata?: { annotations?: Record<string, string>; };
-  config: UIToolsSpecConfig;
-  tools: UITool[];
+  maxTools?: number;
+  defaultValues?: Record<string, any>;
 }
 
 export interface UITool {
@@ -335,15 +331,11 @@ export interface UITool {
   category: string;
   revision: number;
   enabled: boolean;
-  properties: Record<string, any>;
   metadata: Record<string, any>;
-}
-
-export interface UIToolsConfigPayload {
-  name: string;
-  metadata?: { annotations: Record<string, string>; };
-  config: UIToolsSpecConfig;
-  tools: UITool[];
+  schema: {
+    properties: Record<string, any>;
+  }
+  defaultValues?: Record<string, any>;
 }
 
 export interface HistoryChat {

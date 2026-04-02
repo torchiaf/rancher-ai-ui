@@ -7,7 +7,6 @@ import connectionStore from './store/connection';
 import chatStore from './store/chat';
 import inputStore from './store/input';
 import contextStore from './store/context';
-import toolsStore from './store/tools';
 import stagingStore from './store/staging';
 import Chat from './handlers/chat';
 import Hooks from './handlers/hooks/index';
@@ -78,7 +77,6 @@ export default function(plugin: IPlugin, { store }: any): void {
   plugin.addDashboardStore(chatStore.config.namespace, chatStore.specifics, chatStore.config);
   plugin.addDashboardStore(inputStore.config.namespace, inputStore.specifics, inputStore.config);
   plugin.addDashboardStore(contextStore.config.namespace, contextStore.specifics, contextStore.config);
-  plugin.addDashboardStore(toolsStore.config.namespace, toolsStore.specifics, toolsStore.config);
   plugin.addDashboardStore(stagingStore.config.namespace, stagingStore.specifics, stagingStore.config);
 
   // Inject hooks in the main window
