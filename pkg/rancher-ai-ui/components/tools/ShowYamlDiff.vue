@@ -46,13 +46,14 @@ function navigateToStagingWithYaml() {
 
   store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, 'DIFF_CODE');
 
-  // Navigate to staging page
+  // Navigate to staging page with a timestamp to force route update even if params are identical
   store.state.$router.push({
     name:   `c-cluster-${ PRODUCT_NAME }-staging`,
     params: {
       cluster: 'local',
       product: 'explorer',
-    }
+    },
+    query: { t: Date.now() }
   });
 }
 </script>

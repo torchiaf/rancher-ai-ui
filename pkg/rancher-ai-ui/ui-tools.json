@@ -151,7 +151,7 @@
     {
       "name": "show-logs",
       "description": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod",
-      "prompt": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod. The cluster is: {cluster}, the namespace is: {namespace}, the pod name is: {name}, and the container name is: {containerName}.",
+      "prompt": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod. Useful when for troubleshooting resources in error state. The cluster is: {cluster}, the namespace is: {namespace}, the pod name is: {name}, and the container name is: {containerName}.",
       "category": "console",
       "revision": 1,
       "enabled": true,

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { useRouter } from 'vue-router';
+import { useRouter, onBeforeRouteUpdate } from 'vue-router';
 import jsyaml from 'js-yaml';
 import YamlEditor from '@shell/components/YamlEditor';
 import RcButton from '@components/RcButton/RcButton.vue';
@@ -58,11 +58,23 @@ watch(newContent, (val) => {
   proposedContent.value = val;
 }, { immediate: true });
 
+// Handle navigation to same route (when clicking another ShowYaml/ShowYamlDiff tool)
+onBeforeRouteUpdate(async(to, from) => {
+  // Force re-render by refreshing proposedContent
+  proposedContent.value = newContent.value;
+
+  return true;
+});
+
 onMounted(async() => {
   console.log('Staging page mounted');
   console.log('Staging data from store:', editorMode.value);
   console.log('Current content:', currentContent.value);
   console.log('New content:', newContent.value);
+
+  if (!stagingData.value) {
+    router.back();
+  }
 });
 
 function handleCancel() {
