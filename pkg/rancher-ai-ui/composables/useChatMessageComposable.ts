@@ -162,6 +162,10 @@ export function useChatMessageComposable(
         status:  result ? ConfirmationStatus.Confirmed : ConfirmationStatus.Canceled
       },
     });
+
+    if (message.source === MessageInternalSource.MessageBox) {
+      clearMessageBox();
+    }
   }
 
   function getMessage(messageId: string) {

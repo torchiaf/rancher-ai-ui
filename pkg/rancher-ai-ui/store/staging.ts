@@ -1,6 +1,7 @@
 import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
 import { EDITOR_MODES } from '@shell/components/YamlEditor';
+import { Message } from '../types';
 
 /**
  * Manages the state for staging YAML content before applying to the cluster.
@@ -15,6 +16,7 @@ interface StagingData {
     name: string;
   };
   title?: string;
+  sourceMessage?: Message;
 }
 
 interface State {

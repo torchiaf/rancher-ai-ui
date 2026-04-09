@@ -3,26 +3,26 @@ import { camelCase, upperFirst } from 'lodash';
 import { type PropType, defineAsyncComponent, onMounted, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { ToolAction } from '../../types';
+import { Message, ToolAction } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
 
 const props = defineProps({
+  message: {
+    type:    Object as PropType<Message>,
+    default: () => ({} as Message),
+  },
   label: {
     type:    String,
     default: '',
-  },
-  tools: {
-    type:    Array as PropType<ToolAction[]>,
-    default: () => [],
   },
 });
 
 const toolComponents = ref<Record<string, any>>({});
 
 async function loadToolComponents() {
-  const loaderPromises = props.tools.map(async({ toolName: name }) => {
+  const loaderPromises = (props.message.tools || []).map(async({ toolName: name }) => {
     const path = upperFirst(camelCase(name));
 
     try {
@@ -68,7 +68,7 @@ onMounted(() => {
     <div class="chat-msg-tools-container">
       <div class="chat-msg-tool-tags">
         <template
-          v-for="(tool, index) in props.tools"
+          v-for="(tool, index) in props.message.tools || []"
           :key="index"
         >
           <div
@@ -77,6 +77,7 @@ onMounted(() => {
           >
             <component
               :is="toolComponents[tool.toolName]"
+              :message="props.message"
               :tool="tool"
             />
           </div>

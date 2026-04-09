@@ -6,6 +6,7 @@ import { useRouter, onBeforeRouteUpdate } from 'vue-router';
 import jsyaml from 'js-yaml';
 import YamlEditor from '@shell/components/YamlEditor';
 import RcButton from '@components/RcButton/RcButton.vue';
+import { ConfirmationStatus } from '../types';
 
 const store = useStore();
 const router = useRouter();
@@ -67,7 +68,7 @@ onBeforeRouteUpdate(async(to, from) => {
 });
 
 onMounted(async() => {
-  console.log('Staging page mounted');
+  console.log('Staging page mounted', stagingData.value);
   console.log('Staging data from store:', editorMode.value);
   console.log('Current content:', currentContent.value);
   console.log('New content:', newContent.value);
@@ -78,14 +79,34 @@ onMounted(async() => {
 });
 
 function handleCancel() {
+  if (stagingData.value?.sourceMessage?.confirmation?.status === ConfirmationStatus.Pending) {
+    const message = { ...stagingData.value?.sourceMessage };
+
+    message.confirmation.status = ConfirmationStatus.Canceled;
+
+    store.commit('rancher-ai-ui/chat/addToMessageBox', {
+      chatId: 'default',
+      message
+    });
+  }
+
   store.commit(`rancher-ai-ui/staging/setStagingData`, null);
   store.commit(`rancher-ai-ui/staging/setEditorMode`, null);
+
   router.back();
 }
 
 function handleApply() {
-  // TODO: Apply YAML to cluster
-  console.log('Applying YAML changes:', proposedContent.value);
+  if (stagingData.value?.sourceMessage?.confirmation?.status === ConfirmationStatus.Pending) {
+    const message = { ...stagingData.value?.sourceMessage };
+
+    message.confirmation.status = ConfirmationStatus.Confirmed;
+
+    store.commit('rancher-ai-ui/chat/addToMessageBox', {
+      chatId: 'default',
+      message
+    });
+  }
   router.back();
 }
 

@@ -6,7 +6,7 @@ import {
 } from 'vue';
 import { PRODUCT_NAME } from '../product';
 import {
-  Agent, AgentState, AIServiceState, ConnectionPhase, FormattedMessage, HistoryChat, Message, MessagePhase, Role, StorageType
+  Agent, AgentState, AIServiceState, ConfirmationStatus, ConnectionPhase, FormattedMessage, HistoryChat, Message, MessagePhase, Role, StorageType
 } from '../types';
 import { extractMessageText } from '../utils/label';
 import Chat from '../handlers/chat';
@@ -355,7 +355,12 @@ watch(() => [
   /**
    * If the chat is ready and the message box has content, send the message
    */
-  if (!newDisabled && newIsChatInitialized && newMessage) {
+  if (newIsChatInitialized && newMessage && !!newMessage.confirmation?.status) {
+    confirmMessage({
+      message: newMessage,
+      result:  ConfirmationStatus.Confirmed === newMessage.confirmation.status
+    }, ws.value!);
+  } else if (!newDisabled && newIsChatInitialized && newMessage) {
     ensureConnectionAndSendMessage(newMessage);
   }
 }, {

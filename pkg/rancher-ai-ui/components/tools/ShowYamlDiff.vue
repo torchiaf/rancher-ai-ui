@@ -4,12 +4,16 @@ import { useStore } from 'vuex';
 import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ToolAction } from '../../types';
+import { Message, ToolAction } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
 
 const props = defineProps({
+  message: {
+    type:    Object as PropType<Message>,
+    default: () => ({} as Message),
+  },
   tool: {
     type:    Object as PropType<ToolAction>,
     default: () => ({}),
@@ -41,7 +45,8 @@ function navigateToStagingWithYaml() {
       namespace: resourceNamespace,
       name:      resourceName
     },
-    title
+    title,
+    sourceMessage: props.message
   });
 
   store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, 'DIFF_CODE');

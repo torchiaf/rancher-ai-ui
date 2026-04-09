@@ -266,7 +266,7 @@ onBeforeUnmount(() => {
       >
         <Tools
           :label="t('ai.message.tools.label')"
-          :tools="props.message.tools"
+          :message="props.message"
         />
       </div>
       <div
