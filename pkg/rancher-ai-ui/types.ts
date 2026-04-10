@@ -304,19 +304,12 @@ export interface AIAgentConfigCRD {
   stateDescription?: string;
 }
 
-export interface UIToolsConfigCRD {
-  metadata: {
-    name: string;
-    namespace: string;
-    annotations?: Record<string, string>;
-  };
-  spec: {
-    tools: UITool[];
-    config: UIToolsSpecConfig;
-  }
+export interface UIToolsConfigs {
+  config: UIToolsConfig;
+  tools: UITool[];
 }
 
-export interface UIToolsSpecConfig {
+export interface UIToolsConfig {
   systemPrompt?: string;
   enabled: boolean;
   revision: number;

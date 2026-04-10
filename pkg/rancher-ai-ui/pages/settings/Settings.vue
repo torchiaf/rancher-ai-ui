@@ -13,6 +13,7 @@ import {
   AGENT_CONFIG_SECRET_NAME,
   AGENT_CONFIG_CONFIG_MAP_NAME,
   PERMISSIONS_DOCS_URL,
+  TOOLS_CONFIG_NAME,
 } from '../../product';
 import { warn } from '../../utils/log';
 import { CONFIG_MAP, SECRET, WORKLOAD_TYPES } from '@shell/config/types';
@@ -28,7 +29,7 @@ import {
   SettingsFormData, Settings, Workload, AiAgentConfigSecretPayload, AIAgentConfigAuthType,
   SettingsPermissions,
 } from './types';
-import { AgentSettings, AIAgentConfigCRD, UIToolsConfigCRD } from '../../types';
+import { AgentSettings, AIAgentConfigCRD, UIToolsConfigs } from '../../types';
 import { AI_AGENT_LABELS } from '../../labels-annotations';
 import SettingsRow from './SettingsRow.vue';
 import AIAgentConfigs from './sections/AIAgentConfigs.vue';
@@ -59,7 +60,7 @@ const aiAgentDeployment = ref<Workload | null>(null);
 const chatSettings = ref<AgentSettings | null>(null);
 const aiAgentSettings = ref<SettingsFormData | null>(null);
 const aiAgentConfigCRDs = ref<AIAgentConfigCRD[] | null>(null);
-const uiToolsConfigCRD = ref<UIToolsConfigCRD | null>(null);
+const uiToolsSettings = ref<UIToolsConfigs | null>(null);
 const authenticationSecrets = ref<Record<string, AiAgentConfigSecretPayload | null>>({});
 
 const permissions = ref<SettingsPermissions | null>(null);
@@ -165,24 +166,32 @@ async function fetchAiAgentConfigCRDs() {
 }
 
 /**
- * Fetches the UI tools config CRD.
+ * Fetches the UI tools config from the ConfigMap.
  */
-async function fetchUIToolsConfigCRD() {
-  let crd;
+async function fetchUIToolsConfigSettings() {
+  let uiToolsConfigSettings;
 
-  if (permissions.value?.list?.canListUiToolsCRDS) {
+  if (permissions.value?.list?.canListConfigMaps) {
+    let configMap;
+
     try {
-      crd = await store.dispatch(`management/find`, {
-        type: RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG,
-        id:   `${ AGENT_NAMESPACE }/rancher-ai-ui`,
+      configMap = await store.dispatch(`management/find`, {
+        type: CONFIG_MAP,
+        id:   `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`,
         opt:  { watch: true }
       });
     } catch (err) {
-      warn('Unable to fetch UI Tools Config CRD: ', { err });
+      warn('Unable to fetch UI Tools Config ConfigMap: ', { err });
+    }
+
+    try {
+      uiToolsConfigSettings = JSON.parse(configMap.data?.config || '{}');
+    } catch (error) {
+      warn('Failed to parse UI Tools Config ConfigMap data:', { error });
     }
   }
 
-  uiToolsConfigCRD.value = crd;
+  uiToolsSettings.value = uiToolsConfigSettings;
 }
 
 /**
@@ -404,16 +413,15 @@ function fetchPermissions() {
   const canListSecrets = store.getters['management/canList'](SECRET);
   const canListDeployments = store.getters['management/canList'](WORKLOAD_TYPES.DEPLOYMENT);
   const canListAiAgentCRDS = canListSecrets && store.getters['management/canList'](RANCHER_AI_SCHEMA.AI_AGENT_CONFIG);
-  const canListUiToolsCRDS = canListSecrets && store.getters['management/canList'](RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG);
 
   let schema = store.getters['management/schemaFor'](RANCHER_AI_SCHEMA.AI_AGENT_CONFIG);
   const canCreateAiAgentCRDS = !!schema?.resourceMethods?.find((verb: any) => 'PUT' === verb);
 
-  schema = store.getters['management/schemaFor'](RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG);
-  const canCreateUiToolsCRDS = !!schema?.resourceMethods?.find((verb: any) => 'PUT' === verb);
-
   schema = store.getters['management/schemaFor'](SECRET);
   const canCreateSecrets = !!schema?.resourceMethods?.find((verb: any) => 'PUT' === verb);
+
+  schema = store.getters['management/schemaFor'](CONFIG_MAP);
+  const canCreateConfigMaps = !!schema?.resourceMethods?.find((verb: any) => 'PUT' === verb);
 
   permissions.value = {
     list:   {
@@ -421,12 +429,11 @@ function fetchPermissions() {
       canListSecrets,
       canListDeployments,
       canListAiAgentCRDS,
-      canListUiToolsCRDS
     },
     create: {
       canCreateSecrets,
       canCreateAiAgentCRDS,
-      canCreateUiToolsCRDS
+      canCreateConfigMaps,
     }
   };
 }
@@ -444,7 +451,7 @@ onMounted(async() => {
     await fetchAiAgentSettings();
 
     await fetchAiAgentConfigCRDs();
-    await fetchUIToolsConfigCRD();
+    await fetchUIToolsConfigSettings();
 
     // Watch for status updates of AI Agent Config CRDs
     watch(
@@ -543,10 +550,10 @@ onMounted(async() => {
         data-testid="rancher-ai-ui-settings-tools"
       >
         <UIToolsConfig
-          v-if="uiToolsConfigCRD"
-          :value="uiToolsConfigCRD"
-          :read-only="!permissions?.create.canCreateUiToolsCRDS"
-          @update:value="uiToolsConfigCRD = $event"
+          v-if="uiToolsSettings"
+          :value="uiToolsSettings"
+          :read-only="!permissions?.create.canCreateConfigMaps"
+          @update:value="uiToolsSettings = $event"
         />
       </settings-row>
 

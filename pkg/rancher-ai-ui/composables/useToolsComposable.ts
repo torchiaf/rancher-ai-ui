@@ -1,16 +1,16 @@
 import semver from 'semver';
 import { computed } from 'vue';
 import { useStore } from 'vuex';
-import { AGENT_NAMESPACE, RANCHER_AI_SCHEMA } from '../product';
 import { useI18n } from '@shell/composables/useI18n';
+import { CONFIG_MAP } from '@shell/config/types';
 import { NotificationLevel } from '@shell/types/notifications';
+import { AGENT_NAMESPACE, RANCHER_AI_UI_LABELS, TOOLS_CONFIG_NAME } from '../product';
 import { warn } from '../utils/log';
 import { getRancherVersion, uiVersion } from '../utils/version';
 import { compareSpecConfig, compareSpecTools, hasChanges } from '../utils/tools';
 import toolsConfigData from '../ui-tools.json';
-import { UITool, UIToolsConfigCRD } from 'types';
+import { UITool, UIToolsConfig, UIToolsConfigs } from '../types';
 
-const TOOLS_CONFIG_NAME = 'rancher-ai-ui';
 const RANCHER_VERSION_KEY = 'rancher-version';
 const UI_VERSION_KEY = 'ui-version';
 
@@ -22,58 +22,69 @@ export function useToolsComposable() {
   const store = useStore();
   const { t } = useI18n(store);
 
-  const toolsConfig = computed<UIToolsConfigCRD>(() => store.getters['management/byId'](RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG, `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`));
+  const toolsConfigMap = computed(() => store.getters['management/byId'](CONFIG_MAP, `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`));
 
   /**
    * Default tools selector based on the tools configuration,
    * filtering tools based on Rancher version compatibility.
    */
   const defaultToolsSelector = computed(() => {
-    if (!toolsConfig.value?.spec?.config?.enabled) {
+    let configs = {} as UIToolsConfigs;
+
+    try {
+      configs = JSON.parse(toolsConfigMap.value?.data?.config || '{}');
+    } catch (err) {
+      warn('Failed to parse UI Tools Config ConfigMap data:', { err });
+    }
+
+    if (!configs.config?.enabled || !configs.tools?.length) {
       return undefined;
     }
 
     return {
       name:  TOOLS_CONFIG_NAME,
-      tools: (toolsConfig.value?.spec?.tools || [])
-        .filter((tool) => !tool.metadata[RANCHER_VERSION_KEY] || semver.satisfies(getRancherVersion(), tool.metadata[RANCHER_VERSION_KEY]))
-        .map((tool) => tool.name)
+      tools: configs.tools
+        .filter((tool: UITool) => !tool.metadata[RANCHER_VERSION_KEY] || semver.satisfies(getRancherVersion(), tool.metadata[RANCHER_VERSION_KEY]))
+        .map((tool: UITool) => tool.name)
     };
   });
 
   async function publishToolsDefinition() {
-    let toolsConfig;
+    let configMap;
 
-    // First, attempt to find the existing config
+    // First, attempt to find the existing ConfigMap
     try {
-      toolsConfig = await store.dispatch('management/find', {
-        type: RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG,
+      configMap = await store.dispatch('management/find', {
+        type: CONFIG_MAP,
         id:   `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`
       });
     } catch (err) { // eslint-disable-line no-unused-vars
     }
 
-    // Create the new config
-    if (!toolsConfig) {
-      toolsConfig = await store.dispatch('management/create', {
-        type:     RANCHER_AI_SCHEMA.UI_TOOLS_CONFIG,
+    // Create the new ConfigMap if it doesn't exist
+    if (!configMap) {
+      configMap = await store.dispatch('management/create', {
+        type:     CONFIG_MAP,
         metadata: {
           name:        TOOLS_CONFIG_NAME,
           namespace:   AGENT_NAMESPACE,
+          labels:      { app: RANCHER_AI_UI_LABELS.UI_TOOLS },
           annotations: {
             ...(toolsConfigData.metadata?.annotations || {}),
             [UI_VERSION_KEY]: uiVersion
-          },
+          }
         },
-        spec: {
-          tools:  toolsConfigData.tools,
-          config: toolsConfigData.config,
+        data: {
+          config: JSON.stringify({
+            config: toolsConfigData.config,
+            tools:  toolsConfigData.tools
+          }),
         }
       });
 
-      // Notify users about creation
+      // Notify creation
       try {
-        await toolsConfig.save();
+        await configMap.save();
 
         store.dispatch('notifications/add', {
           level:   NotificationLevel.Success,
@@ -81,17 +92,25 @@ export function useToolsComposable() {
           message: t('aiConfig.form.section.tools.notifications.created.message')
         });
       } catch (err) {
-        warn(`Unable to create UI Tools Config CRD ${ toolsConfig.metadata.name }: `, { err });
+        warn(`Unable to create UI Tools Config ConfigMap ${ configMap.metadata.name }: `, { err });
       }
 
       return;
     }
 
-    // Extract current tools and config from the cluster state for comparison
+    // Extract current tools and config from ConfigMap data (parse JSON strings)
+    let configs = {} as UIToolsConfigs;
+
+    try {
+      configs = JSON.parse(toolsConfigMap.value?.data?.config || '{}');
+    } catch (err) {
+      warn('Failed to parse UI Tools Config ConfigMap data:', { err });
+    }
+
     const {
-      tools: currentTools,
-      config: currentConfig
-    } = toolsConfig.spec as UIToolsConfigCRD['spec'];
+      config: currentConfig = {} as UIToolsConfig,
+      tools:  currentTools = [] as UITool[]
+    } = configs;
 
     // Compare with hasChanges before publishing
     const changesDetected = hasChanges(
@@ -113,13 +132,8 @@ export function useToolsComposable() {
     let updatedConfig = false;
     const resetConfigUserValues = {} as Record<string, { from: any; to: any }>;
 
-    // Merge new config with existing config
-    toolsConfig.spec = {
-      tools:  [] as UITool[],
-      config: {}
-    } as UIToolsConfigCRD['spec'];
-
-    // Update spec tools
+    // Build new tools array instead of modifying in place
+    const newTools: UITool[] = [];
     const currentToolsByName = Object.fromEntries(currentTools.map((t) => [t.name, t]));
     const providedToolsByName = Object.fromEntries(toolsConfigData.tools.map((t) => [t.name, t]));
 
@@ -133,7 +147,7 @@ export function useToolsComposable() {
     for (const tool of toolsConfigData.tools) {
       if (!currentToolsByName[tool.name]) {
         // Add new tool
-        toolsConfig.spec.tools.push(tool);
+        newTools.push(tool);
 
         // Track added tools
         addedTools.push(tool.name);
@@ -167,12 +181,12 @@ export function useToolsComposable() {
           }
         }
 
-        toolsConfig.spec.tools.push(toolToUpdate);
+        newTools.push(toolToUpdate);
       }
     }
 
-    // Update spec config - always preserve user's enabled and systemPrompt values from current config
-    toolsConfig.spec.config = {
+    // Build new config - always preserve user's enabled and systemPrompt values
+    const newConfig = {
       ...toolsConfigData.config,
       enabled:      currentConfig.enabled,
       systemPrompt: currentConfig.systemPrompt
@@ -187,7 +201,7 @@ export function useToolsComposable() {
     const currentConfigRevision = currentConfig.revision || 0;
 
     if (providedConfigRevision > currentConfigRevision) {
-      if (toolsConfig.spec.config.enabled !== toolsConfigData.config.enabled) {
+      if (newConfig.enabled !== toolsConfigData.config.enabled) {
         // Track config updates in resetConfigUserValues
         resetConfigUserValues['enabled'] = {
           from: currentConfig.enabled,
@@ -195,10 +209,10 @@ export function useToolsComposable() {
         };
 
         // Force enabled to be updated to the provided value since it's a new revision with changes
-        toolsConfig.spec.config.enabled = toolsConfigData.config.enabled;
+        newConfig.enabled = toolsConfigData.config.enabled;
       }
 
-      if (toolsConfig.spec.config.systemPrompt !== toolsConfigData.config.systemPrompt) {
+      if (newConfig.systemPrompt !== toolsConfigData.config.systemPrompt) {
         // Track config updates in resetConfigUserValues
         resetConfigUserValues['systemPrompt'] = {
           from: currentConfig.systemPrompt,
@@ -206,14 +220,22 @@ export function useToolsComposable() {
         };
 
         // Force systemPrompt to be updated to the provided value since it's a new revision with changes
-        toolsConfig.spec.config.systemPrompt = toolsConfigData.config.systemPrompt;
+        newConfig.systemPrompt = toolsConfigData.config.systemPrompt;
       }
     }
 
+    // Update ConfigMap data with JSON strings
+    configMap.data = {
+      config: JSON.stringify({
+        config: newConfig,
+        tools:  newTools
+      })
+    };
+
     try {
-      await toolsConfig.save();
+      await configMap.save();
     } catch (err) {
-      warn(`Unable to update UI Tools Config CRD ${ toolsConfig.metadata.name }: `, { err });
+      warn(`Unable to update UI Tools Config ConfigMap ${ configMap.metadata.name }: `, { err });
 
       store.dispatch('notifications/add', {
         level:   NotificationLevel.Error,

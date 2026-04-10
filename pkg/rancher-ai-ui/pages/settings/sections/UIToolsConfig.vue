@@ -11,17 +11,16 @@ import FilterPanel from '@shell/components/FilterPanel.vue';
 import TextAreaAutoGrow from '@components/Form/TextArea/TextAreaAutoGrow.vue';
 import { getRancherVersion } from '../../../utils/version';
 import toolsConfigData from '../../../ui-tools.json';
+import { UIToolsConfigs } from 'types';
 
 const store = useStore();
 const { t } = useI18n(store);
-
-import type { UIToolsConfigCRD } from '../../../types';
 
 const RANCHER_VERSION_KEY = 'rancher-version';
 
 const props = defineProps({
   value: {
-    type:     Object as () => UIToolsConfigCRD,
+    type:     Object as () => UIToolsConfigs,
     required: true,
   },
   readOnly: {
@@ -49,7 +48,7 @@ const debouncedSearch = debounce((q: string) => {
 const categoryOptions = computed(() => {
   const categories = new Set<string>();
 
-  props.value.spec?.tools?.forEach((tool) => {
+  props.value?.tools?.forEach((tool) => {
     if (tool.category) {
       categories.add(tool.category);
     }
@@ -72,7 +71,7 @@ const filterPanelFilters = computed(() => [
 
 // Filter tools based on search and category filters
 const filteredTools = computed(() => {
-  let tools = props.value.spec?.tools || [];
+  let tools = props.value?.tools || [];
 
   // Filter by Rancher version compatibility
   tools = tools.filter((tool) => !tool.metadata?.[RANCHER_VERSION_KEY] || semver.satisfies(getRancherVersion(), tool.metadata[RANCHER_VERSION_KEY]));
@@ -125,8 +124,8 @@ const applyFiltersDebounced = debounce((newFilters: any) => {
 
 // Update tool enabled state
 const updateToolEnabled = (toolName: string, enabled: boolean) => {
-  if (props.value.spec?.tools) {
-    const tool = props.value.spec.tools.find((t) => t.name === toolName);
+  if (props.value?.tools) {
+    const tool = props.value.tools.find((t) => t.name === toolName);
 
     if (tool) {
       tool.enabled = enabled;
@@ -154,17 +153,17 @@ const focusSearch = () => {
 
 // Reset config fields to default values
 const resetConfigToDefaults = () => {
-  if (props.value.spec) {
-    props.value.spec.config.enabled = toolsConfigData.config.enabled;
-    props.value.spec.config.systemPrompt = toolsConfigData.config.systemPrompt;
+  if (props.value?.config) {
+    props.value.config.enabled = toolsConfigData.config.enabled;
+    props.value.config.systemPrompt = toolsConfigData.config.systemPrompt;
     emit('update:value', { ...props.value });
   }
 };
 
 // Reset tools to default values
 const resetToolsToDefaults = () => {
-  if (props.value.spec?.tools) {
-    props.value.spec.tools.forEach((tool) => {
+  if (props.value?.tools) {
+    props.value.tools.forEach((tool) => {
       const defaultTool = toolsConfigData.tools.find((t: any) => t.name === tool.name);
 
       if (defaultTool) {
@@ -183,10 +182,10 @@ const resetToolsToDefaults = () => {
         <div class="col span-12">
           <Checkbox
             class="form-value-checkbox"
-            :value="props.value.spec.config.enabled"
+            :value="props.value?.config?.enabled"
             :label="t('aiConfig.form.section.tools.fields.enabled.label')"
             :disabled="readOnly"
-            @input="(val: any) => { props.value.spec.config.enabled = val; emit('update:value', { ...props.value }); }"
+            @input="(val: any) => { props.value.config.enabled = val; emit('update:value', { ...props.value }); }"
           />
         </div>
       </div>
@@ -204,12 +203,12 @@ const resetToolsToDefaults = () => {
       </div>
       <div class="row textarea-with-validation">
         <TextAreaAutoGrow
-          :value="props.value.spec.config.systemPrompt"
+          :value="props.value?.config?.systemPrompt"
           :disabled="readOnly"
           :placeholder="t('aiConfig.form.section.tools.fields.systemPrompt.placeholder')"
           :min-height="100"
           :max-height="150"
-          @update:value="(val: string) => { props.value.spec.config.systemPrompt = val; emit('update:value', { ...props.value }); }"
+          @update:value="(val: string) => { props.value.config.systemPrompt = val; emit('update:value', { ...props.value }); }"
         />
         <!-- <i
           v-if="systemPromptValidationStatus.touched && !systemPromptValidationStatus.focused && !selectedAgent.spec.systemPrompt"
@@ -280,7 +279,7 @@ const resetToolsToDefaults = () => {
 
       <!-- Banner for any errors -->
       <Banner
-        v-if="!value.spec?.tools || value.spec.tools.length === 0"
+        v-if="!value?.tools || value?.tools.length === 0"
         color="warning"
         :label="t('aiConfig.form.section.tools.noTools', {}, true)"
       />
@@ -341,7 +340,7 @@ const resetToolsToDefaults = () => {
             <div class="text-right">
               <button
                 class="btn role-tertiary"
-                :disabled="readOnly || !props.value.spec?.tools || props.value.spec.tools.length === 0"
+                :disabled="readOnly || !props.value?.tools || props.value?.tools.length === 0"
                 @click="resetToolsToDefaults"
               >
                 {{ t('aiConfig.form.resetToDefaults', {}, true) }}
