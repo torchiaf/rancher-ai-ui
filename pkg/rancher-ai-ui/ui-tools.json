@@ -18,7 +18,7 @@
     {
       "name": "show-yaml",
       "description": "Display YAML content of a Kubernetes resource",
-      "prompt": "Display YAML content of a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace} and the yaml file in a yaml editor. The YAML content is: {yaml}. The YAML content should be the same as the content returned in the LLM AI message or even better from the MCP tool call.",
+      "prompt": "This tool is designed to display the YAML content of a SINGLE Kubernetes resource, it should NOT be used when the user requests a list of resources. It should be called only 1 time per request.\nDisplay YAML content of a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace} and the yaml file in a yaml editor. The YAML content is: {yaml}. The YAML content should be the same as the content returned in the AI message or even better from the MCP data.",
       "category": "editor",
       "revision": 1,
       "enabled": true,
@@ -68,7 +68,7 @@
     {
       "name": "show-yaml-diff",
       "description": "Display YAML content differences between an existing Kubernetes resource and a proposed configuration",
-      "prompt": "Display YAML content differences between an existing Kubernetes resource and a proposed configuration for a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace}. The current YAML content is: {currentContent}. The proposed YAML configuration content is: {newContent}. Both current and proposed YAML contents should be the same as the contents returned in the LLM AI message or even better from the MCP tool call.",
+      "prompt": "This tool is designed to display the YAML content differences between an existing Kubernetes resource and a proposed configuration for a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace}. The current YAML content is: {original}. The proposed YAML configuration content is: {patched}.",
       "category": "editor",
       "revision": 1,
       "enabled": true,
@@ -77,12 +77,12 @@
       },
       "schema": {
         "properties": {
-          "currentContent": {
+          "original": {
             "type": "string",
             "description": "The current YAML content of the resource. It should contain the existing YAML for the resource before changes.",
             "required": true
           },
-          "newContent": {
+          "patched": {
             "type": "string",
             "description": "The new YAML content of the resource. It should contain the proposed YAML for the resource after changes.",
             "required": true
@@ -121,9 +121,9 @@
       }
     },
     {
-      "name": "navigate-to",
+      "name": "explore",
       "description": "Navigate to a Rancher UI page",
-      "prompt": "Navigate to a Rancher UI page with path {path}.\nThe {label} is the label the Ui will use to display the link to the page, e.g.: 'View Pod', 'View Pods list'; It should be max 50 characters long.\nThe {path} should be built based on the Rancher UI routing structure and should lead to a specific page in the Rancher UI.\nRULES: 1. GLOBAL: '/home', '/clusters', '/prefs'. 2. CLUSTER: Starts with '/c/:cluster/'. 3. RESOURCE MAPPING (CRITICAL): Use Fully Qualified Names for :resource. Examples: Deployments -> 'apps.deployment', StatefulSets -> 'apps.statefulset', CronJobs -> 'batch.cronjob', Secrets -> 'secret', ConfigMaps -> 'configmap'. 4. LIST: '/c/:cluster/explorer/:resource' (e.g., /c/local/explorer/apps.deployment). 5. DETAIL: '/c/:cluster/explorer/:resource/:namespace/:id'. 6. TOOLS: Use shortcuts for installed apps: '/c/:cluster/monitoring', '/c/:cluster/logging', '/c/:cluster/gatekeeper', '/c/:cluster/istio'. 7. MANAGEMENT: For clusters use '/c/:cluster/manager/provisioning.cattle.io.cluster'.",
+      "prompt": "Navigate to a Rancher UI page by specifying the target route. The {route} param identifies the destination, {cluster} is needed for cluster-specific routes, {label} is optional link text.",
       "category": "route",
       "revision": 1,
       "enabled": true,
@@ -131,21 +131,50 @@
         "enabled": true
       },
       "schema": {
+        "type": "object",
         "properties": {
-          "path": {
+          "route": {
             "type": "string",
-            "description": "Path to navigate to",
+            "enum": [
+              "projects-namespaces",
+              "clusters",
+              "settings",
+              "deployments"
+            ],
+            "description": "The route identifier.",
             "required": true
+          },
+          "cluster": {
+            "type": "string",
+            "description": "The cluster name."
           },
           "label": {
             "type": "string",
-            "description": "Link label text",
-            "required": true
+            "description": "Link display text (max 50 characters) - for example, 'View Deployments' instead of just 'deployments'.",
+            "maxLength": 50
           }
         }
       },
       "metadata": {
-        "interactive": true
+        "interactive": true,
+        "enum": {
+          "route": {
+            "clusters": {
+              "description": "View all clusters page"
+            },
+            "settings": {
+              "description": "View settings page. This page contains the Rancher settings, including AI Assistant configuration."
+            },
+            "projects-namespaces": {
+              "description": "View projects / namespaces page for a specific cluster",
+              "requires": ["cluster"]
+            },
+            "deployments": {
+              "description": "Deployments list page for a specific cluster",
+              "requires": ["cluster"]
+            }
+          }
+        }
       }
     },
     {
@@ -205,51 +234,6 @@
         }
       },
       "metadata": {
-      }
-    },
-    {
-      "name": "navigate-to-fleet",
-      "description": "Navigate to a Fleet UI page or external resource",
-      "prompt": "Navigate to a Fleet UI page or external resource",
-      "category": "route",
-      "revision": 1,
-      "enabled": true,
-      "defaultValues": {
-        "enabled": true
-      },
-      "schema": {
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "URL to navigate to",
-            "required": true
-          },
-          "label": {
-            "type": "string",
-            "description": "Link label text",
-            "required": true
-          },
-          "target": {
-            "type": "string",
-            "enum": [
-              "_self",
-              "_blank"
-            ],
-            "description": "Open in same or new tab"
-          },
-          "icon": {
-            "type": "string",
-            "description": "Icon name/emoji"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description of where this leads"
-          }
-        }
-      },
-      "metadata": {
-        "interactive": true,
-        "product": "fleet"
       }
     },
     {

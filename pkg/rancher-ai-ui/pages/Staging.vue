@@ -19,8 +19,8 @@ const proposedContent = ref('');
 const stagingData = computed(() => store.getters['rancher-ai-ui/staging/stagingData']);
 const editorMode = computed(() => store.getters['rancher-ai-ui/staging/editorMode']);
 
-const currentContent = computed(() => {
-  let yaml = stagingData.value?.currentContent || '';
+const original = computed(() => {
+  let yaml = stagingData.value?.original || '';
 
   // Ensure it's a string
   if (typeof yaml !== 'string') {
@@ -30,8 +30,8 @@ const currentContent = computed(() => {
   return yaml;
 });
 
-const newContent = computed(() => {
-  let yaml = stagingData.value?.newContent || '';
+const patched = computed(() => {
+  let yaml = stagingData.value?.patched || '';
 
   // Ensure it's a string
   if (typeof yaml !== 'string') {
@@ -54,15 +54,15 @@ const resourceLabel = computed(() => {
 
 // const showShowDiffButton = computed(() => false);
 
-// Sync proposedContent with newContent immediately
-watch(newContent, (val) => {
+// Sync proposedContent with patched immediately
+watch(patched, (val) => {
   proposedContent.value = val;
 }, { immediate: true });
 
 // Handle navigation to same route (when clicking another ShowYaml/ShowYamlDiff tool)
 onBeforeRouteUpdate(async(to, from) => {
   // Force re-render by refreshing proposedContent
-  proposedContent.value = newContent.value;
+  proposedContent.value = patched.value;
 
   return true;
 });
@@ -70,8 +70,8 @@ onBeforeRouteUpdate(async(to, from) => {
 onMounted(async() => {
   console.log('Staging page mounted', stagingData.value);
   console.log('Staging data from store:', editorMode.value);
-  console.log('Current content:', currentContent.value);
-  console.log('New content:', newContent.value);
+  console.log('Current content:', original.value);
+  console.log('New content:', patched.value);
 
   if (!stagingData.value) {
     router.back();
@@ -129,8 +129,11 @@ function onInput(value: string) {
           {{ resourceLabel }}
         </p>
       </div>
-      <div class="staging-actions">
-        <RcButton
+      <div
+        v-if="stagingData?.sourceMessage?.confirmation?.status === ConfirmationStatus.Pending"
+        class="staging-actions"
+      >
+        <!-- <RcButton
           v-if="false"
           secondary
           data-testid="staging-editor-show-diff-button"
@@ -146,7 +149,7 @@ function onInput(value: string) {
           @click="toggleShowDiff"
         >
           {{ t('ai.staging.backToEdit', {}, true) }}
-        </RcButton>
+        </RcButton> -->
 
         <RcButton
           secondary
@@ -167,9 +170,10 @@ function onInput(value: string) {
 
     <div class="staging-editor-container">
       <YamlEditor
+        :key="resourceLabel"
         ref="editorRef"
         :value="proposedContent"
-        :initial-yaml-values="currentContent"
+        :initial-yaml-values="original"
         :editor-mode="editorMode"
         :scrolling="true"
         class="yaml-editor"

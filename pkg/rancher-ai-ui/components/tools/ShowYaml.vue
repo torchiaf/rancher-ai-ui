@@ -4,7 +4,7 @@ import { useStore } from 'vuex';
 import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { Message, ToolAction } from '../../types';
+import { EditorMode, Message, ToolAction } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -37,8 +37,8 @@ function navigateToStagingWithYaml() {
 
   // Save YAML to staging store
   store.commit(`${ PRODUCT_NAME }/staging/setStagingData`, {
-    currentContent: '',
-    newContent:     yaml,
+    original: '',
+    patched:     yaml,
     resource:       {
       kind:      resourceKind,
       namespace: resourceNamespace,
@@ -48,7 +48,7 @@ function navigateToStagingWithYaml() {
     sourceMessage: props.message
   });
 
-  store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, 'VIEW_CODE');
+  store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, EditorMode.VIEW_CODE);
 
   // Navigate to staging page with a timestamp to force route update even if params are identical
   store.state.$router.push({

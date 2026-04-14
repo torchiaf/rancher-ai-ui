@@ -1,15 +1,14 @@
 import { PRODUCT_NAME } from '../product';
 import { CoreStoreSpecifics, CoreStoreConfig } from '@shell/core/types';
-import { EDITOR_MODES } from '@shell/components/YamlEditor';
-import { Message } from '../types';
+import { EditorMode, Message } from '../types';
 
 /**
  * Manages the state for staging YAML content before applying to the cluster.
  */
 
 interface StagingData {
-  currentContent: string;
-  newContent: string;
+  original: string;
+  patched: string;
   resource?: {
     kind: string;
     namespace: string;
@@ -21,7 +20,7 @@ interface StagingData {
 
 interface State {
   staging: StagingData | null;
-  mode: EDITOR_MODES.DIFF_CODE | EDITOR_MODES.VIEW_CODE;
+  mode: EditorMode;
 }
 
 const getters = {
@@ -37,7 +36,7 @@ const mutations = {
   setStagingData(state: State, data: StagingData | null) {
     state.staging = data;
   },
-  setEditorMode(state: State, mode: EDITOR_MODES) {
+  setEditorMode(state: State, mode: EditorMode) {
     state.mode = mode;
   }
 };
@@ -49,7 +48,7 @@ const factory = (): CoreStoreSpecifics => {
     state: (): State => {
       return {
         staging: null,
-        mode:    EDITOR_MODES.VIEW_CODE
+        mode:    EditorMode.VIEW_CODE
       };
     },
     getters:   { ...getters },

@@ -128,9 +128,21 @@ export interface ActionResource {
 }
 
 export interface ConfirmationOperationPayload {
+  original: string;
+  patch: PatchPayload[];
+  patched: string;
+};
+
+export interface PatchPayload {
   op: string; // add, update, remove, etc.
   path: string;
   value?: any;
+}
+
+export const enum EditorMode {
+  EDIT_CODE = 'EDIT_CODE',
+  VIEW_CODE = 'VIEW_CODE',
+  DIFF_CODE = 'DIFF_CODE'
 };
 
 export const enum ConfirmationActionType {
@@ -182,7 +194,7 @@ export interface MessageConfirmation {
 
 export interface MessageConfirmationAction {
   type: ConfirmationActionType | string;
-  payload?: ConfirmationOperationPayload[];
+  payload?: ConfirmationOperationPayload;
   resource: ActionResource;
 }
 

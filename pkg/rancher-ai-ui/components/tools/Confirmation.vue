@@ -48,7 +48,7 @@ const confirmationText = computed(() => {
           break;
         case ConfirmationActionType.Update:
         case ConfirmationActionType.Patch:
-          const description = action?.payload?.reduce((acc: string, curr) => {
+          const description = action?.payload?.patch?.reduce((acc: string, curr) => {
             const { op, value, path } = curr || {};
 
             if (op && value && path) {

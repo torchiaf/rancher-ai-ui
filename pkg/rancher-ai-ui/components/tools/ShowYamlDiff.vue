@@ -4,7 +4,7 @@ import { useStore } from 'vuex';
 import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { Message, ToolAction } from '../../types';
+import { EditorMode, Message, ToolAction } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -22,15 +22,15 @@ const props = defineProps({
 
 function navigateToStagingWithYaml() {
   const {
-    currentContent,
-    newContent,
+    original,
+    patched,
     resourceKind,
     resourceNamespace,
     resourceName,
     title
   } = props.tool.input;
 
-  if (!currentContent || !newContent || !resourceKind || !resourceName || !resourceNamespace) {
+  if (!original || !patched || !resourceKind || !resourceName || !resourceNamespace) {
     console.warn('Missing YAML content for ShowYamlDiff tool:', props.tool.input);
 
     return;
@@ -38,8 +38,8 @@ function navigateToStagingWithYaml() {
 
   // Save YAML to staging store
   store.commit(`${ PRODUCT_NAME }/staging/setStagingData`, {
-    currentContent,
-    newContent,
+    original,
+    patched,
     resource: {
       kind:      resourceKind,
       namespace: resourceNamespace,
@@ -49,7 +49,7 @@ function navigateToStagingWithYaml() {
     sourceMessage: props.message
   });
 
-  store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, 'DIFF_CODE');
+  store.commit(`${ PRODUCT_NAME }/staging/setEditorMode`, EditorMode.DIFF_CODE);
 
   // Navigate to staging page with a timestamp to force route update even if params are identical
   store.state.$router.push({

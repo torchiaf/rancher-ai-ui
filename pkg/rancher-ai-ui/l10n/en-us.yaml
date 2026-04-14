@@ -261,7 +261,7 @@ ai:
     opensInNewTab: Opens in a new tab
 
   staging:
-    title: Edit YAML
+    title: YAML editor
     unknownResource: Unknown Resource
     showDiff: Show Diff
     backToEdit: Back to Edit
@@ -384,10 +384,9 @@ aiConfig:
             name:
               show-yaml: Show YAML
               show-yaml-diff: Show YAML Diff
-              navigate-to: Navigate To
+              explore: Explore
               show-logs: View Logs
               download-logs: Download Logs
-              navigate-to-fleet: Navigate to Fleet
               rancher-2-13-specific-tool: Rancher 2.13 Specific Tool
               
         search: Search tools...

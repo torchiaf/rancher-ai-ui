@@ -1,4 +1,4 @@
-import { UIToolsSpecConfig, UITool } from '../types';
+import { UIToolsConfig, UITool } from '../types';
 
 /**
  * Compare two tool for differences ignoring enabled fields which are handled separately
@@ -11,8 +11,8 @@ export function compareSpecTools(tool1: Record<string, any>, tool2: Record<strin
   delete t2.enabled;
 
   try {
-    return JSON.stringify(t1, Object.keys(t1).sort()) !== JSON.stringify(t2, Object.keys(t2).sort()) ||
-      JSON.stringify(t1.defaultValues, Object.keys(t1.defaultValues || {}).sort()) !== JSON.stringify(t2.defaultValues, Object.keys(t2.defaultValues || {}).sort());
+    // Deep compare
+    return JSON.stringify(t1, null, 0) !== JSON.stringify(t2, null, 0);
   } catch {
     return t1 !== t2;
   }
@@ -31,8 +31,8 @@ export function compareSpecConfig(config1: Record<string, any>, config2: Record<
   delete c2.systemPrompt;
 
   try {
-    return JSON.stringify(c1, Object.keys(c1).sort()) !== JSON.stringify(c2, Object.keys(c2).sort()) ||
-      JSON.stringify(c1.defaultValues, Object.keys(c1.defaultValues || {}).sort()) !== JSON.stringify(c2.defaultValues, Object.keys(c2.defaultValues || {}).sort());
+    // Deep compare
+    return JSON.stringify(c1, null, 0) !== JSON.stringify(c2, null, 0);
   } catch {
     return c1 !== c2;
   }
@@ -44,8 +44,8 @@ export function compareSpecConfig(config1: Record<string, any>, config2: Record<
 export function hasChanges(
   providedTools: UITool[],
   currentTools: UITool[],
-  providedSpecConfig: UIToolsSpecConfig,
-  currentSpecConfig: UIToolsSpecConfig,
+  providedSpecConfig: UIToolsConfig,
+  currentSpecConfig: UIToolsConfig,
 ): boolean {
   if (providedTools.length !== currentTools.length) {
     return true;
