@@ -18,7 +18,7 @@
     {
       "name": "show-yaml",
       "description": "Display YAML content of a Kubernetes resource",
-      "prompt": "This tool is designed to display the YAML content of a SINGLE Kubernetes resource, it should NOT be used when the user requests a list of resources. It should be called only 1 time per request.\nDisplay YAML content of a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace} and the yaml file in a yaml editor. The YAML content is: {yaml}. The YAML content should be the same as the content returned in the AI message or even better from the MCP data.",
+      "prompt": "TOOL SCOPE: single-resource\n\nYou are selecting whether to use this tool. THIS TOOL IS FOR ONE SPECIFIC RESOURCE ONLY.\n\nUSE THIS TOOL ONLY WHEN:\n- The context names a specific resource by exact name (e.g., 'pod-xyz', 'deployment-web-app')\n- The user is asking for details about that ONE resource\n- You are showing configuration of a single resource\n\nNEVER USE THIS TOOL WHEN:\n- Showing multiple resources (list of pods, deployments, etc.)\n- The context mentions 'list', 'all', 'multiple', or plurals\n- You would need to call this tool 2+ times with different resource names\n\nIf you're tempted to call this tool multiple times with different resource names, STOP. That means there's a list tool you should use instead.\n\nWhen you call this tool: Display YAML configuration for kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace} in a syntax-highlighted YAML editor. The YAML is: {yaml}. PRESERVE all indentation and formatting - do not modify or reformat.",
       "category": "editor",
       "revision": 1,
       "enabled": true,
@@ -29,22 +29,22 @@
         "properties": {
           "yaml": {
             "type": "string",
-            "description": "YAML content to display",
+            "description": "The exact YAML content to display. Must be the complete, unmodified YAML from the resource.",
             "required": true
           },
           "resourceKind": {
             "type": "string",
-            "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+            "description": "Resource kind (Pod, Deployment, Service, etc.) for display purposes.",
             "required": true
           },
           "resourceName": {
             "type": "string",
-            "description": "The name of the Kubernetes resource",
+            "description": "The exact name of the ONE resource being displayed. Must match the resource in the YAML.",
             "required": true
           },
           "resourceNamespace": {
             "type": "string",
-            "description": "The namespace of the Kubernetes resource",
+            "description": "The namespace where this ONE resource exists.",
             "required": true
           },
           "title": {
@@ -68,7 +68,7 @@
     {
       "name": "show-yaml-diff",
       "description": "Display YAML content differences between an existing Kubernetes resource and a proposed configuration",
-      "prompt": "This tool is designed to display the YAML content differences between an existing Kubernetes resource and a proposed configuration for a Kubernetes resource displaying kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace}. The current YAML content is: {original}. The proposed YAML configuration content is: {patched}.",
+      "prompt": "TOOL SCOPE: single-resource\n\nYou are selecting whether to use this tool. THIS TOOL COMPARES ONE RESOURCE'S CURRENT VS PROPOSED STATE.\n\nUSE THIS TOOL ONLY WHEN:\n- Showing before/after changes to a SINGLE specific resource\n- The resource is identified by exact name\n- Comparing original and modified versions of same resource\n\nNEVER USE THIS TOOL WHEN:\n- Comparing multiple different resources\n- Showing changes to different resource instances\n- You would call this 2+ times with different resource names\n\nWhen you call this tool: Display side-by-side YAML diff for resource kind {resourceKind}, name {resourceName}, in namespace {resourceNamespace}. Original YAML: {original}. Proposed YAML: {patched}. PRESERVE exact formatting in both versions - do not modify or reformat the YAML content.",
       "category": "editor",
       "revision": 1,
       "enabled": true,
@@ -79,27 +79,27 @@
         "properties": {
           "original": {
             "type": "string",
-            "description": "The current YAML content of the resource. It should contain the existing YAML for the resource before changes.",
+            "description": "The current/existing YAML of the ONE resource before any changes. Must be complete and unmodified.",
             "required": true
           },
           "patched": {
             "type": "string",
-            "description": "The new YAML content of the resource. It should contain the proposed YAML for the resource after changes.",
+            "description": "The proposed/new YAML of the ONE resource after changes. Must be complete and unmodified.",
             "required": true
           },
           "resourceKind": {
             "type": "string",
-            "description": "The resource kind of the Kubernetes resource (Pod, Deployment, etc.)",
+            "description": "Resource kind for the single resource being compared (Pod, Deployment, etc.).",
             "required": true
           },
           "resourceName": {
             "type": "string",
-            "description": "The name of the Kubernetes resource",
+            "description": "The exact name of the ONE resource being compared.",
             "required": true
           },
           "resourceNamespace": {
             "type": "string",
-            "description": "The namespace of the Kubernetes resource",
+            "description": "The namespace of the ONE resource being compared.",
             "required": true
           },
           "title": {
@@ -123,7 +123,7 @@
     {
       "name": "explore",
       "description": "Navigate to a Rancher UI page",
-      "prompt": "Navigate to a Rancher UI page by specifying the target route. The {route} param identifies the destination, {cluster} is needed for cluster-specific routes, {label} is optional link text.",
+      "prompt": "TOOL SCOPE: list or collection\n\nNavigate to a Rancher UI page. Use route {route} to specify destination. For cluster-specific routes, provide {cluster} parameter. Optional {label} provides friendly link text.",
       "category": "route",
       "revision": 1,
       "enabled": true,
@@ -150,7 +150,7 @@
           },
           "label": {
             "type": "string",
-            "description": "Link display text (max 50 characters) - for example, 'View Deployments' instead of just 'deployments'.",
+            "description": "Friendly display text for the link (max 50 chars). Example: 'View Deployments' or 'Go to Production Cluster'.",
             "maxLength": 50
           }
         }
@@ -160,17 +160,17 @@
         "enum": {
           "route": {
             "clusters": {
-              "description": "View all clusters page"
+              "description": "SCOPE: list or collection, this route shows the list of clusters in Rancher. Use this route when the context is about listing clusters or cluster management."
             },
             "settings": {
-              "description": "View settings page. This page contains the Rancher settings, including AI Assistant configuration."
+              "description": "SCOPE: list or collection, this route shows the settings page, including AI Assistant configuration. Use this route when the context is about configuring Rancher or AI Assistant settings."
             },
             "projects-namespaces": {
-              "description": "View projects / namespaces page for a specific cluster",
+              "description": "SCOPE: list or collection, this route shows the projects / namespaces page for a specific cluster. Use this route when the context is about managing or listing projects or namespaces within a cluster.",
               "requires": ["cluster"]
             },
             "deployments": {
-              "description": "Deployments list page for a specific cluster",
+              "description": "SCOPE: list or collection, this route shows the deployments list page for a specific cluster. Use this route when the context is about managing or listing deployments within a cluster.",
               "requires": ["cluster"]
             }
           }
@@ -180,7 +180,7 @@
     {
       "name": "show-logs",
       "description": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod",
-      "prompt": "Display the logs of a container from a Pod in Rancher by opening the logs view from the specified cluster, namespace, and pod. Useful when for troubleshooting resources in error state. The cluster is: {cluster}, the namespace is: {namespace}, the pod name is: {name}, and the container name is: {containerName}.",
+      "prompt": "TOOL SCOPE: single-resource\n\nYou are selecting whether to use this tool. This tool open the console logs FOR ONE SPECIFIC pod container.\n\nUse this tool only when:\n- The agent is not able to retrieve the logs so this tool can be used to directly open the console\n- User asks to troubleshoot a SPECIFIC pod or a deployment containing a pod\n- User wants to see logs from a specific container or pod or deployment\n- You can extract the exact pod name and container name from the context\n\nNEVER USE THIS TOOL WHEN:\n- Showing a list of pods or containers\n- Multiple pods are involved\n- You would call this 2+ times for different pods\n\nWhen you call this tool: Open logs view in Rancher for cluster {cluster}, namespace {namespace}, pod name {name}, container {containerName}.",
       "category": "console",
       "revision": 1,
       "enabled": true,
@@ -191,22 +191,22 @@
         "properties": {
           "cluster": {
             "type": "string",
-            "description": "Cluster where the Pod is running",
+            "description": "The cluster where the ONE pod is running.",
             "required": true
           },
           "namespace": {
             "type": "string",
-            "description": "Namespace of the Pod",
+            "description": "The namespace containing the ONE pod.",
             "required": true
           },
           "name": {
             "type": "string",
-            "description": "Name of the Pod the container belongs to",
+            "description": "The exact name of the ONE pod to view logs from.",
             "required": true
           },
           "containerName": {
             "type": "string",
-            "description": "Name of the container to show logs for (defaults to first container)",
+            "description": "The container name inside the pod (use the exact container name - defaults to first container).",
             "required": true
           }
         }
@@ -217,7 +217,7 @@
     {
       "name": "download-logs",
       "description": "Download logs from a resource in Rancher as a file",
-      "prompt": "Download logs from a resource in Rancher as a file. The log content is: {logs}. The logs should be the same as the content returned in the LLM AI message or even better from the MCP tool call.",
+      "prompt": "TOOL SCOPE: single-resource\n\nGenerate a downloadable file. The log content is: {logs}. Use the exact log content provided without any modification or reformatting.",
       "category": "button",
       "revision": 1,
       "enabled": true,
@@ -228,7 +228,7 @@
         "properties": {
           "logs": {
             "type": "string",
-            "description": "Log content",
+            "description": "The complete log content to download as a file. Must be the actual log text you want to export.",
             "required": true
           }
         }

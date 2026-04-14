@@ -32,13 +32,13 @@ const pod = computed(() => {
 });
 
 function openConsoleLogs() {
-  const containerName = props.tool.input.containerName || pod.value?.spec?.containers?.[0]?.name;
+  const containerName = pod.value?.spec?.containers?.[0]?.name; // TODO fix the tool to get the exact container name
 
-  console.log('Opening logs for container:', containerName, 'in pod:', pod.value);
+  console.log('Opening logs for container:', props.tool.input, 'containerName:', containerName, 'in pod:', pod.value);
 
   store.dispatch('wm/open', {
     id:        `${ containerName }-logs`,
-    label:     containerName,
+    label:     pod.value?.metadata?.name,
     icon:      'file',
     component: 'ContainerLogs',
     attrs:     {
