@@ -4,7 +4,7 @@ import { useStore } from 'vuex';
 import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { EditorMode, Message, ToolAction } from '../../types';
+import { EditorMode, Message, ToolCall } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -15,7 +15,7 @@ const props = defineProps({
     default: () => ({} as Message),
   },
   tool: {
-    type:    Object as PropType<ToolAction>,
+    type:    Object as PropType<ToolCall>,
     default: () => {},
   },
 });

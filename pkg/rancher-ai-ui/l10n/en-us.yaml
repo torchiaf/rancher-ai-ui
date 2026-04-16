@@ -385,8 +385,10 @@ aiConfig:
               show-yaml: Show YAML
               show-yaml-diff: Show YAML Diff
               explore: Explore
-              show-logs: View Logs
+              open-console-logs: Console Logs
               download-logs: Download Logs
+              select-option: 'Some options:'
+              suggestions: 'Quick actions:'
               rancher-2-13-specific-tool: Rancher 2.13 Specific Tool
               
         search: Search tools...

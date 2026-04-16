@@ -3,7 +3,7 @@ import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ToolAction } from '../../types';
+import { ToolCall } from '../../types';
 import { SCHEMA } from '@shell/config/types';
 
 interface RouteConfig {
@@ -13,29 +13,29 @@ interface RouteConfig {
 
 const ROUTES: Record<string, RouteConfig> = {
   ['projects-namespaces']: {
-    schema: 'management.cattle.io.project',
+    schema:  'management.cattle.io.project',
     resolve: (cluster: string) => `/c/${ cluster }/explorer/projectsnamespaces`,
   },
   ['deployments']: {
-    schema: 'apps.deployment',
+    schema:  'apps.deployment',
     resolve:  (cluster: string) => `/c/${ cluster }/explorer/apps.deployment`,
   },
   ['clusters']: {
-    schema: 'provisioning.cattle.io.cluster',
+    schema:  'provisioning.cattle.io.cluster',
     resolve: () => '/c/_/manager/provisioning.cattle.io.cluster',
   },
   ['settings']: {
-    schema: 'management.cattle.io.setting',
+    schema:  'management.cattle.io.setting',
     resolve: () => '/c/_/settings/management.cattle.io.setting',
   },
-}
+};
 
 const store = useStore();
 const { t } = useI18n(store);
 
 const props = defineProps({
   tool: {
-    type:    Object as PropType<ToolAction>,
+    type:    Object as PropType<ToolCall>,
     default: () => {},
   },
 });

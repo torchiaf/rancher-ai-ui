@@ -3,8 +3,10 @@ import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { Message } from '../../../types';
-import Suggestions from '../../tools/Suggestions.vue';
+import { ToolActionEvent, ToolName } from '../../tools/types';
+import Tool from '../../tools/Tool.vue';
 import { formatMessageContent } from '../../../utils/format';
+import { useInputComposable } from '../../../composables/useInputComposable';
 // @ts-expect-error FIXME: Cannot find module '../../../assets/liz-icon.svg'... Remove this comment to see the full error message
 import lizIcon from '../../../assets/liz-icon.svg';
 
@@ -24,6 +26,8 @@ const props = defineProps({
 
 const emit = defineEmits(['send:message']);
 
+const { updateInput } = useInputComposable();
+
 const user = computed(() => {
   const principal = props.message.templateContent?.content?.principal;
 
@@ -35,6 +39,14 @@ const user = computed(() => {
 
   return out;
 });
+
+function handleToolAction(event: ToolActionEvent) {
+  if (event.type === 'select') {
+    emit('send:message', event.value);
+  } else if (event.type === 'edit') {
+    updateInput(event.value);
+  }
+}
 </script>
 
 <template>
@@ -87,18 +99,13 @@ const user = computed(() => {
         </span>
       </div>
     </div>
-    <div
-      v-if="props.message.completed && props.message.suggestionActions?.length"
+    <Tool
+      v-if="props.message.completed"
       class="chat-welcome-msg-bubble chat-welcome-suggestions"
-    >
-      <div class="chat-welcome-msg-text">
-        <Suggestions
-          :label="t('ai.message.system.welcome.suggestions.label')"
-          :suggestions="props.message.suggestionActions"
-          @select="(suggestion: string) => emit('send:message', suggestion)"
-        />
-      </div>
-    </div>
+      :name="ToolName.Suggestions"
+      :message="props.message"
+      @action="handleToolAction"
+    />
   </div>
 </template>
 

@@ -4,17 +4,17 @@ import { useStore } from 'vuex';
 import { warn } from '../../utils/log';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ToolAction } from '../../types';
+import { ToolCall } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
 
 const inStore = 'management';
-const TYPE_POD = 'pod';
+const POD_TYPE = 'pod';
 
 const props = defineProps({
   tool: {
-    type:    Object as PropType<ToolAction>,
+    type:    Object as PropType<ToolCall>,
     default: () => {},
   },
 });
@@ -28,7 +28,7 @@ const pod = computed(() => {
 
   const id = `${ namespace }/${ name }`;
 
-  return store.getters[`${ inStore }/byId`](TYPE_POD, id);
+  return store.getters[`${ inStore }/byId`](POD_TYPE, id);
 });
 
 function openConsoleLogs() {
@@ -52,7 +52,7 @@ onMounted(async() => {
   await store.dispatch('loadManagement');
 
   const {
-    cluster, type = TYPE_POD, namespace, name
+    cluster, type = POD_TYPE, namespace, name
   } = props.tool.input || {};
 
   try {

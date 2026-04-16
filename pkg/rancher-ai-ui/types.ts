@@ -19,8 +19,6 @@ export const enum Tag {
   McpResultEnd = '</mcp-response>',
   ConfirmationStart = '<confirmation-response>',
   ConfirmationEnd = '</confirmation-response>',
-  SuggestionsStart = '<suggestion>',
-  SuggestionsEnd = '</suggestion>',
   DocLinkStart = '<mcp-doclink>',
   DocLinkEnd = '</mcp-doclink>',
   ChatErrorStart = '<chat-error>',
@@ -169,7 +167,7 @@ export const enum MessageTag {
   Confirmation = 'confirmation',
 }
 
-export interface ToolAction {
+export interface ToolCall {
   toolName: string;
   input: Record<string, any>;
 }
@@ -182,8 +180,6 @@ export interface MessageAction {
   resource?: ActionResource;
   action?: () => MessageConfirmation;
 }
-
-export type MessageActionSuggestion = string;
 
 export interface MessageConfirmation {
   actions?: MessageConfirmationAction[] | null;
@@ -239,10 +235,9 @@ export interface Message {
   completed?: boolean;
   showThinking?: boolean;
   showCompleteMessage?: boolean;
-  tools?: ToolAction[];
+  tools?: ToolCall[];
   actions?: MessageAction[];
   relatedResourcesActions?: MessageAction[];
-  suggestionActions?: string[];
   confirmation?: MessageConfirmation;
   sourceLinks?: SourceLinkItem[];
   timestamp?: Date;

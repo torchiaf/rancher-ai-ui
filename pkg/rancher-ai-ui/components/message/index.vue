@@ -5,12 +5,13 @@ import {
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { FormattedMessage, MessageInternalSource, MessagePhase, Role as RoleEnum } from '../../types';
+import { ToolActionEvent, ToolName } from '../tools/types';
 import { extractMessageText } from '../../utils/label';
 import Tools from '../tools/index.vue';
+import Tool from '../tools/Tool.vue';
 import Actions from '../tools/actions/index.vue';
 import SourceLinks from '../tools/SourceLinks.vue';
 import Confirmation from '../tools/Confirmation.vue';
-import Suggestions from '../tools/Suggestions.vue';
 import ContextTag from '../context/ContextTag.vue';
 import UserAvatar from './avatar/UserAvatar.vue';
 import SystemAvatar from './avatar/SystemAvatar.vue';
@@ -45,7 +46,7 @@ const isThinking = computed(() => props.message.role === RoleEnum.Assistant &&
 );
 const showCopySuccess = ref(false);
 const timeoutCopy = ref<any>(null);
-const { cleanInputAndTags } = useInputComposable();
+const { updateInput, cleanInputAndTags } = useInputComposable();
 
 function handleCopy() {
   let text = extractMessageText(props.message);
@@ -86,6 +87,14 @@ function handleShowThinking() {
     ...props.message,
     showThinking
   }));
+}
+
+function handleToolAction(event: ToolActionEvent) {
+  if (event.type === 'select') {
+    emit('send:message', event.value);
+  } else if (event.type === 'edit') {
+    updateInput(event.value);
+  }
 }
 
 onBeforeUnmount(() => {
@@ -179,16 +188,20 @@ onBeforeUnmount(() => {
             }"
           />
         </div>
-        <div
-          v-if="props.message.suggestionActions?.length && !props.message.confirmation"
-          class="chat-msg-section-footer"
-        >
-          <Suggestions
-            :suggestions="props.message.suggestionActions"
-            :disabled="disabled || pendingConfirmation"
-            @select="(suggestion: string) => emit('send:message', suggestion)"
+        <template v-if="!props.message.confirmation">
+          <Tool
+            class="chat-msg-section-footer"
+            :name="ToolName.SelectOption"
+            :message="props.message"
+            @action="handleToolAction"
           />
-        </div>
+          <Tool
+            class="chat-msg-section-footer"
+            :name="ToolName.Suggestions"
+            :message="props.message"
+            @action="handleToolAction"
+          />
+        </template>
         <div
           v-if="props.message.confirmation"
           class="chat-msg-section-footer"

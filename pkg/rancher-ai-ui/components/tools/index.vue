@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { camelCase, upperFirst } from 'lodash';
-import { type PropType, defineAsyncComponent, onMounted, ref } from 'vue';
+import {
+  type PropType, computed, defineAsyncComponent, onMounted, ref
+} from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { Message, ToolAction } from '../../types';
+import { Message } from '../../types';
+
+// TODO this will be removed !!!
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -21,8 +25,19 @@ const props = defineProps({
 
 const toolComponents = ref<Record<string, any>>({});
 
+const tools = computed(() => {
+  const all = props.message.tools || [];
+
+  console.log('All tools from message:', props.message.tools);
+
+  // TODO temporary filter tools managed elsewhere
+  return all.filter((tool) => {
+    return tool.toolName !== 'select-option' && tool.toolName !== 'suggestions';
+  });
+});
+
 async function loadToolComponents() {
-  const loaderPromises = (props.message.tools || []).map(async({ toolName: name }) => {
+  const loaderPromises = tools.value.map(async({ toolName: name }) => {
     const path = upperFirst(camelCase(name));
 
     try {
@@ -68,7 +83,7 @@ onMounted(() => {
     <div class="chat-msg-tools-container">
       <div class="chat-msg-tool-tags">
         <template
-          v-for="(tool, index) in props.message.tools || []"
+          v-for="(tool, index) in tools"
           :key="index"
         >
           <div

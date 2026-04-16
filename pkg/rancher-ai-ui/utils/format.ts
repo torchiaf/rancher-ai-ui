@@ -14,7 +14,7 @@ import {
   ChatError,
   SourceLinkItem,
   ToolsConfig,
-  ToolAction,
+  ToolCall,
 } from '../types';
 import { error } from '../utils/log';
 import { validateActionResource } from './validator';
@@ -49,6 +49,8 @@ export function formatWSInputMessage(args: WSInputMessageArgs): string {
   }), {});
 
   const tags = args.tags?.length ? args.tags : undefined;
+
+  console.log('Formatting WS input message with args:', args.agent);
 
   return JSON.stringify({
     prompt: args.prompt,
@@ -167,6 +169,8 @@ export function formatConfirmationActions(value: string): MessageConfirmationAct
     try {
       const parsed = JSON.parse(value);
 
+      console.log('--- Parsed confirmation actions:', parsed);
+
       return parsed;
     } catch (err) {
       error('Failed to parse confirmation response:', err);
@@ -176,28 +180,7 @@ export function formatConfirmationActions(value: string): MessageConfirmationAct
   return null;
 }
 
-export function formatSuggestionActions(suggestionActions: string[], remaining: string): { suggestionActions: string[]; remaining: string } {
-  const re = /<suggestion\b[^>]*>([\s\S]*?)<\/suggestion>/i;
-  const match = remaining?.match(re);
-
-  if (match) {
-    const inner = match[1]; // first suggestion text
-
-    suggestionActions.push(inner.trim());
-    remaining = remaining.replace(match[0], '').trim();
-
-    if (remaining) {
-      return formatSuggestionActions(suggestionActions, remaining);
-    }
-  }
-
-  return {
-    suggestionActions,
-    remaining
-  };
-}
-
-export function formatTools(toolActions: ToolAction[], remaining: string): { toolActions: ToolAction[]; remaining: string } {
+export function formatTools(tools: ToolCall[], remaining: string): { tools: ToolCall[]; remaining: string } {
   const re = /<ui-tools\b[^>]*>([\s\S]*?)<\/ui-tools>/i;
   const match = remaining?.match(re);
 
@@ -208,7 +191,7 @@ export function formatTools(toolActions: ToolAction[], remaining: string): { too
       const parsed = JSON.parse(inner);
       const toolsArray = Array.isArray(parsed) ? parsed : [parsed];
 
-      toolActions.push(...toolsArray);
+      tools.push(...toolsArray);
     } catch (err) {
       error('Failed to parse ui-tools content:', err);
     }
@@ -216,12 +199,12 @@ export function formatTools(toolActions: ToolAction[], remaining: string): { too
     remaining = remaining.replace(match[0], '').trim();
 
     if (remaining) {
-      return formatTools(toolActions, remaining);
+      return formatTools(tools, remaining);
     }
   }
 
   return {
-    toolActions,
+    tools,
     remaining
   };
 }
@@ -249,9 +232,7 @@ export function formatFileMessages(principal: any, messages: Message[]): string 
       body += `Context: ${ JSON.stringify(msg.contextContent) }\n`;
     }
 
-    if (msg.suggestionActions?.length) {
-      body += `Suggestions: [${ msg.suggestionActions.join('], [') }]\n`;
-    }
+    // TODO: add ui tools content !!!
 
     return `[${ timestamp }] [${ avatar[msg.role] }]: ${ body }`;
   }).join('\n');
@@ -313,18 +294,6 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage, agents: 
     tag:         key,
     description:   key,
   }));
-
-  /**
-   * Parsing suggestion actions
-   */
-  let suggestionActions: string[] = [];
-
-  if (msg.message?.includes(Tag.SuggestionsStart) && msg.message?.includes(Tag.SuggestionsEnd)) {
-    const { suggestionActions: suggestionActionsData, remaining } = formatSuggestionActions(suggestionActions, msg.message);
-
-    suggestionActions = suggestionActionsData;
-    msg.message = remaining;
-  }
 
   /**
    * Parsing related resources actions
@@ -412,7 +381,6 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage, agents: 
     summaryContent,
     relatedResourcesActions,
     confirmation,
-    suggestionActions,
     sourceLinks,
     messageContent:    msg.message,
     timestamp:         new Date(msg.createdAt),

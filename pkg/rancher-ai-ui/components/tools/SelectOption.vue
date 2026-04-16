@@ -20,14 +20,14 @@ const emit = defineEmits(['action']);
 const options = computed(() => {
   const opts = [];
 
-  if (props.tool.input.suggestion1) {
-    opts.push(props.tool.input.suggestion1);
+  if (props.tool.input.option1) {
+    opts.push(props.tool.input.option1);
   }
-  if (props.tool.input.suggestion2) {
-    opts.push(props.tool.input.suggestion2);
+  if (props.tool.input.option2) {
+    opts.push(props.tool.input.option2);
   }
-  if (props.tool.input.suggestion3) {
-    opts.push(props.tool.input.suggestion3);
+  if (props.tool.input.option3) {
+    opts.push(props.tool.input.option3);
   }
 
   return opts;
@@ -38,8 +38,6 @@ const options = computed(() => {
   <ListOptions
     :label="t(`aiConfig.form.section.tools.fields.tools.name.${props.tool.toolName}`, {}, true)"
     :options="options"
-    :show-edit="true"
     @select="emit('action', { type: 'select', value: $event })"
-    @edit="emit('action', { type: 'edit', value: $event })"
   />
 </template>
