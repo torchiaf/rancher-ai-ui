@@ -31,6 +31,7 @@ import {
 import { downloadFile } from '@shell/utils/download';
 import { useContextComposable } from './useContextComposable';
 import { useToolsComposable } from './useToolsComposable';
+import { DEFAULT_AI_AGENT } from './useAgentComposable';
 
 const EXPAND_THINKING = false;
 const DISMISS_RECOMMENDED_AGENT_KEY = 'dismissed-agent-recommendation';
@@ -283,6 +284,7 @@ export function useChatMessageComposable(
     wsSend(ws, formatWSInputMessage({
       prompt:  initPrompt,
       context: selectedContext.value,
+      agent:   DEFAULT_AI_AGENT,
       tags:    [MessageTag.Ephemeral, MessageTag.Welcome]
     }));
 
