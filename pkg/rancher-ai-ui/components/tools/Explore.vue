@@ -4,11 +4,11 @@ import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { ToolCall } from '../../types';
-import { SCHEMA } from '@shell/config/types';
+import { warn } from '../../utils/log';
 
 interface RouteConfig {
   schema: string;
-  resolve: (...args: string[]) => string;
+  resolve: (...args: string[]) => string; // eslint-disable-line no-unused-vars
 }
 
 const ROUTES: Record<string, RouteConfig> = {
@@ -66,7 +66,7 @@ function navigateToRoute() {
   if (route.value) {
     store.state.$router.push(route.value);
   } else {
-    console.warn(`Unknown route: ${ props.tool.input.route }`);
+    warn(`Unknown route: ${ props.tool.input.route }`);
   }
 }
 </script>

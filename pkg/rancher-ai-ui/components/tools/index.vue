@@ -6,7 +6,7 @@ import {
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { Message } from '../../types';
-
+import { warn } from '../../utils/log';
 // TODO this will be removed !!!
 
 const store = useStore();
@@ -50,7 +50,7 @@ async function loadToolComponents() {
         component
       };
     } catch (error) {
-      console.warn(`Tool component not found: ${ path }.vue`, error);
+      warn(`Tool component not found: ${ path }.vue`, error);
 
       return { name };
     }

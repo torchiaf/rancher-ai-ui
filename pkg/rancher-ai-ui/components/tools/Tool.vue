@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { camelCase, upperFirst } from 'lodash';
-import { type PropType, computed, defineAsyncComponent, ref } from 'vue';
+import {
+  type PropType, computed, defineAsyncComponent, ref, watch
+} from 'vue';
 import { Message } from '../../types';
 import { ToolName } from './types';
+import { warn } from '../../utils/log';
 
 const props = defineProps({
   name: {
@@ -24,40 +27,37 @@ const tool = computed(() => {
   return props.message.tools?.find((t) => t.toolName === props.name) || null;
 });
 
-const componentCache = ref<any>(null);
+const component = ref<any>(null);
 
-const component = computed(() => {
-  if (!tool.value) {
-    return null;
+watch(() => tool.value, (newTool) => {
+  if (!newTool) {
+    component.value = null;
+
+    return;
   }
 
-  if (componentCache.value) {
-    return componentCache.value;
+  if (component.value) {
+    return;
   }
 
   const path = upperFirst(camelCase(props.name));
 
   try {
-    componentCache.value = defineAsyncComponent(() => import(`./${ path }.vue`));
-
-    return componentCache.value;
+    component.value = defineAsyncComponent(() => import(`./${ path }.vue`));
   } catch (error) {
-    console.warn(`Tool component not found: ${ path }.vue`, error);
-
-    return null;
+    warn(`Tool component not found: ${ path }.vue`, error);
   }
-});
+}, { immediate: true });
 
 const emit = defineEmits(['action']);
 </script>
 
 <template>
-  <div v-if="component">
-    <component
-      :is="component"
-      :tool="tool"
-      :message="props.message"
-      @action="emit('action', $event)"
-    />
-  </div>
+  <component
+    :is="component"
+    v-if="component"
+    :tool="tool"
+    :message="props.message"
+    @action="emit('action', $event)"
+  />
 </template>

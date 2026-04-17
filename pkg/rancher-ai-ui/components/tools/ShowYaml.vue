@@ -5,6 +5,7 @@ import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { EditorMode, Message, ToolCall } from '../../types';
+import { warn } from '../../utils/log';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -16,7 +17,7 @@ const props = defineProps({
   },
   tool: {
     type:    Object as PropType<ToolCall>,
-    default: () => {},
+    default: () => ({} as ToolCall),
   },
 });
 
@@ -30,7 +31,7 @@ function navigateToStagingWithYaml() {
   } = props.tool.input;
 
   if (!yaml || !resourceKind || !resourceName || !resourceNamespace) {
-    console.warn('Missing YAML content for ShowYamlDiff tool:', props.tool.input);
+    warn('Missing YAML content for ShowYamlDiff tool:', props.tool.input);
 
     return;
   }
