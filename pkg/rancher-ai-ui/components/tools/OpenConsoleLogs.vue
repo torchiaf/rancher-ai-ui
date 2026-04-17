@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, type PropType } from 'vue';
 import { useStore } from 'vuex';
+import { useRoute, useRouter } from 'vue-router';
 import { warn } from '../../utils/log';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { ToolCall } from '../../types';
 
 const store = useStore();
+const route = useRoute();
+const router = useRouter();
 const { t } = useI18n(store);
 
 const inStore = 'management';
@@ -31,7 +34,24 @@ const pod = computed(() => {
   return store.getters[`${ inStore }/byId`](POD_TYPE, id);
 });
 
-function openConsoleLogs() {
+async function openConsoleLogs() {
+  const { cluster } = props.tool.input || {};
+
+  if (!cluster) {
+    warn('Cannot open console logs: cluster information is missing');
+    return;
+  }
+
+  const currentPath = route.path;
+  const expectedBasePath = `/c/${ cluster }/explorer`;
+
+  // If not in explorer route, navigate there first
+  if (!currentPath.includes(expectedBasePath)) {
+    await router.push({
+      path: expectedBasePath
+    });
+  }
+
   const containerName = pod.value?.spec?.containers?.[0]?.name; // TODO fix the tool to get the exact container name
 
   console.log('Opening logs for container:', props.tool.input, 'containerName:', containerName, 'in pod:', pod.value);
