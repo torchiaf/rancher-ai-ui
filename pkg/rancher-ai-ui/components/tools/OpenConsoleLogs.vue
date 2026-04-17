@@ -39,6 +39,7 @@ async function openConsoleLogs() {
 
   if (!cluster) {
     warn('Cannot open console logs: cluster information is missing');
+
     return;
   }
 
@@ -47,9 +48,7 @@ async function openConsoleLogs() {
 
   // If not in explorer route, navigate there first
   if (!currentPath.includes(expectedBasePath)) {
-    await router.push({
-      path: expectedBasePath
-    });
+    await router.push({ path: expectedBasePath });
   }
 
   const containerName = pod.value?.spec?.containers?.[0]?.name; // TODO fix the tool to get the exact container name

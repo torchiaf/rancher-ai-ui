@@ -2,7 +2,7 @@
 
 /**
  * The name of the tools that can be used in Rancher AI Chat messages.
- * 
+ *
  * NOTE! These enum values should be updated when the ui-tools.json definition is updated.
  */
 export const enum ToolName {

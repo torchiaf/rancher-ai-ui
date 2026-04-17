@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { camelCase, upperFirst } from 'lodash';
-import {
-  type PropType, computed, defineAsyncComponent, ref
-} from 'vue';
+import { type PropType, computed, defineAsyncComponent, ref } from 'vue';
 import { Message } from '../../types';
 import { ToolName } from './types';
 
@@ -41,9 +39,11 @@ const component = computed(() => {
 
   try {
     componentCache.value = defineAsyncComponent(() => import(`./${ path }.vue`));
+
     return componentCache.value;
   } catch (error) {
     console.warn(`Tool component not found: ${ path }.vue`, error);
+
     return null;
   }
 });
