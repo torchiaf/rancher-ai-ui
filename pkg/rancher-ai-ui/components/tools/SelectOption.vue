@@ -36,7 +36,7 @@ const options = computed(() => {
 
 <template>
   <ListOptions
-    :label="t(`aiConfig.form.section.tools.fields.tools.name.${props.tool.toolName}`, {}, true)"
+    :label="props.tool.input.label || t(`aiConfig.form.section.tools.fields.tools.name.${props.tool.toolName}`, {}, true)"
     :options="options"
     @select="emit('action', { type: 'select', value: $event })"
   />

@@ -169,8 +169,6 @@ export function formatConfirmationActions(value: string): MessageConfirmationAct
     try {
       const parsed = JSON.parse(value);
 
-      console.log('--- Parsed confirmation actions:', parsed);
-
       return parsed;
     } catch (err) {
       error('Failed to parse confirmation response:', err);

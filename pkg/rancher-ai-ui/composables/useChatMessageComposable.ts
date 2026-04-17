@@ -501,9 +501,13 @@ export function useChatMessageComposable(
           throw errorMessage;
         }
 
-        currentMsg.value.messageContent += data;
+        if (data === Tag.ProcessingTools) {
+          setPhase(MessagePhase.ProcessingTools);
 
-        // setPhase(MessagePhase.ProcessingTools);
+          break;
+        }
+
+        currentMsg.value.messageContent += data;
 
         if (currentMsg.value.messageContent?.includes(Tag.ToolsStart) && currentMsg.value.messageContent?.includes(Tag.ToolsEnd)) {
           const { tools, remaining } = formatTools(currentMsg.value.tools || [], currentMsg.value.messageContent);

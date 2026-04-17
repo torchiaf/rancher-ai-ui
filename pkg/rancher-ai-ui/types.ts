@@ -5,10 +5,12 @@
  */
 
 export const enum Tag {
+  // Chat init tags
   ChatMetadataStart = '<chat-metadata>',
   ChatMetadataEnd = '</chat-metadata>',
   AgentMetadataStart = '<agent-metadata>',
   AgentMetadataEnd = '</agent-metadata>',
+  // Message content tags
   MessageStart = '<message>',
   MessageEnd = '</message>',
   ThinkingStart = '<think>',
@@ -25,6 +27,8 @@ export const enum Tag {
   ChatErrorEnd = '</chat-error>',
   ErrorStart = '<error>',
   ErrorEnd = '</error>',
+  // Processing tags
+  ProcessingTools = '<processing-ui-tools/>',
 }
 
 /**

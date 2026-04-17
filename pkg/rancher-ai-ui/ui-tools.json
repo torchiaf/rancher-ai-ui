@@ -241,6 +241,11 @@
           "option3": {
             "type": "string",
             "description": "The third option."
+          },
+          "label": {
+            "type": "string",
+            "description": "Friendly display text for the options (max 30 chars). Example: 'Select a cluster' or 'Choose a namespace'.",
+            "maxLength": 30
           }
         }
       },
