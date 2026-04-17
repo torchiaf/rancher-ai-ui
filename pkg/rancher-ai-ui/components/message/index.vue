@@ -46,7 +46,7 @@ const isThinking = computed(() => props.message.role === RoleEnum.Assistant &&
 );
 const showCopySuccess = ref(false);
 const timeoutCopy = ref<any>(null);
-const { updateInput, cleanInputAndTags } = useInputComposable();
+const { updateInput, cleanInputAndTags, focusConsoleInput } = useInputComposable();
 
 function handleCopy() {
   let text = extractMessageText(props.message);
@@ -94,6 +94,7 @@ function handleToolAction(event: ToolActionEvent) {
     emit('send:message', event.value);
   } else if (event.type === 'edit') {
     updateInput(event.value);
+    focusConsoleInput();
   }
 }
 

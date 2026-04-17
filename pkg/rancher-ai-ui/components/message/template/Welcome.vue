@@ -26,7 +26,7 @@ const props = defineProps({
 
 const emit = defineEmits(['send:message']);
 
-const { updateInput } = useInputComposable();
+const { updateInput, focusConsoleInput } = useInputComposable();
 
 const user = computed(() => {
   const principal = props.message.templateContent?.content?.principal;
@@ -45,6 +45,7 @@ function handleToolAction(event: ToolActionEvent) {
     emit('send:message', event.value);
   } else if (event.type === 'edit') {
     updateInput(event.value);
+    focusConsoleInput();
   }
 }
 </script>
