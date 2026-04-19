@@ -360,6 +360,7 @@ export interface HistoryChatMessage {
   labels?: Record<MessageLabelKey, string>;
   tags?: string[];
   confirmation?: boolean;
+  tools?: ToolCall[];
   createdAt: string;
 }
 

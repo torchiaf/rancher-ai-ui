@@ -380,6 +380,7 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage, agents: 
     relatedResourcesActions,
     confirmation,
     sourceLinks,
+    tools:             msg.tools || [],
     messageContent:    msg.message,
     timestamp:         new Date(msg.createdAt),
   };
