@@ -129,9 +129,15 @@
             "type": "string",
             "enum": [
               "projects-namespaces",
+              "nodes",
+              "events",
               "clusters",
+              "charts",
+              "fleet",
+              "users",
               "settings",
-              "deployments"
+              "deployments",
+              "pods"
             ],
             "description": "The route identifier.",
             "required": true
@@ -151,20 +157,50 @@
         "interactive": true,
         "enum": {
           "route": {
-            "clusters": {
-              "description": "SCOPE: list or collection, this route shows the list of clusters in Rancher. Use this route when the context is about listing clusters or cluster management."
-            },
-            "settings": {
-              "description": "SCOPE: list or collection, this route shows the settings page, including AI Assistant configuration. Use this route when the context is about configuring Rancher or AI Assistant settings."
-            },
             "projects-namespaces": {
               "description": "SCOPE: list or collection, this route shows the projects / namespaces page for a specific cluster. Use this route when the context is about managing or listing projects or namespaces within a cluster.",
               "requires": [
                 "cluster"
               ]
             },
+            "nodes": {
+              "description": "SCOPE: list or collection, this route shows the nodes list page for a specific cluster. Use this route when the context is about managing or listing nodes within a cluster.",
+              "requires": [
+                "cluster"
+              ]
+            },
+            "events": {
+              "description": "SCOPE: list or collection, this route shows the events list page for a specific cluster. Use this route when the context is about managing or listing events or showing errors within a cluster.",
+              "requires": [
+                "cluster"
+              ]
+            },
+            "charts": {
+              "description": "SCOPE: list or collection, this route shows the apps & marketplace page for a specific cluster. Use this route when the context is about managing or listing charts or marketplace or Helm charts within a cluster.",
+              "requires": [
+                "cluster"
+              ]
+            },
+            "clusters": {
+              "description": "SCOPE: list or collection, this route shows the list of clusters in Rancher. Use this route when the context is about listing clusters or cluster management."
+            },
+            "fleet": {
+              "description": "This route shows the Fleet dashboard. Use this route when the context is about managing or listing Fleet resources."
+            },
+            "users": {
+              "description": "This route shows the Users management page. Use this route when the context is about managing users, roles, or permissions."
+            },
+            "settings": {
+              "description": "SCOPE: list or collection, this route shows the settings page, including AI Assistant configuration. Use this route when the context is about configuring Rancher or AI Assistant settings."
+            },
             "deployments": {
               "description": "SCOPE: list or collection, this route shows the deployments list page for a specific cluster. Use this route when the context is about managing or listing deployments within a cluster.",
+              "requires": [
+                "cluster"
+              ]
+            },
+            "pods": {
+              "description": "SCOPE: list or collection, this route shows the pods list page for a specific cluster. Use this route when the context is about managing or listing pods within a cluster.",
               "requires": [
                 "cluster"
               ]

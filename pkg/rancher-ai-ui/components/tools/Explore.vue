@@ -2,6 +2,9 @@
 import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
+import {
+  CATALOG, EVENT, FLEET, MANAGEMENT, NODE, POD, WORKLOAD_TYPES
+} from '@shell/config/types';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { ToolCall } from '../../types';
 import { warn } from '../../utils/log';
@@ -11,23 +14,60 @@ interface RouteConfig {
   resolve: (...args: string[]) => string; // eslint-disable-line no-unused-vars
 }
 
+const enum ROUTE_ID {
+  ProjectsNamespaces = 'projects-namespaces',
+  Nodes = 'nodes',
+  Events = 'events',
+  Charts = 'charts',
+  Clusters = 'clusters',
+  Fleet = 'fleet',
+  Users = 'users',
+  Settings = 'settings',
+  Deployments = 'deployments',
+  Pods = 'pods',
+}
+
 const ROUTES: Record<string, RouteConfig> = {
-  ['projects-namespaces']: {
-    schema:  'management.cattle.io.project',
+  [ROUTE_ID.ProjectsNamespaces]: {
+    schema:  MANAGEMENT.PROJECT,
     resolve: (cluster: string) => `/c/${ cluster }/explorer/projectsnamespaces`,
   },
-  ['deployments']: {
-    schema:  'apps.deployment',
-    resolve:  (cluster: string) => `/c/${ cluster }/explorer/apps.deployment`,
+  [ROUTE_ID.Nodes]: {
+    schema:  NODE,
+    resolve: (cluster: string) => `/c/${ cluster }/explorer/node`,
   },
-  ['clusters']: {
+  [ROUTE_ID.Events]: {
+    schema:  EVENT,
+    resolve: (cluster: string) => `/c/${ cluster }/explorer/event`,
+  },
+  [ROUTE_ID.Charts]: {
+    schema:  CATALOG.APP,
+    resolve: (cluster: string) => `/c/${ cluster }/apps/charts`,
+  },
+  [ROUTE_ID.Clusters]: {
     schema:  'provisioning.cattle.io.cluster',
     resolve: () => '/c/_/manager/provisioning.cattle.io.cluster',
   },
-  ['settings']: {
-    schema:  'management.cattle.io.setting',
+  [ROUTE_ID.Fleet]: {
+    schema:  FLEET.GIT_REPO,
+    resolve: () => '/c/_/fleet',
+  },
+  [ROUTE_ID.Users]: {
+    schema:  MANAGEMENT.USER,
+    resolve: () => '/c/_/auth/management.cattle.io.user',
+  },
+  [ROUTE_ID.Settings]: {
+    schema:  MANAGEMENT.SETTING,
     resolve: () => '/c/_/settings/management.cattle.io.setting',
   },
+  [ROUTE_ID.Deployments]: {
+    schema:  WORKLOAD_TYPES.DEPLOYMENT,
+    resolve: (cluster: string) => `/c/${ cluster }/explorer/apps.deployment`,
+  },
+  [ROUTE_ID.Pods]: {
+    schema:  POD,
+    resolve: (cluster: string) => `/c/${ cluster }/explorer/pod`,
+  }
 };
 
 const store = useStore();
@@ -48,8 +88,6 @@ const route = computed(() => {
   }
 
   const { schema, resolve } = config;
-
-  // console.log('--- all schemas', store.getters[`${ 'management' }/all`](SCHEMA).map((s: any) => s.id));
 
   if (!store.getters['management/schemaFor'](schema)) {
     return null;
