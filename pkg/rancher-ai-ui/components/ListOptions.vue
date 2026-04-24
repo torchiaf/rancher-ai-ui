@@ -38,7 +38,10 @@ const hoveredIndex = ref<number | null>(null);
 </script>
 
 <template>
-  <div class="list-options-container">
+  <div
+    v-if="props.options?.length"
+    class="list-options-container"
+  >
     <div class="list-options-header">
       <span v-clean-html="props.label" />
       <i

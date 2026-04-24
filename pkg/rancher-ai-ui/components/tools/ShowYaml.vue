@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, watch, type PropType } from 'vue';
 import { useStore } from 'vuex';
-import { PRODUCT_NAME } from '../../product';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ConfirmationStatus, Message, ToolCall } from '../../types';
+import { ConfirmationStatus, Message, ToolActionEventType, ToolCall } from '../../types';
 import { EditorMode } from '../../pages/staging/yaml-editor/types';
 import { ComponentName } from '../../pages/staging/types';
 import { warn } from '../../utils/log';
+import { useStagingComposable } from '../../composables/useStagingComposable';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -25,6 +25,23 @@ const props = defineProps({
     type:    String,
     default: '',
   },
+});
+
+const emit = defineEmits(['action']);
+
+const { open: openStaging } = useStagingComposable();
+
+const isConfirmingMessage = computed(() => props.message.confirmation?.status === ConfirmationStatus.Pending);
+
+const isValidInput = computed(() => {
+  const {
+    yaml,
+    resourceKind,
+    resourceNamespace,
+    resourceName,
+  } = props.tool.input;
+
+  return !!yaml && !!resourceKind && !!resourceNamespace && !!resourceName;
 });
 
 const label = computed(() => {
@@ -49,7 +66,7 @@ const tooltip = computed(() => {
   }, true);
 });
 
-async function navigateToStaging() {
+function navigateToStaging() {
   const {
     yaml,
     resourceKind,
@@ -64,9 +81,17 @@ async function navigateToStaging() {
     return;
   }
 
-  // Set staging data in the store
-  await store.dispatch(`${ PRODUCT_NAME }/staging/setData`, {
-    component: ComponentName.YAML_EDITOR,
+  openStaging({
+    component: {
+      name:    ComponentName.YAML_EDITOR,
+      watcher: isConfirmingMessage.value ? {
+        close: (fn: Function) => watch(() => props.message.confirmation?.status, (newVal) => {
+          if (newVal && newVal !== ConfirmationStatus.Pending) {
+            fn();
+          }
+        }, { deep: true })
+      } : undefined,
+    },
     data:      {
       original: '',
       patched:     yaml,
@@ -76,32 +101,23 @@ async function navigateToStaging() {
         name:      resourceName
       },
       title,
-      editorMode:    EditorMode.VIEW_CODE,
-      sourceMessage: props.message,
+      editorMode:   EditorMode.VIEW_CODE,
+      handleCancel: isConfirmingMessage.value ? () => emitConfirmationAction(false) : undefined,
+      handleApply:  isConfirmingMessage.value ? () => emitConfirmationAction(true) : undefined,
     }
-  });
-
-  // Navigate to Staging
-  store.state.$router.push({
-    name:   `c-cluster-${ PRODUCT_NAME }-staging`,
-    params: {
-      cluster: 'local', // TODO pass actual cluster if needed
-      product: 'explorer',
-    },
   });
 }
 
-const stopWatching = watch(() => props.message.confirmation?.status, (newVal, oldVal) => {
-  if (oldVal === ConfirmationStatus.Pending && newVal !== ConfirmationStatus.Pending) {
-    store.commit('rancher-ai-ui/staging/resetData');
-  } else if (!newVal || newVal === ConfirmationStatus.Confirmed || newVal === ConfirmationStatus.Canceled) {
-    stopWatching();
-  }
-}, { deep: true });
+function emitConfirmationAction(value: boolean) {
+  emit('action', {
+    type: ToolActionEventType.Confirm,
+    value
+  });
+}
 </script>
 
 <template>
-  <div>
+  <div v-if="isValidInput">
     <slot
       :navigate="navigateToStaging"
       :tool="tool"
