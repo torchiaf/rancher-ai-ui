@@ -15,6 +15,18 @@ jest.mock('../../../composables/useAIAgentApiComposable', () => ({
 }));
 jest.mock('../sections/AIAgentSettings.vue', () => ({}));
 jest.mock('../../../dialog/ApplySettingsCard.vue', () => ({}));
+jest.mock('@components/RcButton/RcButton.vue', () => ({
+  default: {
+    name:     'RcButton',
+    template: '<button><slot /></button>'
+  }
+}));
+jest.mock('@components/RcItemCard/RcItemCard.vue', () => ({
+  default: {
+    name:     'RcItemCard',
+    template: '<div><slot /></div>'
+  }
+}));
 
 jest.mock('dayjs', () => ({
   __esModule: true,

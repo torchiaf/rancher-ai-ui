@@ -5,7 +5,6 @@ import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import YamlEditor from '@shell/components/YamlEditor';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ConfirmationStatus, Message } from '../../../types';
 import { EditorMode } from './types';
 
 interface StagingData {
@@ -17,8 +16,9 @@ interface StagingData {
     name: string;
   };
   title?: string;
-  sourceMessage?: Message;
   editorMode: EditorMode;
+  handleCancel: () => void;
+  handleApply: () => void;
 }
 
 const store = useStore();
@@ -66,37 +66,26 @@ const resourceLabel = computed(() => {
 
 const proposedContent = ref('');
 
+const showActions = computed(() => {
+  return props.value?.handleApply || props.value?.handleCancel;
+});
+
 function handleCancel() {
-  const message = { ...props.value?.sourceMessage };
-
-  if (message.confirmation?.status === ConfirmationStatus.Pending) {
-    message.confirmation.status = ConfirmationStatus.Canceled;
-
-    store.commit('rancher-ai-ui/chat/addToMessageBox', {
-      chatId: 'default',
-      message
-    });
+  if (props.value?.handleCancel) {
+    props.value.handleCancel();
   }
 
   emit('close');
 }
 
 function handleApply() {
-  const message = { ...props.value?.sourceMessage };
-
-  if (message.confirmation?.status === ConfirmationStatus.Pending) {
-    message.confirmation.status = ConfirmationStatus.Confirmed;
-
-    store.commit('rancher-ai-ui/chat/addToMessageBox', {
-      chatId: 'default',
-      message
-    });
+  if (props.value?.handleApply) {
+    props.value.handleApply();
   }
 
   emit('close');
 }
 
-// Sync proposedContent with patched immediately
 watch(patched, (val) => {
   proposedContent.value = val;
 }, { immediate: true });
@@ -112,7 +101,7 @@ watch(patched, (val) => {
         </p>
       </div>
       <div
-        v-if="props.value?.sourceMessage?.confirmation?.status === ConfirmationStatus.Pending"
+        v-if="showActions"
         class="staging-yaml-actions"
       >
         <RcButton
@@ -134,7 +123,7 @@ watch(patched, (val) => {
       >
         <RcButton
           secondary
-          @click="handleCancel"
+          @click="emit('close')"
         >
           {{ t('ai.staging.yaml-editor.close', {}, true) }}
         </RcButton>

@@ -94,11 +94,13 @@ const confirmationText = computed(() => {
         :name="ToolName.ShowYamlDiff"
         :message="props.message"
         :label="t(`ai.tools.${ ToolName.ShowYamlDiff }.name`, {}, true)"
+        @action="emit('confirm', $event.value)"
       />
       <Tool
         :name="ToolName.ShowYaml"
         :message="props.message"
         :label="t(`ai.tools.${ ToolName.ShowYaml }.name`, {}, true)"
+        @action="emit('confirm', $event.value)"
       />
       <div
         v-if="props.message.confirmation?.status === ConfirmationStatus.Pending"

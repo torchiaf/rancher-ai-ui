@@ -344,6 +344,7 @@ export interface ToolActionEvent {
 export const enum ToolActionEventType {
   Select = 'select',
   Edit = 'edit',
+  Confirm = 'confirm',
 }
 
 export const enum ToolsDefinitionActionType {

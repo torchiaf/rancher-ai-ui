@@ -6,10 +6,17 @@ import { randomStr } from '@shell/utils/string';
  * Manages the state for staging component which is generic
  */
 
+interface ComponentData {
+  name: string;
+  watcher?: {
+    close: (fn: Function) => void; // eslint-disable-line no-unused-vars
+  };
+}
+
 interface State {
   id?: string;
   previousRoute?: string;
-  component?: string;
+  component?: ComponentData;
   data?: any;
 }
 
@@ -24,7 +31,7 @@ const getters = {
 };
 
 const mutations = {
-  setData(state: State, { component, route, data }: { component: string, route: string, data: any }) {
+  setData(state: State, { component, route, data }: { component: ComponentData, route: string, data: any }) {
     state.id = randomStr();
     state.previousRoute = route;
     state.component = component;
@@ -38,22 +45,7 @@ const mutations = {
   }
 };
 
-const actions = {
-  setData({ state, rootState, commit }: any, { component, data }: { component: string, data: any }) {
-    let route = rootState.$router.currentRoute.value.path || '';
-
-    // Prevent setting route to staging page itself
-    if (route.includes('/explorer/staging')) {
-      route = state.previousRoute;
-    }
-
-    commit('setData', {
-      component,
-      route,
-      data
-    });
-  }
-};
+const actions = {};
 
 const factory = (): CoreStoreSpecifics => {
   return {

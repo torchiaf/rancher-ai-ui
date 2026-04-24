@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ComponentName } from './types';
@@ -10,8 +10,8 @@ const store = useStore();
 
 const staging = computed(() => store.getters['rancher-ai-ui/staging/all']);
 
-function getStagingComponent(component: ComponentName) {
-  switch (component) {
+function getStagingComponent(name: ComponentName) {
+  switch (name) {
   case ComponentName.YAML_EDITOR:
     return YamlEditor;
   default:
@@ -35,19 +35,22 @@ function close() {
   }
 }
 
-watch(staging, (val) => {
-  if (!val) {
+onMounted(() => {
+  if (!staging.value) {
     close();
   }
-}, {
-  immediate: true,
-  deep:      true
+
+  const watchConditionThen = staging.value?.component?.watcher?.close;
+
+  if (watchConditionThen) {
+    watchConditionThen(close);
+  }
 });
 </script>
 
 <template>
   <component
-    :is="getStagingComponent(staging?.component)"
+    :is="getStagingComponent(staging?.component?.name)"
     :key="staging?.id"
     :value="staging?.data"
     @close="close"
