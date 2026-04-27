@@ -41,6 +41,7 @@ const hoveredIndex = ref<number | null>(null);
   <div
     v-if="props.options?.length"
     class="list-options-container"
+    :class="{ ['disabled-panel']: props.disabled }"
   >
     <div class="list-options-header">
       <span v-clean-html="props.label" />
@@ -65,8 +66,7 @@ const hoveredIndex = ref<number | null>(null);
               tertiary
               small
               :data-testid="`rancher-ai-ui-chat-message-list-option-${index}`"
-              :disabled="props.disabled"
-              @click="() => emit('select', option)"
+              @click="props.disabled ? undefined : emit('select', option)"
             >
               <span class="rc-button-label">
                 {{ option }}
@@ -75,9 +75,9 @@ const hoveredIndex = ref<number | null>(null);
             <BubbleButton
               v-clean-tooltip="{ content: t('ai.tools.suggestions.action.edit'), delay: { show: 300 } }"
               class="button-group-action"
-              :class="{ hidden: !(props.showEdit && hoveredIndex === index) }"
+              :class="{ hidden: !(props.showEdit && hoveredIndex === index && !props.disabled) }"
               :icon="'icon-edit'"
-              @click="() => emit('edit', option)"
+              @click="props.disabled ? undefined : emit('edit', option)"
             />
           </div>
         </div>
@@ -151,5 +151,10 @@ const hoveredIndex = ref<number | null>(null);
   height: 26px;
   min-width: 26px;
   max-width: 26px;
+}
+
+.disabled-panel {
+  opacity: 0.5;
+  pointer-events: none;
 }
 </style>

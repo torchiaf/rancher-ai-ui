@@ -86,6 +86,10 @@ const props = defineProps({
     type:    String,
     default: '',
   },
+  disabled: {
+    type:    Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['action']); // eslint-disable-line no-unused-vars
@@ -125,6 +129,10 @@ const label = computed(() => {
 });
 
 function navigateToRoute() {
+  if (props.disabled) {
+    return;
+  }
+
   if (route.value) {
     store.state.$router.push(route.value);
   } else {
@@ -156,6 +164,7 @@ onMounted(async() => {
       v-clean-tooltip="tooltip"
       small
       tertiary
+      :disabled="props.disabled"
       @click="navigateToRoute"
     >
       <div class="explore-tool-label">

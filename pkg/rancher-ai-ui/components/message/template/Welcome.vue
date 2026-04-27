@@ -27,6 +27,10 @@ const props = defineProps({
     type:    Boolean,
     default: false,
   },
+  pendingConfirmation: {
+    type:    Boolean,
+    default: false,
+  }
 });
 
 const emit = defineEmits(['send:message']);
@@ -156,6 +160,7 @@ function routeToSettings() {
           <RcButton
             small
             secondary
+            :disabled="props.disabled || props.pendingConfirmation"
             @click="routeToSettings()"
           >
             <span class="rc-button-label">
@@ -181,6 +186,7 @@ function routeToSettings() {
       class="chat-welcome-msg-bubble chat-welcome-suggestions"
       :name="ToolName.Suggestions"
       :message="props.message"
+      :disabled="props.disabled || props.pendingConfirmation"
       @action="handleToolAction"
     />
   </div>
