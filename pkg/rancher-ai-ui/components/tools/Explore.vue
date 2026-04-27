@@ -155,7 +155,7 @@ onMounted(async() => {
     <RcButton
       v-clean-tooltip="tooltip"
       small
-      tertiary
+      variant="tertiary"
       @click="navigateToRoute"
     >
       <div class="explore-tool-label">
