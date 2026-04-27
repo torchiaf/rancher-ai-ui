@@ -4,7 +4,7 @@ import { useStore } from 'vuex';
 import { warn } from '../../utils/log';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ToolCall } from '../../types';
+import { Message, ToolCall } from '../../types';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -16,6 +16,18 @@ const props = defineProps({
   tool: {
     type:    Object as PropType<ToolCall>,
     default: () => {},
+  },
+  message: {
+    type:    Object as PropType<Message>,
+    default: () => ({} as Message),
+  },
+  label: {
+    type:    String,
+    default: '',
+  },
+  disabled: {
+    type:    Boolean,
+    default: false,
   },
 });
 
@@ -43,6 +55,10 @@ const tooltip = computed(() => {
 });
 
 async function openConsoleLogs() {
+  if (props.disabled) {
+    return;
+  }
+
   const { cluster } = props.tool.input || {};
 
   if (!cluster) {
@@ -111,6 +127,7 @@ onMounted(async() => {
     <RcButton
       small
       tertiary
+      :disabled="props.disabled"
       @click="() => openConsoleLogs()"
     >
       <div class="open-console-logs-tool-label">

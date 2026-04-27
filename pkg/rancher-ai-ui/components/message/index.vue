@@ -201,11 +201,13 @@ onBeforeUnmount(() => {
               ToolName.SelectOption,
               ToolName.Suggestions,
             ]"
+            :disabled="props.disabled"
           />
           <Tool
             class="chat-msg-section-footer"
             :name="ToolName.SelectOption"
             :message="props.message"
+            :disabled="props.disabled || props.pendingConfirmation"
             @action="handleToolAction"
           />
           <Tool
@@ -213,6 +215,7 @@ onBeforeUnmount(() => {
             class="chat-msg-section-footer"
             :name="ToolName.Suggestions"
             :message="props.message"
+            :disabled="props.disabled || props.pendingConfirmation"
             @action="handleToolAction"
           />
         </template>
