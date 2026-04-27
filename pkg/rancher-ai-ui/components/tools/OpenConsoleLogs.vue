@@ -108,7 +108,7 @@ onMounted(async() => {
   <div v-if="!!pod">
     <RcButton
       small
-      tertiary
+      variant="tertiary"
       @click="() => openConsoleLogs()"
     >
       <div class="open-console-logs-tool-label">

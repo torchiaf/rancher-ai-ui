@@ -125,7 +125,7 @@ function emitConfirmationAction(value: boolean) {
     >
       <RcButton
         small
-        tertiary
+        variant="tertiary"
         @click="navigateToStaging"
       >
         <div class="show-yaml-tool-label">

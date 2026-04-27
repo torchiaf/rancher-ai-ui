@@ -121,7 +121,7 @@ function navigateToRoute() {
   <div v-if="route">
     <RcButton
       small
-      tertiary
+      variant="tertiary"
       @click="navigateToRoute"
     >
       <div class="explore-tool-label">

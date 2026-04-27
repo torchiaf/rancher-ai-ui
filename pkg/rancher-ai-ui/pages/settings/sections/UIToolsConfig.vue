@@ -282,7 +282,7 @@ const resetToolsToDefaults = () => {
     </Banner>
     <RcButton
       v-if="!props.readOnly"
-      primary
+      variant="primary"
       @click="emit('publish:tools')"
     >
       {{ t(`aiConfig.form.section.tools.publish.action.${ props.requiredAction.type }.label`, {}, true) }}
@@ -398,7 +398,7 @@ const resetToolsToDefaults = () => {
             <p>{{ t('aiConfig.form.section.tools.tryAdjustingFilters', {}, true) }}</p>
             <RcButton
               v-if="!noFiltersApplied"
-              tertiary
+              variant="tertiary"
               class="inline-button"
               @click="resetAllFilters"
             >

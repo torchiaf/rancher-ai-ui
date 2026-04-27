@@ -155,7 +155,7 @@ function routeToSettings() {
         >
           <RcButton
             small
-            secondary
+            variant="secondary"
             @click="routeToSettings()"
           >
             <span class="rc-button-label">

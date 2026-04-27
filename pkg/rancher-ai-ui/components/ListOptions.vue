@@ -62,7 +62,7 @@ const hoveredIndex = ref<number | null>(null);
           <div class="button-group">
             <RcButton
               class="button-group-label"
-              tertiary
+              variant="tertiary"
               small
               :data-testid="`rancher-ai-ui-chat-message-suggestion-${index}`"
               :disabled="props.disabled"
