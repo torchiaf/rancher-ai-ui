@@ -85,50 +85,51 @@ function reset() {
     v-if="props.options.length > 0"
     class="context-select"
   >
-    <rc-dropdown
-      class="context-dropdown"
-      placement="top-end"
-      @update:open="isOpen = $event"
-    >
-      <rc-dropdown-trigger
-        ghost
-        small
-        class="context-trigger"
-        :disabled="props.disabled"
+    <div class="context-dropdown">
+      <rc-dropdown
+        placement="top-end"
+        @update:open="isOpen = $event"
       >
-        <span
-          class="context-trigger-text"
-          :class="{ 'ml-5': props.disabled }"
+        <rc-dropdown-trigger
+          ghost
+          small
+          class="context-trigger"
+          :disabled="props.disabled"
         >
-          {{ t('ai.context.add') }}
-        </span>
-      </rc-dropdown-trigger>
-      <template #dropdownCollection>
-        <rc-dropdown-item
-          v-for="(opt, i) in props.options"
-          :key="i"
-          v-clean-tooltip="opt.description"
-          @click="toggleItem(opt)"
-        >
-          {{ opt.tag }}:{{ contextLabel(opt) }}
-          <i
-            v-if="selected.find((s: Context) => _id(s) === _id(opt))"
-            :class="{
-              'icon icon-close': selected.find((s: Context) => _id(s) === _id(opt)),
-            }"
-          />
-          <template
-            #before
+          <span
+            class="context-trigger-text"
+            :class="{ 'ml-5': props.disabled }"
           >
+            {{ t('ai.context.add') }}
+          </span>
+        </rc-dropdown-trigger>
+        <template #dropdownCollection>
+          <rc-dropdown-item
+            v-for="(opt, i) in props.options"
+            :key="i"
+            v-clean-tooltip="opt.description"
+            @click="toggleItem(opt)"
+          >
+            {{ opt.tag }}:{{ contextLabel(opt) }}
             <i
-              v-if="opt.icon"
-              class="icon"
-              :class="opt.icon"
+              v-if="selected.find((s: Context) => _id(s) === _id(opt))"
+              :class="{
+                'icon icon-close': selected.find((s: Context) => _id(s) === _id(opt)),
+              }"
             />
-          </template>
-        </rc-dropdown-item>
-      </template>
-    </rc-dropdown>
+            <template
+              #before
+            >
+              <i
+                v-if="opt.icon"
+                class="icon"
+                :class="opt.icon"
+              />
+            </template>
+          </rc-dropdown-item>
+        </template>
+      </rc-dropdown>
+    </div>
     <div class="tags">
       <ContextTag
         v-for="(item, index) in selected"
