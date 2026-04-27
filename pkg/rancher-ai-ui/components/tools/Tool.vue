@@ -3,31 +3,40 @@ import { camelCase, upperFirst } from 'lodash';
 import {
   type PropType, computed, defineAsyncComponent, shallowRef, watch
 } from 'vue';
-import { Message } from '../../types';
+import { Message, ToolCall } from '../../types';
 import { warn } from '../../utils/log';
 
 const props = defineProps({
+  message: {
+    type:    Object as PropType<Message>,
+    default: () => ({} as Message),
+  },
   name: {
     type:    String,
     default: '',
   },
-  message: {
-    type:    Object as PropType<Message>,
-    default: () => ({} as Message),
+  tool: {
+    type:    Object as PropType<ToolCall | null>,
+    default: null,
   },
   label: {
     type:    String,
     default: '',
   },
+  disabled: {
+    type:    Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['action']);
 
-const tool = computed(() => props.message.tools?.find((t) => t.toolName === props.name) || null);
+// Get the tool directly or select it by name
+const selectedTool = computed(() => props.tool || props.message.tools?.find((t) => t.toolName === props.name) || null);
 
 const component = shallowRef<any>(null);
 
-watch(() => tool.value, (newTool) => {
+watch(() => selectedTool.value, (newTool) => {
   if (!newTool) {
     component.value = null;
 
@@ -38,7 +47,7 @@ watch(() => tool.value, (newTool) => {
     return;
   }
 
-  const path = upperFirst(camelCase(props.name));
+  const path = upperFirst(camelCase(newTool.toolName));
 
   try {
     component.value = defineAsyncComponent(() => import(`./${ path }.vue`));
@@ -52,9 +61,10 @@ watch(() => tool.value, (newTool) => {
   <component
     :is="component"
     v-if="component"
-    :tool="tool"
+    :tool="selectedTool"
     :message="props.message"
     :label="props.label"
+    :disabled="props.disabled"
     @action="emit('action', $event)"
   >
     <template #default="slotProps">

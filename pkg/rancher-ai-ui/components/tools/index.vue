@@ -30,6 +30,10 @@ const props = defineProps({
     type:    Boolean,
     default: true,
   },
+  disabled: {
+    type:    Boolean,
+    default: false,
+  },
 });
 
 const tools = computed(() => {
@@ -58,15 +62,13 @@ const tools = computed(() => {
     </div>
     <div class="chat-msg-tools-container">
       <div class="chat-msg-tool-tags">
-        <template
+        <Tool
           v-for="(tool, index) in tools"
           :key="index"
-        >
-          <Tool
-            :name="tool.toolName"
-            :message="props.message"
-          />
-        </template>
+          :tool="tool"
+          :message="props.message"
+          :disabled="props.disabled"
+        />
       </div>
     </div>
   </div>
@@ -94,5 +96,6 @@ const tools = computed(() => {
 .chat-msg-tool-tags {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 </style>

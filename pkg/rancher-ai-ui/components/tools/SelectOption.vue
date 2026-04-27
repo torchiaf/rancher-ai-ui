@@ -21,6 +21,10 @@ const props = defineProps({
     type:    String,
     default: '',
   },
+  disabled: {
+    type:    Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['action']);
@@ -46,6 +50,7 @@ const options = computed(() => {
   <ListOptions
     :label="props.tool.input.label || t(`ai.tools.${props.tool.toolName}.name`, {}, true)"
     :options="options"
+    :disabled="props.disabled"
     @select="emit('action', { type: ToolActionEventType.Select, value: $event })"
   />
 </template>

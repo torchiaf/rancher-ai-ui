@@ -11,7 +11,7 @@ const { t } = useI18n(store);
 const props = defineProps({
   tool: {
     type:    Object as PropType<ToolCall>,
-    default: () => ({} as ToolCall),
+    default: () => {},
   },
   message: {
     type:    Object as PropType<Message>,
@@ -20,6 +20,10 @@ const props = defineProps({
   label: {
     type:    String,
     default: '',
+  },
+  disabled: {
+    type:    Boolean,
+    default: false,
   },
 });
 
@@ -48,6 +52,7 @@ const options = computed(() => {
     :icon="'icon-quick-action'"
     :options="options"
     :show-edit="true"
+    :disabled="props.disabled"
     @select="emit('action', { type: ToolActionEventType.Select, value: $event })"
     @edit="emit('action', { type: ToolActionEventType.Edit, value: $event })"
   />

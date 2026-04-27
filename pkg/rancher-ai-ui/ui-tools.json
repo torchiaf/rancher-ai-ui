@@ -307,29 +307,6 @@
         }
       },
       "metadata": {}
-    },
-    {
-      "name": "rancher-2-13-specific-tool",
-      "description": "Display YAML differences between resources, when creating or updating resources",
-      "prompt": "Display YAML differences between resources, when creating or updating resources",
-      "category": "editor",
-      "revision": 1,
-      "enabled": true,
-      "defaultValues": {
-        "enabled": true
-      },
-      "schema": {
-        "properties": {
-          "test": {
-            "type": "string",
-            "description": "test.",
-            "required": true
-          }
-        }
-      },
-      "metadata": {
-        "rancher-version": "2.13.0"
-      }
     }
   ]
 }

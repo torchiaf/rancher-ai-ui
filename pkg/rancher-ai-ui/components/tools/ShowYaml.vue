@@ -13,17 +13,21 @@ const store = useStore();
 const { t } = useI18n(store);
 
 const props = defineProps({
+  tool: {
+    type:    Object as PropType<ToolCall>,
+    default: () => {},
+  },
   message: {
     type:    Object as PropType<Message>,
     default: () => ({} as Message),
   },
-  tool: {
-    type:    Object as PropType<ToolCall>,
-    default: () => ({} as ToolCall),
-  },
   label: {
     type:    String,
     default: '',
+  },
+  disabled: {
+    type:    Boolean,
+    default: false,
   },
 });
 
@@ -67,6 +71,10 @@ const tooltip = computed(() => {
 });
 
 function navigateToStaging() {
+  if (props.disabled) {
+    return;
+  }
+
   const {
     yaml,
     resourceKind,
@@ -126,6 +134,7 @@ function emitConfirmationAction(value: boolean) {
       <RcButton
         small
         tertiary
+        :disabled="props.disabled"
         @click="navigateToStaging"
       >
         <div class="show-yaml-tool-label">
