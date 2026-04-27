@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
 import { ComponentName } from './types';
 import YamlEditor from './yaml-editor/index.vue';
 
-const router = useRouter();
 const store = useStore();
 
 const staging = computed(() => store.getters['rancher-ai-ui/staging/all']);
@@ -29,9 +27,9 @@ function close() {
   }
 
   if (route) {
-    router.push(route);
+    store.state.$router.push(route);
   } else {
-    router.back();
+    store.state.$router.back();
   }
 }
 

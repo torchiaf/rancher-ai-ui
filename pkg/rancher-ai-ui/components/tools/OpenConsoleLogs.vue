@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, type PropType } from 'vue';
 import { useStore } from 'vuex';
-import { useRoute, useRouter } from 'vue-router';
 import { warn } from '../../utils/log';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { ToolCall } from '../../types';
 
 const store = useStore();
-const route = useRoute();
-const router = useRouter();
 const { t } = useI18n(store);
 
 const inStore = 'management';
@@ -52,15 +49,15 @@ async function openConsoleLogs() {
     return;
   }
 
-  const currentPath = route.path;
+  const currentPath = store.state.$router.currentRoute.value.path;
   const expectedBasePath = `/c/${ cluster }/explorer`;
 
   // If not in explorer route, navigate there first
   if (!currentPath.includes(expectedBasePath)) {
-    await router.push({ path: expectedBasePath });
+    await store.state.$router.push({ path: expectedBasePath });
   }
 
-  const containerName = pod.value?.spec?.containers?.[0]?.name; // TODO fix the tool to get the exact container name
+  const containerName = pod.value?.spec?.containers?.[0]?.name;
 
   store.dispatch('wm/open', {
     id:        `${ containerName }-logs`,
