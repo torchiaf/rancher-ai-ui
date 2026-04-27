@@ -2,11 +2,11 @@ export interface LlmResponseArgs {
   agent?: string;
   text?: string | string[];
   chunkSize?: number;
-  tool?: McpTool;
-  uiTools?: McpTool[];
+  mcpTool?: Tool;
+  uiTools?: Tool[];
 }
 
-export interface McpTool {
+export interface Tool {
   name: string;
   args: object | object[];
 }
