@@ -1,5 +1,4 @@
 import { useStore } from 'vuex';
-import { useRoute, useRouter } from 'vue-router';
 import { PRODUCT_NAME } from '../product';
 
 interface OpenArgs {
@@ -14,11 +13,9 @@ interface OpenArgs {
  */
 export function useStagingComposable() {
   const store = useStore();
-  const route = useRoute();
-  const router = useRouter();
 
   function open(args: OpenArgs) {
-    let currentRoute = route.path || '';
+    let currentRoute = store.state.$router.currentRoute.value.path || '';
 
     // Prevent setting route to staging page itself
     if (currentRoute.includes('/explorer/staging')) {
@@ -30,7 +27,7 @@ export function useStagingComposable() {
       route: currentRoute,
     });
 
-    router.push({
+    store.state.$router.push({
       name:   `c-cluster-${ PRODUCT_NAME }-staging`,
       params: {
         cluster: 'local', // TODO pass actual cluster if needed
