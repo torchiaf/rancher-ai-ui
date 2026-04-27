@@ -120,7 +120,7 @@ describe('Messages', () => {
 
     cy.enqueueLLMResponse({
       text:      ['Here', ' are the resources'],
-      tool: {
+      mcpTool: {
         name: 'listKubernetesResources',
         args: {
           kind:      'Deployment',
@@ -214,7 +214,7 @@ describe('Messages', () => {
 
     cy.enqueueLLMResponse({
       text:      'Pod created successfully.',
-      tool: {
+      mcpTool: {
         name: 'createKubernetesResource',
         args: {
           kind:      'Pod',
@@ -268,7 +268,7 @@ describe('Messages', () => {
      */
     cy.enqueueLLMResponse({
       text:      'Pod created successfully.',
-      tool: {
+      mcpTool: {
         name: 'createKubernetesResource',
         args: {
           kind:      'Pod',
@@ -316,7 +316,7 @@ describe('Messages', () => {
 
     cy.enqueueLLMResponse({
       text:      'Pod creation canceled.',
-      tool: {
+      mcpTool: {
         name: 'createKubernetesResource',
         args: {
           kind:      'Pod',
