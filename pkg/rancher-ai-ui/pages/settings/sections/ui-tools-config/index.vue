@@ -32,8 +32,8 @@ const props = defineProps({
     default: false,
   },
   requiredAction: {
-    type:    Object as () => ToolsDefinitionActionType,
-    default: () => ToolsDefinitionActionType.None,
+    type:    String as () => ToolsDefinitionActionType,
+    default: ToolsDefinitionActionType.None,
   },
 });
 
