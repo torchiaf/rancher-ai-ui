@@ -9,11 +9,11 @@ import ToggleSwitch from '@components/Form/ToggleSwitch/ToggleSwitch.vue';
 import RcButton from '@components/RcButton/RcButton.vue';
 import FilterPanel from '@shell/components/FilterPanel.vue';
 import TextAreaAutoGrow from '@components/Form/TextArea/TextAreaAutoGrow.vue';
-import Banner from '@components/Banner/Banner.vue';
 import RcItemCard from '@components/RcItemCard/RcItemCard.vue';
 import RcItemCardAction from '@components/RcItemCard/RcItemCardAction.vue';
-import { getRancherVersion } from '../../../utils/version';
-import { UIToolsConfig, UIToolsConfigs, ToolsDefinitionActionType } from '../../../types';
+import { getRancherVersion } from '../../../../utils/version';
+import { UIToolsConfig, UIToolsConfigs, ToolsDefinitionActionType } from '../../../../types';
+import Intro from './Intro.vue';
 
 type FilterState = Record<string, string[]>;
 
@@ -49,16 +49,6 @@ const debouncedSearchQuery = ref('');
 const filters = ref<FilterState>({ categories: [] });
 const internalFilters = ref<FilterState>({ categories: [] });
 const isFilterUpdating = ref(false);
-
-const toolsDefinitionActionType = computed(() => {
-  const user = props.readOnly ? 'user' : 'admin';
-  const type = props.requiredAction;
-
-  return {
-    color:   type === ToolsDefinitionActionType.Create ? 'info' : 'warning',
-    message: t(`aiConfig.form.section.tools.publish.action.${ type }.message.${ user }`, {}, true),
-  };
-});
 
 // Debounce search query
 const debouncedSearch = debounce((q: string) => {
@@ -239,250 +229,237 @@ const resetToolsToDefaults = () => {
 </script>
 
 <template>
-  <div
-    v-if="props.requiredAction !== ToolsDefinitionActionType.None"
-    class="tools-definition-row"
-  >
-    <Banner
-      class="m-0"
-      :color="toolsDefinitionActionType.color"
+  <div>
+    <Intro
+      :required-action="props.requiredAction"
+      :read-only="props.readOnly"
+      @publish:tools="emit('publish:tools')"
+    />
+    <div
+      v-if="props.requiredAction === ToolsDefinitionActionType.None"
+      class="ui-tools-config-container"
     >
-      <span
-        v-clean-html="toolsDefinitionActionType.message"
-      />
-    </Banner>
-    <RcButton
-      v-if="!props.readOnly"
-      primary
-      @click="emit('publish:tools')"
-    >
-      {{ t(`aiConfig.form.section.tools.publish.action.${ props.requiredAction }.label`, {}, true) }}
-    </RcButton>
-  </div>
-  <div
-    v-else
-    class="ui-tools-config-container"
-  >
-    <!-- Tools Config management Section -->
-    <div class="form-values-row">
-      <div class="row">
-        <div class="col span-12">
-          <Checkbox
-            class="form-value-checkbox"
-            :value="props.value?.config?.enabled"
-            :label="t('aiConfig.form.section.tools.fields.enabled.label')"
-            :disabled="readOnly"
-            @update:value="(val: boolean) => updateToolsConfigValue({ enabled: val })"
-          />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col span-12">
-          <h3 class="m-0">
-            {{ t('aiConfig.form.section.tools.fields.systemPrompt.label') }}
-            <i
-              v-clean-tooltip="t('aiConfig.form.section.tools.fields.systemPrompt.tooltip')"
-              class="icon icon-info tooltip-icon"
+      <!-- Tools Config management Section -->
+      <div class="form-values-row">
+        <div class="row">
+          <div class="col span-12">
+            <Checkbox
+              class="form-value-checkbox"
+              :value="props.value?.config?.enabled"
+              :label="t('aiConfig.form.section.tools.fields.enabled.label')"
+              :disabled="readOnly"
+              @update:value="(val: boolean) => updateToolsConfigValue({ enabled: val })"
             />
-          </h3>
-        </div>
-      </div>
-      <div class="row textarea-with-validation">
-        <TextAreaAutoGrow
-          :value="props.value?.config?.systemPrompt"
-          :disabled="readOnly"
-          :placeholder="t('aiConfig.form.section.tools.fields.systemPrompt.placeholder')"
-          :min-height="100"
-          :max-height="150"
-          @update:value="(val: string) => updateToolsConfigValue({ systemPrompt: val })"
-        />
-      </div>
-      <div
-        v-if="!props.readOnly && hasToolsConfigChanges"
-        class="row"
-      >
-        <div class="col span-4">
-          <button
-            class="btn role-tertiary"
-            :disabled="readOnly"
-            @click="resetToolsConfigToDefaults"
-          >
-            {{ t('aiConfig.form.resetToDefaults', {}, true) }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tools list management Section -->
-    <div class="form-values-row">
-      <div class="row">
-        <div class="col span-6">
-          <h3 class="m-0">
-            {{ t('aiConfig.form.section.tools.fields.tools.label') }}
-          </h3>
-        </div>
-      </div>
-
-      <!-- Search Input -->
-      <div class="search-input">
-        <input
-          ref="searchRef"
-          v-model="searchQuery"
-          type="search"
-          class="input"
-          :placeholder="t('aiConfig.form.section.tools.search', {}, true)"
-          :aria-label="t('aiConfig.form.section.tools.search', {}, true)"
-          role="textbox"
-          @input="debouncedSearch(searchQuery)"
-        >
-        <i
-          v-if="!searchQuery"
-          class="icon icon-search"
-        />
-      </div>
-
-      <!-- Keyboard shortcut to focus search -->
-      <button
-        v-shortkey.once="['/']"
-        class="hide"
-        @shortkey="focusSearch()"
-      />
-
-      <div class="tools-wrapper">
-        <!-- Filter Panel -->
-        <FilterPanel
-          :model-value="internalFilters"
-          :filters="filterPanelFilters"
-          @update:modelValue="onFilterChange"
-        />
-
-        <!-- Empty State -->
-        <div
-          v-if="filteredTools.length === 0"
-          class="empty-state"
-        >
-          <h3 class="empty-state-title">
-            {{ t('aiConfig.form.section.tools.noMatchingTools', {}, true) }}
-          </h3>
-          <div class="empty-state-content">
-            <p>{{ t('aiConfig.form.section.tools.tryAdjustingFilters', {}, true) }}</p>
-            <RcButton
-              v-if="!noFiltersApplied"
-              tertiary
-              class="inline-button"
-              @click="resetAllFilters"
-            >
-              {{ t('aiConfig.form.section.tools.resetFilters', {}, true) }}
-            </RcButton>
           </div>
         </div>
 
-        <!-- Tools List -->
+        <div class="row">
+          <div class="col span-12">
+            <h3 class="m-0">
+              {{ t('aiConfig.form.section.tools.fields.systemPrompt.label') }}
+              <i
+                v-clean-tooltip="t('aiConfig.form.section.tools.fields.systemPrompt.tooltip')"
+                class="icon icon-info tooltip-icon"
+              />
+            </h3>
+          </div>
+        </div>
+        <div class="row textarea-with-validation">
+          <TextAreaAutoGrow
+            :value="props.value?.config?.systemPrompt"
+            :disabled="readOnly"
+            :placeholder="t('aiConfig.form.section.tools.fields.systemPrompt.placeholder')"
+            :min-height="100"
+            :max-height="150"
+            @update:value="(val: string) => updateToolsConfigValue({ systemPrompt: val })"
+          />
+        </div>
         <div
-          v-else
-          class="right-section"
+          v-if="!props.readOnly && hasToolsConfigChanges"
+          class="row"
         >
-          <!-- Total and Controls -->
-          <div class="total-and-controls">
-            <div class="total">
-              <p class="total-message">
-                {{ totalMessage }}
-                <span
-                  v-if="enabledToolsCount > 0"
-                  class="enabled-count"
-                >
-                  {{ t('aiConfig.form.section.tools.enabledCount', { count: enabledToolsCount }) }}
-                </span>
-              </p>
-              <button
+          <div class="col span-4">
+            <button
+              class="btn role-tertiary"
+              :disabled="readOnly"
+              @click="resetToolsConfigToDefaults"
+            >
+              {{ t('aiConfig.form.resetToDefaults', {}, true) }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools list management Section -->
+      <div class="form-values-row">
+        <div class="row">
+          <div class="col span-6">
+            <h3 class="m-0">
+              {{ t('aiConfig.form.section.tools.fields.tools.label') }}
+            </h3>
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="search-input">
+          <input
+            ref="searchRef"
+            v-model="searchQuery"
+            type="search"
+            class="input"
+            :placeholder="t('aiConfig.form.section.tools.search', {}, true)"
+            :aria-label="t('aiConfig.form.section.tools.search', {}, true)"
+            role="textbox"
+            @input="debouncedSearch(searchQuery)"
+          >
+          <i
+            v-if="!searchQuery"
+            class="icon icon-search"
+          />
+        </div>
+
+        <!-- Keyboard shortcut to focus search -->
+        <button
+          v-shortkey.once="['/']"
+          class="hide"
+          @shortkey="focusSearch()"
+        />
+
+        <div class="tools-wrapper">
+          <!-- Filter Panel -->
+          <FilterPanel
+            :model-value="internalFilters"
+            :filters="filterPanelFilters"
+            @update:modelValue="onFilterChange"
+          />
+
+          <!-- Empty State -->
+          <div
+            v-if="filteredTools.length === 0"
+            class="empty-state"
+          >
+            <h3 class="empty-state-title">
+              {{ t('aiConfig.form.section.tools.noMatchingTools', {}, true) }}
+            </h3>
+            <div class="empty-state-content">
+              <p>{{ t('aiConfig.form.section.tools.tryAdjustingFilters', {}, true) }}</p>
+              <RcButton
                 v-if="!noFiltersApplied"
-                class="reset-filters-link"
+                tertiary
+                class="inline-button"
                 @click="resetAllFilters"
               >
                 {{ t('aiConfig.form.section.tools.resetFilters', {}, true) }}
-              </button>
-            </div>
-            <div
-              v-if="!props.readOnly && hasToolEnabledChanges"
-              class="text-right"
-            >
-              <button
-                class="btn role-tertiary"
-                :disabled="readOnly || !props.value?.tools || props.value?.tools.length === 0"
-                @click="resetToolsToDefaults"
-              >
-                {{ t('aiConfig.form.resetToDefaults', {}, true) }}
-              </button>
+              </RcButton>
             </div>
           </div>
 
-          <!-- Tools Cards Grid -->
-          <div class="tools-grid-container">
-            <div class="tools-grid">
-              <RcItemCard
-                v-for="tool in filteredTools"
-                :id="tool.name"
-                :key="tool.name"
-                :value="tool"
-                variant="medium"
-                :header="{
-                  title: {
-                    key: `aiConfig.form.section.tools.fields.tools.name.${tool.name}`,
-                    text: tool.name
-                  }
-                }"
-                :image="{
-                  icon: 'icon-gear'
-                }"
-                :content="{
-                  text: tool.description
-                }"
-              >
-                <template
-                  v-once
-                  #item-card-sub-header
-                >
-                  <div class="version-badge">
-                    <i
-                      v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.revision.tooltip', {}, true)"
-                      :class="['icon', 'icon-version-alt']"
-                    />
-                    <p>
-                      v{{ tool.revision }}
-                    </p>
-                  </div>
-                </template>
-                <template #item-card-actions>
-                  <ToggleSwitch
-                    :value="tool.enabled"
-                    :disabled="readOnly"
-                    @update:value="updateToolEnabled(tool.name, $event)"
-                  />
-                </template>
-                <template #item-card-footer>
-                  <rc-item-card-action
-                    class="app-chart-card-footer-item-action"
+          <!-- Tools List -->
+          <div
+            v-else
+            class="right-section"
+          >
+            <!-- Total and Controls -->
+            <div class="total-and-controls">
+              <div class="total">
+                <p class="total-message">
+                  {{ totalMessage }}
+                  <span
+                    v-if="enabledToolsCount > 0"
+                    class="enabled-count"
                   >
-                    <rc-button
-                      variant="ghost"
-                      class="app-chart-card-footer-button secondary-text-link"
-                      @click="filterByCategory(tool.category)"
-                    >
+                    {{ t('aiConfig.form.section.tools.enabledCount', { count: enabledToolsCount }) }}
+                  </span>
+                </p>
+                <button
+                  v-if="!noFiltersApplied"
+                  class="reset-filters-link"
+                  @click="resetAllFilters"
+                >
+                  {{ t('aiConfig.form.section.tools.resetFilters', {}, true) }}
+                </button>
+              </div>
+              <div
+                v-if="!props.readOnly && hasToolEnabledChanges"
+                class="text-right"
+              >
+                <button
+                  class="btn role-tertiary"
+                  :disabled="readOnly || !props.value?.tools || props.value?.tools.length === 0"
+                  @click="resetToolsToDefaults"
+                >
+                  {{ t('aiConfig.form.resetToDefaults', {}, true) }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Tools Cards Grid -->
+            <div class="tools-grid-container">
+              <div class="tools-grid">
+                <RcItemCard
+                  v-for="tool in filteredTools"
+                  :id="tool.name"
+                  :key="tool.name"
+                  :value="tool"
+                  variant="medium"
+                  :header="{
+                    title: {
+                      key: `aiConfig.form.section.tools.fields.tools.name.${tool.name}`,
+                      text: tool.name
+                    }
+                  }"
+                  :image="{
+                    icon: 'icon-gear'
+                  }"
+                  :content="{
+                    text: tool.description
+                  }"
+                >
+                  <template
+                    v-once
+                    #item-card-sub-header
+                  >
+                    <div class="version-badge">
                       <i
-                        v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.category.tooltip.label', {}, true)"
-                        class="app-chart-card-footer-item-icon icon icon-category-alt"
+                        v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.revision.tooltip', {}, true)"
+                        :class="['icon', 'icon-version-alt']"
                       />
-                      <span
-                        v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.category.tooltip.action', {}, true)"
-                        class="app-chart-card-footer-button-label"
+                      <p>
+                        v{{ tool.revision }}
+                      </p>
+                    </div>
+                  </template>
+                  <template #item-card-actions>
+                    <ToggleSwitch
+                      :value="tool.enabled"
+                      :disabled="readOnly"
+                      @update:value="updateToolEnabled(tool.name, $event)"
+                    />
+                  </template>
+                  <template #item-card-footer>
+                    <rc-item-card-action
+                      class="app-chart-card-footer-item-action"
+                    >
+                      <rc-button
+                        variant="ghost"
+                        class="app-chart-card-footer-button secondary-text-link"
+                        @click="filterByCategory(tool.category)"
                       >
-                        {{ tool.category }}
-                      </span>
-                    </rc-button>
-                  </rc-item-card-action>
-                </template>
-              </RcItemCard>
+                        <i
+                          v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.category.tooltip.label', {}, true)"
+                          class="app-chart-card-footer-item-icon icon icon-category-alt"
+                        />
+                        <span
+                          v-clean-tooltip="t('aiConfig.form.section.tools.fields.tools.category.tooltip.action', {}, true)"
+                          class="app-chart-card-footer-button-label"
+                        >
+                          {{ tool.category }}
+                        </span>
+                      </rc-button>
+                    </rc-item-card-action>
+                  </template>
+                </RcItemCard>
+              </div>
             </div>
           </div>
         </div>
@@ -732,14 +709,6 @@ const resetToolsToDefaults = () => {
 
 .text-right {
   text-align: right;
-}
-
-.tools-definition-row {
-  margin: 0 0 24px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
 }
 
 .app-chart-card-footer {
