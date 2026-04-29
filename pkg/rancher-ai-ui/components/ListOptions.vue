@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import BubbleButton from '../components/message/BubbleButton.vue';
+import BubbleButton from '../components/BubbleButton.vue';
 
 const store = useStore();
 const { t } = useI18n(store);

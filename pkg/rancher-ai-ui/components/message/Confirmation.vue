@@ -5,7 +5,7 @@ import { useI18n } from '@shell/composables/useI18n';
 import { warn } from '../../utils/log';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { ConfirmationStatus, ConfirmationActionType, Message } from '../../types';
-import { ToolName } from './types';
+import { ToolName } from '../../components/tools/types';
 import Tool from '../tools/Tool.vue';
 
 const store = useStore();
