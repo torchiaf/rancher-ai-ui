@@ -426,7 +426,6 @@ aiConfig:
               download-logs: Download Logs
               select-option: Select Option
               suggestions: Suggestions
-              rancher-2-13-specific-tool: Rancher 2.13 Specific Tool
             revision:
               tooltip: 'Revision'
             category:
