@@ -50,7 +50,10 @@ const { t } = useI18n(store);
 // TODO: All settings will be fetched through the API in the future.
 const { fetchSettings, saveSettings } = useAIAgentApiComposable();
 
-const { uiToolsDefinitionAction, publishToolsDefinition } = useToolsComposable();
+const {
+  toolsRequiredAction,
+  publishToolsDefinition
+} = useToolsComposable();
 
 const isLoading = ref(true);
 const isSaving = ref(false);
@@ -74,6 +77,8 @@ const buttonProps = ref({
   successLabel: t('asyncButton.apply.action'),
   successColor: 'bg-success',
 });
+
+const toolsActionResultBanner = ref<{ color: string; label: string } | null>(null);
 
 /**
  * Fetches the rancher-ai-agent deployment.
@@ -417,6 +422,8 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
     apiError.value = t('aiConfig.form.save.apiError', { error }, true);
     btnCB(false);
   }
+
+  toolsActionResultBanner.value = null;
 };
 
 function applySettings() {
@@ -442,7 +449,14 @@ function discardSettings() {
 }
 
 async function publishToolsDefinitionAndRefetch() {
-  await publishToolsDefinition();
+  const { action, success, message = undefined } = await publishToolsDefinition();
+
+  const key = success ? 'success' : 'error';
+
+  toolsActionResultBanner.value = {
+    color:   key,
+    label: t(`aiConfig.form.section.tools.publish.action.${ action }.result.${ key }`, { message }, true),
+  };
 
   fetchUIToolsConfigSettings();
 }
@@ -584,13 +598,14 @@ onMounted(async() => {
       <settings-row
         :title="t('aiConfig.form.section.tools.header')"
         :description="t('aiConfig.form.section.tools.description')"
+        :banner="toolsActionResultBanner"
         data-testid="rancher-ai-ui-settings-tools"
       >
         <UIToolsConfig
           v-if="uiToolsSettings"
           :value="uiToolsSettings"
           :read-only="!permissions?.create.canCreateConfigMaps"
-          :required-action="uiToolsDefinitionAction"
+          :required-action="toolsRequiredAction"
           @update:value="uiToolsSettings = $event"
           @publish:tools="publishToolsDefinitionAndRefetch"
         />

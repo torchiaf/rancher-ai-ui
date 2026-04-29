@@ -19,20 +19,20 @@ ai:
         info:
           label: Pro Tip
           message: 'You can also interact with the status badges and error messages throughout the Rancher UI to ask me for help. Or, you can resume one of your previous chats - I automatically save them in the main menu for easy access.'
-        news:
-          label: What’s New
-          message:
-            admin:
-              createTools: 'UI tools are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
-              updateTools: 'UI tools have been updated! The AI assistant can now use the latest interactive UI tools to enhance its responses and provide a more integrated experience.'
-            user:
-              createTools: 'UI tools are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience. Please contact your administrator to install the tools.'
-              updateTools: 'UI tools have been updated! The AI assistant can now use the latest interactive UI tools to enhance its responses and provide a more integrated experience. Please contact your administrator to refresh the tools.'
-          action:
-            install: 'Install UI Tools'
-            refresh: 'Refresh UI Tools'
-        suggestions:
-          label: 'Here are a few suggestions based on your context:'
+      news:
+        label: What’s New
+        message:
+          info: 'UI tools are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
+        admin:
+          infoCreate: '<br><br>UI tools need to be <installTools>installed</installTools> to enable full AI capabilities.'
+          infoUpdate: '<br><br>UI tools have updates available. <refreshTools>Refresh them</refreshTools> to get the latest features.'
+        user:
+          infoCreate: '<br><br>UI tools need to be installed to enable full AI capabilities. Please contact your administrator to proceed.'
+          infoUpdate: '<br><br>UI tools have updates available. Please contact your administrator to refresh them.'
+        action:
+          refreshTooltip: 'Go to settings to handle the UI tools.'
+      suggestions:
+        label: 'Here are a few suggestions based on your context:'
       switchAgent:
         info: '<code>{agent}</code> Agent has been selected in adaptive mode for the last few prompts.<br>Usually, manual selection is best for faster response times.<br><br>Would you like me to switch over to <b>manual</b> agent selection?<br>'
         actions:
@@ -449,7 +449,7 @@ aiConfig:
                 admin: The UI tools definition has changed. Please refresh the tools to apply the latest changes.
                 user: The UI tools definition has changed. Please contact your administrator to refresh the tools and apply the latest changes.
               result:
-                success: 'UI tools definition have been updated: {message}.'
+                success: 'UI tools definition have been updated: {message}'
                 error: 'Failed to update UI Tools definition, an error occurred during update. {message}'
         search: Search tools...
         noTools: No UI tools configured
