@@ -30,11 +30,17 @@ const props = defineProps({
     type:    Boolean,
     default: true,
   },
+  showDefaultLabels: {
+    type:    Boolean,
+    default: false,
+  },
   disabled: {
     type:    Boolean,
     default: false,
   },
 });
+
+const emit = defineEmits(['action']);
 
 const tools = computed(() => {
   const all = props.message.tools || [];
@@ -67,7 +73,9 @@ const tools = computed(() => {
           :key="index"
           :tool="tool"
           :message="props.message"
+          :label="props.showDefaultLabels ? t(`ai.tools.${ tool.toolName }.name`, { }, true) : ''"
           :disabled="props.disabled"
+          @action="emit('action', $event.value)"
         />
       </div>
     </div>

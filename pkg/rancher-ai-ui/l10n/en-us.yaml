@@ -22,7 +22,7 @@ ai:
       news:
         label: What’s New
         message:
-          info: '<b>UI tools</b> are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
+          info: 'UI tools are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
         admin:
           infoCreate: '<br><br>UI tools need to be <installTools>installed</installTools> to enable full AI capabilities.'
           infoUpdate: '<br><br>UI tools have updates available. <refreshTools>Refresh them</refreshTools> to get the latest features.'
