@@ -30,6 +30,10 @@ const props = defineProps({
     type:    Boolean,
     default: true,
   },
+  showDefaultLabels: {
+    type:    Boolean,
+    default: true,
+  },
   disabled: {
     type:    Boolean,
     default: false,
@@ -67,6 +71,7 @@ const tools = computed(() => {
           :key="index"
           :tool="tool"
           :message="props.message"
+          :label="props.showDefaultLabels ? t(`ai.tools.${ tool.toolName }.name`, { }, true) : ''"
           :disabled="props.disabled"
         />
       </div>
