@@ -12,8 +12,8 @@ const { t } = useI18n(store);
 
 const props = defineProps({
   requiredAction: {
-    type:    Object as () => ToolsDefinitionActionType,
-    default: () => ToolsDefinitionActionType.None,
+    type:    String as () => ToolsDefinitionActionType,
+    default: ToolsDefinitionActionType.None,
   },
   readOnly: {
     type:    Boolean,
