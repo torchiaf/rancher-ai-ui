@@ -575,6 +575,7 @@ onMounted(async() => {
 
     <template v-else>
       <settings-row
+        :section-id="'ai-agent-settings'"
         :title="t('aiConfig.form.section.provider.header')"
         :description="t('aiConfig.form.section.provider.description')"
         data-testid="rancher-ai-ui-settings-ai-agent-settings"
@@ -588,6 +589,7 @@ onMounted(async() => {
       </settings-row>
 
       <settings-row
+        :section-id="'ai-agents-configs'"
         :title="t('aiConfig.form.section.aiAgent.header')"
         :description="t('aiConfig.form.section.aiAgent.description')"
         data-testid="rancher-ai-ui-settings-ai-agent-configs"
@@ -604,6 +606,7 @@ onMounted(async() => {
       </settings-row>
 
       <settings-row
+        :section-id="'ui-tools-config'"
         :title="t('aiConfig.form.section.tools.header')"
         :description="t('aiConfig.form.section.tools.description')"
         :banner="toolsActionResultBanner"
