@@ -13,7 +13,7 @@ import Banner from '@components/Banner/Banner.vue';
 import RcItemCard from '@components/RcItemCard/RcItemCard.vue';
 import RcItemCardAction from '@components/RcItemCard/RcItemCardAction.vue';
 import { getRancherVersion } from '../../../utils/version';
-import { UIToolsConfig, UIToolsConfigs, ToolsDefinitionAction, ToolsDefinitionActionType } from '../../../types';
+import { UIToolsConfig, UIToolsConfigs, ToolsDefinitionActionType } from '../../../types';
 
 type FilterState = Record<string, string[]>;
 
@@ -32,8 +32,8 @@ const props = defineProps({
     default: false,
   },
   requiredAction: {
-    type:    Object as () => ToolsDefinitionAction,
-    default: () => ({ type: ToolsDefinitionActionType.None }),
+    type:    Object as () => ToolsDefinitionActionType,
+    default: () => ToolsDefinitionActionType.None,
   },
 });
 
@@ -52,26 +52,11 @@ const isFilterUpdating = ref(false);
 
 const toolsDefinitionActionType = computed(() => {
   const user = props.readOnly ? 'user' : 'admin';
-  const type = props.requiredAction.type;
+  const type = props.requiredAction;
 
   return {
-    color:   props.requiredAction.type === ToolsDefinitionActionType.Create ? 'info' : 'warning',
+    color:   type === ToolsDefinitionActionType.Create ? 'info' : 'warning',
     message: t(`aiConfig.form.section.tools.publish.action.${ type }.message.${ user }`, {}, true),
-  };
-});
-
-const toolsDefinitionActionResult = computed(() => {
-  if (!props.requiredAction.result) {
-    return null;
-  }
-
-  const { action, success, message = undefined } = props.requiredAction.result;
-
-  const key = success ? 'success' : 'error';
-
-  return {
-    color:   key,
-    message: t(`aiConfig.form.section.tools.publish.action.${ action }.result.${ key }`, { message }, true),
   };
 });
 
@@ -255,24 +240,10 @@ const resetToolsToDefaults = () => {
 
 <template>
   <div
-    v-if="toolsDefinitionActionResult"
+    v-if="props.requiredAction !== ToolsDefinitionActionType.None"
     class="tools-definition-row"
   >
     <Banner
-      class="m-0"
-      :color="toolsDefinitionActionResult.color"
-    >
-      <span
-        v-clean-html="toolsDefinitionActionResult.message"
-      />
-    </Banner>
-  </div>
-  <div
-    v-if="props.requiredAction.type !== ToolsDefinitionActionType.None && !props.requiredAction.result?.success"
-    class="tools-definition-row"
-  >
-    <Banner
-      v-if="!props.requiredAction.result"
       class="m-0"
       :color="toolsDefinitionActionType.color"
     >
@@ -285,7 +256,7 @@ const resetToolsToDefaults = () => {
       primary
       @click="emit('publish:tools')"
     >
-      {{ t(`aiConfig.form.section.tools.publish.action.${ props.requiredAction.type }.label`, {}, true) }}
+      {{ t(`aiConfig.form.section.tools.publish.action.${ props.requiredAction }.label`, {}, true) }}
     </RcButton>
   </div>
   <div

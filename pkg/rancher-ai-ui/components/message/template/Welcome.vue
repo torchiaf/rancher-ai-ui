@@ -2,18 +2,14 @@
 import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { CONFIG_MAP } from '@shell/config/types';
-import RcButton from '@components/RcButton/RcButton.vue';
-import { PRODUCT_NAME } from '../../../product';
 import { Message, ToolActionEvent, ToolActionEventType } from '../../../types';
 import { ToolName } from '../../tools/types';
-import Tool from '../../tools/Tool.vue';
 import { formatMessageContent } from '../../../utils/format';
 import { useInputComposable } from '../../../composables/useInputComposable';
 // @ts-expect-error FIXME: Cannot find module '../../../assets/liz-icon.svg'... Remove this comment to see the full error message
 import lizIcon from '../../../assets/liz-icon.svg';
-import { useToolsComposable } from '../../../composables/useToolsComposable';
-import { ToolsDefinitionActionType } from '../../../types';
+import Tool from '../../tools/Tool.vue';
+import News from '../../News.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -36,7 +32,6 @@ const props = defineProps({
 const emit = defineEmits(['send:message']);
 
 const { updateInput, focusConsoleInput } = useInputComposable();
-const { uiToolsDefinitionAction } = useToolsComposable();
 
 const user = computed(() => {
   const principal = props.message.templateContent?.content?.principal;
@@ -50,35 +45,6 @@ const user = computed(() => {
   return out;
 });
 
-const canPublishTools = computed(() => {
-  const schema = store.getters['management/schemaFor'](CONFIG_MAP);
-
-  return !!schema?.resourceMethods?.find((verb: any) => 'PUT' === verb);
-});
-
-const newsMessage = computed(() => {
-  const user = canPublishTools.value ? 'admin' : 'user';
-  const action = uiToolsDefinitionAction.value?.type === ToolsDefinitionActionType.Create ? 'create' : uiToolsDefinitionAction.value?.type === ToolsDefinitionActionType.Update ? 'update' : '';
-
-  if (action) {
-    return t(`ai.message.system.welcome.news.message.${ user }.${ action }Tools`, {}, true);
-  }
-
-  return '';
-});
-
-const newsActionLabel = computed(() => {
-  if (uiToolsDefinitionAction.value?.type === ToolsDefinitionActionType.Create) {
-    return t('ai.message.system.welcome.news.action.install', {}, true);
-  }
-
-  if (uiToolsDefinitionAction.value?.type === ToolsDefinitionActionType.Update) {
-    return t('ai.message.system.welcome.news.action.refresh', {}, true);
-  }
-
-  return '';
-});
-
 function handleToolAction(event: ToolActionEvent) {
   if (event.type === ToolActionEventType.Select) {
     emit('send:message', event.value);
@@ -86,13 +52,6 @@ function handleToolAction(event: ToolActionEvent) {
     updateInput(event.value);
     focusConsoleInput();
   }
-}
-
-function routeToSettings() {
-  store.state.$router.push({
-    name:   `c-cluster-settings-${ PRODUCT_NAME }`,
-    params: { cluster: store.state.$route.params.cluster || 'local' },
-  });
 }
 </script>
 
@@ -141,35 +100,7 @@ function routeToSettings() {
       </div>
     </div>
 
-    <div
-      v-if="uiToolsDefinitionAction.type !== ToolsDefinitionActionType.None"
-      class="chat-welcome-msg-bubble"
-    >
-      <div class="chat-welcome-msg-text">
-        <div class="chat-welcome-msg-text-title">
-          <span><b>{{ t('ai.message.system.welcome.news.label') }}</b></span>
-          <i class="icon icon-notify-announcement" />
-        </div>
-        <span
-          v-clean-html="newsMessage"
-        />
-        <div
-          v-if="canPublishTools"
-          class="chat-msg-section"
-        >
-          <RcButton
-            small
-            secondary
-            :disabled="props.disabled || props.pendingConfirmation"
-            @click="routeToSettings()"
-          >
-            <span class="rc-button-label">
-              {{ newsActionLabel }}
-            </span>
-          </RcButton>
-        </div>
-      </div>
-    </div>
+    <News />
 
     <div
       v-if="props.message.completed && props.message.messageContent"
