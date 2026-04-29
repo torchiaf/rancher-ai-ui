@@ -37,6 +37,7 @@ function routeToSettings() {
   store.state.$router.push({
     name:   `c-cluster-settings-${ PRODUCT_NAME }`,
     params: { cluster: store.state.$route.params.cluster || 'local' },
+    query:  { section: 'ui-tools-config' },
   });
 }
 </script>
