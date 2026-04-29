@@ -444,7 +444,7 @@ describe('UIToolsConfig.vue', () => {
         }
       });
 
-      expect(wrapper.props('readOnly')).toBe(true);
+      expect(wrapper.props('readOnly' as any)).toBe(true);
     });
 
     it('should not show reset buttons when readOnly is true', () => {
