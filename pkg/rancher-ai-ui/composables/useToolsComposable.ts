@@ -8,11 +8,17 @@ import { getRancherVersion, uiVersion } from '../utils/version';
 import { compareSpecConfig, compareSpecTools, hasChanges } from '../utils/tools';
 import toolsConfigData from '../ui-tools.json';
 import {
-  UITool, UIToolsConfig, UIToolsConfigs, ToolsDefinitionAction, ToolsDefinitionActionResult, ToolsDefinitionActionType
+  UITool, UIToolsConfig, UIToolsConfigs, ToolsDefinitionActionType,
+  ToolsDefinitionActionResult
 } from '../types';
 
 const RANCHER_VERSION_KEY = 'rancher-version';
 const UI_VERSION_KEY = 'ui-version';
+
+/**
+ * UI tools definition action state to determine if the tools definition needs to be created or updated.
+ */
+const toolsRequiredAction = ref<ToolsDefinitionActionType>(ToolsDefinitionActionType.None);
 
 /**
  * Composable for managing the UI tools configuration and interactions.
@@ -23,15 +29,13 @@ export function useToolsComposable() {
 
   const toolsConfigMap = computed(() => store.getters['management/byId'](CONFIG_MAP, `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`));
 
-  const uiToolsDefinitionAction = ref<ToolsDefinitionAction>({ type: ToolsDefinitionActionType.None });
-
   /**
    * Tools selector based on the tools configuration,
    * filtering tools based on Rancher version compatibility.
    */
   const toolsSelector = computed(() => {
     // Disable tools if create or update action is needed to prevent usage of outdated tools
-    if (uiToolsDefinitionAction.value.type !== ToolsDefinitionActionType.None) {
+    if (toolsRequiredAction.value !== ToolsDefinitionActionType.None) {
       return undefined;
     }
 
@@ -65,7 +69,7 @@ export function useToolsComposable() {
         id:   `${ AGENT_NAMESPACE }/${ TOOLS_CONFIG_NAME }`
       });
     } catch (err) { // eslint-disable-line no-unused-vars
-      uiToolsDefinitionAction.value.type = ToolsDefinitionActionType.Create;
+      toolsRequiredAction.value = ToolsDefinitionActionType.Create;
 
       return;
     }
@@ -92,13 +96,13 @@ export function useToolsComposable() {
       currentConfig
     );
 
-    uiToolsDefinitionAction.value.type = changesDetected ? ToolsDefinitionActionType.Update : ToolsDefinitionActionType.None;
+    toolsRequiredAction.value = changesDetected ? ToolsDefinitionActionType.Update : ToolsDefinitionActionType.None;
   }
 
   async function publishToolsDefinition() {
     let result = {} as ToolsDefinitionActionResult;
 
-    switch (uiToolsDefinitionAction.value.type) {
+    switch (toolsRequiredAction.value) {
     case ToolsDefinitionActionType.Create:
       result = await createToolsDefinition();
       break;
@@ -107,10 +111,11 @@ export function useToolsComposable() {
       break;
     }
 
-    uiToolsDefinitionAction.value = {
-      type: result.success ? ToolsDefinitionActionType.None : uiToolsDefinitionAction.value.type,
-      result
-    };
+    if (result.success) {
+      toolsRequiredAction.value = ToolsDefinitionActionType.None;
+    }
+
+    return result;
   }
 
   async function createToolsDefinition(): Promise<ToolsDefinitionActionResult> {
@@ -333,7 +338,7 @@ export function useToolsComposable() {
 
   return {
     toolsSelector,
-    uiToolsDefinitionAction,
+    toolsRequiredAction,
     publishToolsDefinition
   };
 }

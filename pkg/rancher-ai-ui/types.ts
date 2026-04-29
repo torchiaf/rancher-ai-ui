@@ -359,11 +359,6 @@ export interface ToolsDefinitionActionResult {
   message?: string;
 }
 
-export interface ToolsDefinitionAction {
-  type: ToolsDefinitionActionType;
-  result?: ToolsDefinitionActionResult | null;
-}
-
 export interface HistoryChat {
   id: string;
   name?: string;
