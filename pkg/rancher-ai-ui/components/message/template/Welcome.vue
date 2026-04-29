@@ -233,6 +233,7 @@ function handleToolAction(event: ToolActionEvent) {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
 .chat-msg-section {

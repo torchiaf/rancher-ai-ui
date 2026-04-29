@@ -112,6 +112,7 @@ function routeToSettings() {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
 .clickable-label {
