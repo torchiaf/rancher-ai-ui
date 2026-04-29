@@ -33,7 +33,7 @@ import { AgentSettings, AIAgentConfigCRD, UIToolsConfigs } from '../../types';
 import { AI_AGENT_LABELS } from '../../labels-annotations';
 import SettingsRow from './SettingsRow.vue';
 import AIAgentConfigs from './sections/AIAgentConfigs.vue';
-import UIToolsConfig from './sections/UIToolsConfig.vue';
+import UIToolsConfig from './sections/ui-tools-config/index.vue';
 import AIAgentSettings from './sections/AIAgentSettings.vue';
 import ApplySettings from '../../dialog/ApplySettingsCard.vue';
 import { useAIAgentApiComposable } from '../../composables/useAIAgentApiComposable';
