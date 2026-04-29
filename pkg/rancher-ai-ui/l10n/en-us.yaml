@@ -22,7 +22,7 @@ ai:
       news:
         label: What’s New
         message:
-          info: 'UI tools are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
+          info: '<b>UI tools</b> are here! The AI assistant can now use interactive UI tools to enhance its responses and provide a more integrated experience.'
         admin:
           infoCreate: '<br><br>UI tools need to be <installTools>installed</installTools> to enable full AI capabilities.'
           infoUpdate: '<br><br>UI tools have updates available. <refreshTools>Refresh them</refreshTools> to get the latest features.'
@@ -438,19 +438,30 @@ aiConfig:
             create:
               label: Install UI Tools
               message:
-                admin: The UI tools are now available for the AI assistant to use. Please install the tools to make them available in the UI.
-                user: The UI tools are now available for the AI assistant to use. Please contact your administrator to install the tools and make them available in the UI.
+                admin: Please install the tools to make them available in the UI.
+                user: Please contact your administrator to install the tools and make them available in the UI.
               result:
                 success: UI Tools definition installed successfully.
                 error: 'Failed to install UI Tools definition, an error occurred during installation. {message}'
             update:
               label: Refresh UI Tools
               message:
-                admin: The UI tools definition has changed. Please refresh the tools to apply the latest changes.
-                user: The UI tools definition has changed. Please contact your administrator to refresh the tools and apply the latest changes.
+                admin: Please refresh the tools to apply the latest changes.
+                user: Please contact your administrator to refresh the tools and apply the latest changes.
               result:
                 success: 'UI tools definition have been updated: {message}'
                 error: 'Failed to update UI Tools definition, an error occurred during update. {message}'
+        intro:
+          title: About UI Tools
+          description: 'UI Tools make your chat experience more interactive and powerful. Instead of just reading text responses, the AI assistant can now provide interactive buttons, shortcuts, and other UI improvements right in the chat to help you accomplish tasks faster.'
+          feature1:
+            title: Smart Tool Selection
+            description: The AI automatically chooses the right tools based on your conversation. It knows when a tool would be helpful and what action you need, so you get relevant interactive options without asking.
+          feature2:
+            title: Seamless Integration
+            description: Tools are built to work naturally with your chat experience, providing helpful options whenever they're relevant.
+          disclaimer: 'Note: With smaller language models, enabling UI tools may slightly increase response time. You can enable or disable tools depending on your preferences for speed versus feature richness.'
+          learnMore: 'Want to know more? <documentation>See the documentation</documentation>'
         search: Search tools...
         noTools: No UI tools configured
         noMatchingTools: No matching tools
