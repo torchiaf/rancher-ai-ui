@@ -11,15 +11,15 @@ import {
 import { ToolName } from '../tools/types';
 import { extractMessageText } from '../../utils/label';
 import Tools from '../tools/index.vue';
+import Actions from '../message/actions/index.vue';
 import Tool from '../tools/Tool.vue';
-import Actions from '../tools/actions/index.vue';
 import SourceLinks from '../tools/SourceLinks.vue';
-import Confirmation from '../tools/Confirmation.vue';
+import Confirmation from './Confirmation.vue';
 import ContextTag from '../context/ContextTag.vue';
 import UserAvatar from './avatar/UserAvatar.vue';
 import SystemAvatar from './avatar/SystemAvatar.vue';
 import Processing from '../Processing.vue';
-import BubbleButton from './BubbleButton.vue';
+import BubbleButton from '../BubbleButton.vue';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { useInputComposable } from '../../composables/useInputComposable';
 
