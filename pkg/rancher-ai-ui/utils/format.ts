@@ -31,6 +31,17 @@ const md = new MarkdownIt({
   typographer: true,
 });
 
+/**
+ * Custom rule to always open links in new window
+ * It applies only to <a> tags.
+ */
+md.renderer.rules.link_open = (tokens, idx) => {
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener,noreferrer');
+
+  return md.renderer.renderToken(tokens, idx, {});
+};
+
 export function formatMessageContent(message: string) {
   const raw = md.render(message ?? '');
 
