@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, PropType, onMounted, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import Banner from '@components/Banner/Banner.vue';
 
@@ -23,13 +22,12 @@ const props = defineProps({
   },
 });
 
-const route = useRoute();
 const store = useStore();
 
 const isExpanded = ref(true);
 
 function ensureScrollToRow() {
-  const section = route?.query.section || store.state.$route.query.section;
+  const section = store.state.$router.currentRoute.value?.query?.section;
 
   if (section && section === props.sectionId) {
     nextTick(() => {
