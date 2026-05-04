@@ -412,9 +412,6 @@ const resetToolsToDefaults = () => {
                       text: tool.name
                     }
                   }"
-                  :image="{
-                    icon: 'icon-gear'
-                  }"
                   :content="{
                     text: tool.description
                   }"
