@@ -628,6 +628,10 @@ const resetToolsToDefaults = () => {
   height: fit-content;
   overflow-y: auto;
   min-width: 0;
+
+  :deep() .item-card-body {
+    gap: 0;
+  }
 }
 
 .tool-card {
@@ -651,6 +655,7 @@ const resetToolsToDefaults = () => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  color: var(--link-text-secondary);
   margin-bottom: 8px;
 
   .icon {
