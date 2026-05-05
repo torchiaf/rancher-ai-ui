@@ -12,7 +12,7 @@ import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
 import Welcome from '../message/template/Welcome.vue';
 import NoPermission from '../message/template/NoPermissions.vue';
-import SystemSuggestion from '../message/template/SystemSuggestion.vue';
+import SystemRequest from '../message/template/SystemRequest.vue';
 import ScrollButton from '../ScrollButton.vue';
 import Processing from '../Processing.vue';
 import { useScrollComposable } from '../../composables/useScrollComposable';
@@ -100,8 +100,8 @@ function getMessageTemplate(component: MessageTemplateComponent) {
     return Welcome;
   case MessageTemplateComponent.NoPermission:
     return NoPermission;
-  case MessageTemplateComponent.SystemSuggestion:
-    return SystemSuggestion;
+  case MessageTemplateComponent.SystemRequest:
+    return SystemRequest;
   default:
     return null;
   }
