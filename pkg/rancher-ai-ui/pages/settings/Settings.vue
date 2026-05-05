@@ -239,7 +239,7 @@ async function saveAiAgentConfigCRDs() {
     }
 
     // Normalize authenticationSecret
-    if (aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.BASIC) {
+    if (aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.BASIC || aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.HEADER) {
       aiAgentConfigCRD.spec.authenticationSecret = aiAgentConfigCRD.spec.authenticationSecret?.replaceAll(`${ AGENT_NAMESPACE }/`, '');
     } else {
       delete aiAgentConfigCRD.spec.authenticationSecret;

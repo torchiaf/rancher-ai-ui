@@ -14,6 +14,7 @@ import Checkbox from '@components/Form/Checkbox/Checkbox.vue';
 import Banner from '@components/Banner/Banner.vue';
 import TextAreaAutoGrow from '@components/Form/TextArea/TextAreaAutoGrow.vue';
 import SelectOrCreateAuthSecret from '@shell/components/form/SelectOrCreateAuthSecret.vue';
+import SecretSelector from '@shell/components/form/SecretSelector.vue';
 import FileSelector from '@shell/components/form/FileSelector.vue';
 import formRulesGenerator from '@shell/utils/validators/formRules';
 
@@ -47,6 +48,10 @@ const authOptions = [
     value: AIAgentConfigAuthType.BASIC
   },
   {
+    label: t('aiConfig.form.section.aiAgent.options.mcp.authOptions.header'),
+    value: AIAgentConfigAuthType.HEADER
+  },
+  {
     label: t('aiConfig.form.section.aiAgent.options.mcp.authOptions.rancher'),
     value: AIAgentConfigAuthType.RANCHER
   },
@@ -55,6 +60,8 @@ const authOptions = [
     value: AIAgentConfigAuthType.NONE
   }
 ];
+
+const initAgents = [...props.value];
 
 const agents = computed(() => {
   /**
@@ -148,7 +155,35 @@ function tabLabelIcon(agent: AIAgentConfigCRD) {
   return 'icon-close';
 }
 
-function updateAuthenticationSecret(value: AiAgentConfigSecretPayload) {
+function updateAuthType(value: AIAgentConfigAuthType) {
+  const updatedSpecValue = {
+    spec: {
+      ...selectedAgent.value.spec,
+      authenticationType: value
+    }
+  };
+
+  const initAgent = initAgents.find((a) => a.metadata?.name === selectedAgentName.value);
+
+  if (updatedSpecValue.spec.authenticationType !== initAgent?.spec.authenticationType) {
+    // When the authentication type changes, we need to clear the authentication secret live value
+    updatedSpecValue.spec.authenticationSecret = undefined;
+  } else {
+    // Else keep the initial value
+    updatedSpecValue.spec.authenticationSecret = initAgent?.spec.authenticationSecret;
+  }
+
+  updateAgent(updatedSpecValue);
+
+  // Cleaning up the agentSecrets to avoid creating new secrets when the type is not BASIC
+  if (updatedSpecValue.spec.authenticationType !== AIAgentConfigAuthType.BASIC) {
+    delete agentSecrets.value[selectedAgentName.value];
+
+    emit('update:authentication-secrets', undefined);
+  }
+}
+
+function updateBasicAuthSecret(value: AiAgentConfigSecretPayload) {
   const { selected, privateKey, publicKey } = value;
 
   // Clear the authenticationSecret fields
@@ -416,7 +451,7 @@ watch(validationErrors, (errors) => {
                 :disabled="isAgentLocked || props.readOnly"
                 :label="t('aiConfig.form.section.aiAgent.fields.authenticationType.label')"
                 :options="authOptions"
-                @update:value="(val: AIAgentConfigAuthType) => updateAgent({ spec: { ...selectedAgent.spec, authenticationType: val } })"
+                @update:value="updateAuthType"
               />
             </div>
           </div>
@@ -436,7 +471,20 @@ watch(validationErrors, (errors) => {
                 :register-before-hook="() => {}"
                 in-store="management"
                 label-key="aiConfig.form.section.aiAgent.fields.authenticationSecret.label"
-                @inputauthval="updateAuthenticationSecret"
+                @inputauthval="updateBasicAuthSecret"
+              />
+            </div>
+          </div>
+          <div
+            v-else-if="selectedAgent.spec.authenticationType === AIAgentConfigAuthType.HEADER && !isAgentLocked && !props.readOnly"
+            class="row"
+          >
+            <div class="col span-6">
+              <SecretSelector
+                :value="selectedAgent.spec.authenticationSecret || undefined"
+                :secret-name-label="t('aiConfig.form.section.aiAgent.fields.authenticationSecret.label')"
+                :namespace="AGENT_NAMESPACE"
+                @update:value="(value: string) => updateAgent({ spec: { ...selectedAgent.spec, authenticationSecret: value || undefined } })"
               />
             </div>
           </div>

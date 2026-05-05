@@ -629,7 +629,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      vm.updateAuthenticationSecret({ selected: '_none' });
+      vm.updateBasicAuthSecret({ selected: '_none' });
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
 
@@ -650,7 +650,7 @@ describe('AIAgentConfigs.vue', () => {
         publicKey:  'pubk-value'
       };
 
-      vm.updateAuthenticationSecret(secretPayload);
+      vm.updateBasicAuthSecret(secretPayload);
 
       expect(vm.agentSecrets['test-agent']).toEqual(secretPayload);
     });
@@ -663,7 +663,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      vm.updateAuthenticationSecret({ selected: 'existing-secret' });
+      vm.updateBasicAuthSecret({ selected: 'existing-secret' });
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
 
@@ -678,7 +678,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      vm.updateAuthenticationSecret({ selected: '_none' });
+      vm.updateBasicAuthSecret({ selected: '_none' });
 
       const emitted = wrapper.emitted('update:authentication-secrets');
 
@@ -696,7 +696,7 @@ describe('AIAgentConfigs.vue', () => {
 
       vm.agentSecrets['test-agent'] = { selected: '_basic' };
 
-      vm.updateAuthenticationSecret({ selected: 'secret-name' });
+      vm.updateBasicAuthSecret({ selected: 'secret-name' });
 
       expect(vm.agentSecrets['test-agent']).toBeUndefined();
     });
@@ -1240,14 +1240,14 @@ describe('AIAgentConfigs.vue', () => {
       const vm = wrapper.vm as any;
 
       vm.selectedAgentName = 'agent-1';
-      vm.updateAuthenticationSecret({
+      vm.updateBasicAuthSecret({
         selected:   '_basic',
         privateKey: 'pk1',
         publicKey:  'pubk1'
       });
 
       vm.selectedAgentName = 'agent-2';
-      vm.updateAuthenticationSecret({
+      vm.updateBasicAuthSecret({
         selected:   '_basic',
         privateKey: 'pk2',
         publicKey:  'pubk2'
@@ -1734,6 +1734,420 @@ describe('AIAgentConfigs.vue', () => {
       const selectAuth = wrapper.findComponent({ name: 'SelectOrCreateAuthSecret' });
 
       expect(selectAuth.exists()).toBe(false);
+    });
+  });
+
+  describe('Authentication Type', () => {
+    describe('HEADER Auth Type', () => {
+      it('should change auth type to HEADER', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.RANCHER
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+      });
+
+      it('should clear authenticationSecret when changing from RANCHER to HEADER', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.RANCHER,
+            authenticationSecret: undefined
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Update to HEADER type
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        expect(emitted[0].spec.authenticationSecret).toBeUndefined();
+      });
+
+      it('should clear authenticationSecret when changing from BASIC to HEADER', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.BASIC,
+            authenticationSecret: 'basic-secret'
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        expect(emitted[0].spec.authenticationSecret).toBeUndefined();
+      });
+
+      it('should preserve authenticationSecret when changing to same HEADER type with initial secret', () => {
+        const initAgent = mockAgent({
+          metadata: {
+            name:      'test-agent',
+            namespace: 'ai-agent'
+          },
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.HEADER,
+            authenticationSecret: 'header-secret'
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [initAgent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Change to same type (should preserve)
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationSecret).toBe('header-secret');
+      });
+
+      it('should clean up agentSecrets when changing to HEADER type', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.BASIC
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Store a secret for this agent
+        vm.agentSecrets['test-agent'] = {
+          selected:   '_basic',
+          privateKey: 'pk',
+          publicKey:  'pubk'
+        };
+
+        // Change to HEADER (should clean up agentSecrets)
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        expect(vm.agentSecrets['test-agent']).toBeUndefined();
+      });
+
+      it('should emit update:authentication-secrets event with agentSecrets when changing to non-BASIC auth', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.BASIC
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        vm.agentSecrets['test-agent'] = { selected: '_basic' };
+
+        // Change to HEADER, which is not BASIC
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:authentication-secrets');
+
+        expect(emitted).toBeTruthy();
+        // When changing away from BASIC, the event should be emitted (with undefined since agentSecrets was deleted)
+        expect(emitted![0][0]).toBe(undefined);
+      });
+
+      it('should not emit undefined for update:authentication-secrets when changing to HEADER', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.RANCHER
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // No secrets stored
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:authentication-secrets');
+
+        expect(emitted).toBeTruthy();
+        // Should emit undefined since we're not in BASIC mode
+        expect(emitted![0][0]).toBe(undefined);
+      });
+    });
+
+    describe('HEADER Auth Type with SecretSelector', () => {
+      it('should use SecretSelector when HEADER auth is selected', async() => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.HEADER
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // HEADER type should not use SelectOrCreateAuthSecret (which is for BASIC)
+        expect(vm.selectedAgent.spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        // SelectOrCreateAuthSecret should not be rendered for HEADER
+        const selectOrCreate = wrapper.findComponent({ name: 'SelectOrCreateAuthSecret' });
+
+        expect(selectOrCreate.exists()).toBe(false);
+      });
+
+      it('should render SecretSelector component when HEADER auth is used', async() => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.HEADER,
+            authenticationSecret: 'header-secret'
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Verify HEADER auth type is set
+        expect(vm.selectedAgent.spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        // Verify authentication secret is stored
+        expect(vm.selectedAgent.spec.authenticationSecret).toBe('header-secret');
+      });
+
+      it('should not render SelectOrCreateAuthSecret when HEADER auth is selected', async() => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.HEADER
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        await wrapper.vm.$nextTick();
+
+        const selectOrCreate = wrapper.findComponent({ name: 'SelectOrCreateAuthSecret' });
+
+        expect(selectOrCreate.exists()).toBe(false);
+      });
+    });
+
+    describe('Auth Type Transitions', () => {
+      it('should handle transition from BASIC to HEADER to NONE', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.BASIC,
+            authenticationSecret: 'basic-secret'
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        vm.agentSecrets['test-agent'] = {
+          selected:   '_basic',
+          privateKey: 'pk',
+          publicKey:  'pubk'
+        };
+
+        // Change to HEADER
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        let emitted = wrapper.emitted('update:value')?.[wrapper.emitted('update:value')!.length - 1][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        expect(emitted[0].spec.authenticationSecret).toBeUndefined();
+        expect(vm.agentSecrets['test-agent']).toBeUndefined();
+
+        // Change to NONE
+        vm.updateAuthType(AIAgentConfigAuthType.NONE);
+
+        emitted = wrapper.emitted('update:value')?.[wrapper.emitted('update:value')!.length - 1][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationType).toBe(AIAgentConfigAuthType.NONE);
+        expect(emitted[0].spec.authenticationSecret).toBeUndefined();
+      });
+
+      it('should preserve authentication secret when toggling between HEADER and other types', () => {
+        const initAgent = mockAgent({
+          metadata: {
+            name:      'test-agent',
+            namespace: 'ai-agent'
+          },
+          spec: {
+            ...mockAgent().spec,
+            authenticationType:   AIAgentConfigAuthType.HEADER,
+            authenticationSecret: 'header-secret'
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [initAgent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Change to RANCHER (should clear since it's different)
+        vm.updateAuthType(AIAgentConfigAuthType.RANCHER);
+
+        let emitted = wrapper.emitted('update:value')?.[wrapper.emitted('update:value')!.length - 1][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationSecret).toBeUndefined();
+
+        // Revert back to HEADER (should restore from init)
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        emitted = wrapper.emitted('update:value')?.[wrapper.emitted('update:value')!.length - 1][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.authenticationSecret).toBe('header-secret');
+      });
+    });
+
+    describe('HEADER Auth Type Edge Cases', () => {
+      it('should handle HEADER auth type for multiple agents independently', async() => {
+        const agent1 = mockAgent({
+          metadata: {
+            name:      'agent-1',
+            namespace: 'ai-agent'
+          },
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.RANCHER
+          }
+        });
+
+        const agent2 = mockAgent({
+          metadata: {
+            name:      'agent-2',
+            namespace: 'ai-agent'
+          },
+          spec: {
+            ...mockAgent().spec,
+            authenticationType: AIAgentConfigAuthType.BASIC
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent1, agent2] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        // Switch to agent-1 and change to HEADER
+        vm.selectedAgentName = 'agent-1';
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        let updateEvents = wrapper.emitted('update:value');
+        let lastEmitted = updateEvents![updateEvents!.length - 1][0] as AIAgentConfigCRD[];
+
+        // Verify agent-1 changed to HEADER
+        expect(lastEmitted.find((a) => a.metadata.name === 'agent-1')?.spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        expect(lastEmitted.find((a) => a.metadata.name === 'agent-2')?.spec.authenticationType).toBe(AIAgentConfigAuthType.BASIC);
+
+        // Update props with new state
+        await wrapper.setProps({ value: lastEmitted });
+
+        // Now switch to agent-2 and change to HEADER
+        vm.selectedAgentName = 'agent-2';
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        updateEvents = wrapper.emitted('update:value');
+        lastEmitted = updateEvents![updateEvents!.length - 1][0] as AIAgentConfigCRD[];
+
+        // Now both should be HEADER
+        expect(lastEmitted.find((a) => a.metadata.name === 'agent-1')?.spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+        expect(lastEmitted.find((a) => a.metadata.name === 'agent-2')?.spec.authenticationType).toBe(AIAgentConfigAuthType.HEADER);
+      });
+
+      it('should not affect other agent properties when changing to HEADER auth', () => {
+        const agent = mockAgent({
+          spec: {
+            ...mockAgent().spec,
+            displayName:          'Important Agent',
+            description:          'Important Description',
+            systemPrompt:         'Important Prompt',
+            humanValidationTools: ['tool1', 'tool2'],
+            authenticationType:   AIAgentConfigAuthType.BASIC
+          }
+        });
+
+        const wrapper = shallowMount(AIAgentConfigs, {
+          ...requiredSetup(),
+          props: { value: [agent] }
+        });
+
+        const vm = wrapper.vm as any;
+
+        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
+
+        const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+
+        expect(emitted[0].spec.displayName).toBe('Important Agent');
+        expect(emitted[0].spec.description).toBe('Important Description');
+        expect(emitted[0].spec.systemPrompt).toBe('Important Prompt');
+        expect(emitted[0].spec.humanValidationTools).toEqual(['tool1', 'tool2']);
+      });
     });
   });
 });
