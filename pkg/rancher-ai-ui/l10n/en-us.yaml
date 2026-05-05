@@ -403,6 +403,7 @@ aiConfig:
               none: No authentication
               basic: Basic authentication
               rancher: Rancher authentication
+              header: Custom Headers authentication
       tools:
         header: UI Tools
         description: Configure the UI tools
