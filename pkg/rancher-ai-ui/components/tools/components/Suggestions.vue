@@ -2,8 +2,8 @@
 import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { Message, ToolActionEventType, ToolCall } from '../../types';
-import ListOptions from '../../components/ListOptions.vue';
+import { Message, ToolActionEventType, ToolCall } from '../../../types';
+import ListOptions from '../../../components/ListOptions.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -11,7 +11,7 @@ const { t } = useI18n(store);
 const props = defineProps({
   tool: {
     type:    Object as PropType<ToolCall>,
-    default: () => {},
+    default: () => ({} as ToolCall),
   },
   message: {
     type:    Object as PropType<Message>,

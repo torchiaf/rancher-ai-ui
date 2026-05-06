@@ -13,7 +13,7 @@ import { extractMessageText } from '../../utils/label';
 import Tools from '../tools/index.vue';
 import Actions from '../message/actions/index.vue';
 import Tool from '../tools/Tool.vue';
-import SourceLinks from '../tools/SourceLinks.vue';
+import SourceLinks from '../tools/components/SourceLinks.vue';
 import Confirmation from './Confirmation.vue';
 import ContextTag from '../context/ContextTag.vue';
 import UserAvatar from './avatar/UserAvatar.vue';

@@ -6,8 +6,8 @@ import {
   CATALOG, EVENT, FLEET, MANAGEMENT, NODE, POD, WORKLOAD_TYPES
 } from '@shell/config/types';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { Message, ToolCall } from '../../types';
-import { warn } from '../../utils/log';
+import { Message, ToolCall } from '../../../types';
+import { warn } from '../../../utils/log';
 
 interface RouteConfig {
   schema: string;

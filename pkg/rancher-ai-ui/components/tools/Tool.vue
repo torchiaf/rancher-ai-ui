@@ -50,7 +50,7 @@ watch(() => selectedTool.value, (newTool) => {
   const path = upperFirst(camelCase(newTool.toolName));
 
   try {
-    component.value = defineAsyncComponent(() => import(`./${ path }.vue`));
+    component.value = defineAsyncComponent(() => import(`./components/${ path }.vue`));
   } catch (error) {
     warn(`Tool component not found: ${ path }.vue`, error);
   }

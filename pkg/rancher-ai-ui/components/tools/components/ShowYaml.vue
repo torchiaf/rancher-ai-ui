@@ -3,11 +3,11 @@ import { computed, watch, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
-import { ConfirmationStatus, Message, ToolActionEventType, ToolCall } from '../../types';
-import { EditorMode } from '../../pages/staging/yaml-editor/types';
-import { ComponentName } from '../../pages/staging/types';
-import { warn } from '../../utils/log';
-import { useStagingComposable } from '../../composables/useStagingComposable';
+import { ConfirmationStatus, Message, ToolActionEventType, ToolCall } from '../../../types';
+import { EditorMode } from '../../../pages/staging/yaml-editor/types';
+import { ComponentName } from '../../../pages/staging/types';
+import { warn } from '../../../utils/log';
+import { useStagingComposable } from '../../../composables/useStagingComposable';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -39,14 +39,13 @@ const isConfirmingMessage = computed(() => props.message.confirmation?.status ==
 
 const isValidInput = computed(() => {
   const {
-    original,
-    patched,
+    yaml,
     resourceKind,
     resourceNamespace,
     resourceName,
   } = props.tool.input;
 
-  return !!original && !!patched && !!resourceKind && !!resourceNamespace && !!resourceName;
+  return !!yaml && !!resourceKind && !!resourceNamespace && !!resourceName;
 });
 
 const label = computed(() => {
@@ -54,7 +53,7 @@ const label = computed(() => {
     return props.label;
   }
 
-  return props.tool?.input.resourceName || t(`ai.tools.${ props.tool.toolName }.name`, { }, true);
+  return props.tool.input.resourceName || t(`ai.tools.${ props.tool.toolName }.name`, { }, true);
 });
 
 const tooltip = computed(() => {
@@ -77,16 +76,15 @@ function navigateToStaging() {
   }
 
   const {
-    original,
-    patched,
+    yaml,
     resourceKind,
     resourceNamespace,
     resourceName,
     title
   } = props.tool.input;
 
-  if (!original || !patched || !resourceKind || !resourceName || !resourceNamespace) {
-    warn('Missing YAML content for ShowYamlDiff tool:', props.tool.input);
+  if (!yaml || !resourceKind || !resourceName || !resourceNamespace) {
+    warn('Missing YAML content for ShowYaml tool:', props.tool.input);
 
     return;
   }
@@ -103,15 +101,15 @@ function navigateToStaging() {
       } : undefined,
     },
     data:      {
-      original,
-      patched,
-      resource: {
+      original: '',
+      patched:     yaml,
+      resource:       {
         kind:      resourceKind,
         namespace: resourceNamespace,
         name:      resourceName
       },
       title,
-      editorMode:    EditorMode.DIFF_CODE,
+      editorMode:   EditorMode.VIEW_CODE,
       handleCancel: isConfirmingMessage.value ? () => emitConfirmationAction(false) : undefined,
       handleApply:  isConfirmingMessage.value ? () => emitConfirmationAction(true) : undefined,
     }
@@ -139,11 +137,11 @@ function emitConfirmationAction(value: boolean) {
         :disabled="props.disabled"
         @click="navigateToStaging"
       >
-        <div class="show-yaml-diff-tool-label">
+        <div class="show-yaml-tool-label">
           <i class="icon icon-document" />
           <span
             v-clean-tooltip="tooltip"
-            class="show-yaml-diff-tool-label-text"
+            class="show-yaml-tool-label-text"
           >
             {{ label }}
           </span>
@@ -154,7 +152,7 @@ function emitConfirmationAction(value: boolean) {
 </template>
 
 <style scoped lang="scss">
-.show-yaml-diff-tool-label {
+.show-yaml-tool-label {
   display: flex;
   flex-direction: row;
   align-items: center;

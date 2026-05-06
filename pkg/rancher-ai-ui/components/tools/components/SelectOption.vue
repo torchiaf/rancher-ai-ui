@@ -2,8 +2,8 @@
 import { computed, type PropType } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import { Message, ToolActionEventType, ToolCall } from '../../types';
-import ListOptions from '../../components/ListOptions.vue';
+import { Message, ToolActionEventType, ToolCall } from '../../../types';
+import ListOptions from '../../../components/ListOptions.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
