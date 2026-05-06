@@ -6,6 +6,11 @@ import ChatPo from '@/cypress/e2e/po/chat.po';
 describe('Messages', () => {
   const chat = new ChatPo();
 
+  before(() => {
+    cy.login();
+    cy.installUIToolsDefinition();
+  });
+
   beforeEach(() => {
     cy.login();
 
@@ -353,5 +358,6 @@ describe('Messages', () => {
 
   after(() => {
     cy.clearLLMResponses();
+    cy.uninstallUIToolsDefinition();
   });
 });

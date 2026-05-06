@@ -1,5 +1,5 @@
 export interface LlmResponseArgs {
-  agent?: string;
+  agent?: string | null;
   text?: string | string[];
   chunkSize?: number;
   mcpTool?: Tool;
@@ -27,6 +27,9 @@ declare global {
       createAgentConfig(config: object): void;
       updateAgentConfig(config: object): void;
       deleteAgentConfig(config: object): void;
+      installUIToolsDefinition(): void;
+      updateUIToolsDefinition(): void;
+      uninstallUIToolsDefinition(): void;
     }
   }
 }

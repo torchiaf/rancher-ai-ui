@@ -5,7 +5,23 @@ import ChatPo from '@/cypress/e2e/po/chat.po';
 describe('UI Tools', () => {
   const chat = new ChatPo();
 
+  /**
+   * TODO
+   *
+   * - check the tools configuration is correctly applied in the UI (e.g. suggestions, select-option, etc.)
+   * - check the tools configuration is correctly updated in the UI when the definition is updated
+   * - check the tools are removed from the UI when the definition is uninstalled
+   * - and more
+   *
+   * Note: cy.installUIToolsDefinition(); and cy.uninstallUIToolsDefinition(); will be removed after we implement the required action tests
+   */
+
   describe('suggestions', () => {
+    before(() => {
+      cy.login();
+      cy.installUIToolsDefinition();
+    });
+
     beforeEach(() => {
       cy.login();
 
@@ -56,12 +72,16 @@ describe('UI Tools', () => {
      *
      * All:
      *  - verify multiple tools in the same response
-     *  - verify exclution each other (suggestions and select-option)
+     *  - verify (suggestions and select-option mutual exclusion)
+     *  - add 1 test for each tool type to verify the tool is correctly rendered in the UI
+     *  - add the tests for the staging page
+     *  - add the Settings page tests to verify the tools configuration is correctly displayed in the UI
      *  - and more
      */
 
     after(() => {
       cy.clearLLMResponses();
+      cy.uninstallUIToolsDefinition();
     });
   });
 });
