@@ -1,22 +1,159 @@
 import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 
 import ChatPo from '@/cypress/e2e/po/chat.po';
+import RequiredActionPo from '@/cypress/e2e/po/ui-tools/requied-action.po';
+import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
 
 describe('UI Tools', () => {
   const chat = new ChatPo();
 
-  /**
-   * TODO
-   *
-   * - check the tools configuration is correctly applied in the UI (e.g. suggestions, select-option, etc.)
-   * - check the tools configuration is correctly updated in the UI when the definition is updated
-   * - check the tools are removed from the UI when the definition is uninstalled
-   * - and more
-   *
-   * Note: cy.installUIToolsDefinition(); and cy.uninstallUIToolsDefinition(); will be removed after we implement the required action tests
-   */
+  describe('Required action: installation', () => {
+    beforeEach(() => {
+      cy.login();
 
-  describe('suggestions', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+    });
+
+    it('It should show required action when tools definition is not installed', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.containsText('Install the UI tools to enable full AI capabilities.');
+      requiredAction.actionLink().should('be.visible');
+    });
+
+    it('It should not show required action when tools definition is installed', () => {
+      cy.installUIToolsDefinition();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.checkNotExists();
+
+      cy.uninstallUIToolsDefinition();
+    });
+
+    it('It should navigate to settings when clicking on the install link', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.actionLink().click();
+
+      const settingsPage = new SettingsPagePo();
+
+      settingsPage.waitForPage();
+
+      settingsPage.settings().uiToolsConfig().intro().self()
+        .should('be.visible');
+    });
+
+    it('It should hide the required action when tools definition is installed', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.actionLink().click();
+
+      const settingsPage = new SettingsPagePo();
+
+      settingsPage.waitForPage();
+
+      const intro = settingsPage.settings().uiToolsConfig().intro();
+
+      intro.self().should('be.visible');
+      intro.actionButton().click();
+
+      requiredAction.checkNotExists();
+    });
+
+    after(() => {
+      cy.uninstallUIToolsDefinition();
+    });
+  });
+
+  describe('Required action: refresh', () => {
+    before(() => {
+      cy.login();
+      cy.installUIToolsDefinition();
+      cy.updateUIToolsDefinition();
+    });
+
+    beforeEach(() => {
+      cy.login();
+
+      HomePagePo.goTo();
+
+      chat.open();
+    });
+
+    it('It should show required action when tools definition has updates available', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.containsText('The UI tools are disabled due to definition change.');
+      requiredAction.actionLink().should('be.visible');
+    });
+
+    it('It should navigate to settings when clicking on the refresh link', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.actionLink().click();
+
+      const settingsPage = new SettingsPagePo();
+
+      settingsPage.waitForPage();
+
+      settingsPage.settings().uiToolsConfig().intro().self()
+        .should('be.visible');
+    });
+
+    it('It should hide the required action when clicking on the refresh link', () => {
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      const requiredAction = new RequiredActionPo();
+
+      requiredAction.actionLink().click();
+
+      const settingsPage = new SettingsPagePo();
+
+      settingsPage.waitForPage();
+
+      const intro = settingsPage.settings().uiToolsConfig().intro();
+
+      intro.self().should('be.visible');
+      intro.actionButton().click();
+
+      requiredAction.checkNotExists();
+    });
+
+    after(() => {
+      cy.uninstallUIToolsDefinition();
+    });
+  });
+
+  describe('Tool: suggestions', () => {
     before(() => {
       cy.login();
       cy.installUIToolsDefinition();
@@ -61,27 +198,26 @@ describe('UI Tools', () => {
       resultMessage.option(0).scrollIntoView().should('be.visible').and('contain.text', 'Show me the resources');
       resultMessage.option(1).scrollIntoView().should('be.visible').and('contain.text', 'The list of clusters');
       resultMessage.option(2).scrollIntoView().should('be.visible').and('contain.text', 'Another suggestion');
-    });
 
-    /**
-     * TODO
-     *
-     * Suggestions:
-     *  - verify edit util
-     *  - verify chat send
-     *
-     * All:
-     *  - verify multiple tools in the same response
-     *  - verify (suggestions and select-option mutual exclusion)
-     *  - add 1 test for each tool type to verify the tool is correctly rendered in the UI
-     *  - add the tests for the staging page
-     *  - add the Settings page tests to verify the tools configuration is correctly displayed in the UI
-     *  - and more
-     */
+      // TODO: add check for edit mode and send message on click
+    });
 
     after(() => {
       cy.clearLLMResponses();
       cy.uninstallUIToolsDefinition();
     });
   });
+
+  /**
+   * TODO
+   *
+   *  - verify multiple tools in the same response
+   *  - verify suggestions vs select-option mutual exclusion
+   *  - add the tests for the staging page (show-yaml, show-yaml-diff)
+   */
+  describe.skip('Tool: select-option', () => {});
+  describe.skip('Tool: explore', () => {});
+  describe.skip('Tool: open-console-logs', () => {});
+  describe.skip('Tool: show-yaml', () => {});
+  describe.skip('Tool: show-yaml-diff', () => {});
 });

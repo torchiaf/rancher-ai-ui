@@ -41,6 +41,7 @@ function routeToSettings() {
     <div
       v-if="toolsRequiredAction !== ToolsDefinitionActionType.None"
       class="chat-required-tools-action-msg-bubble"
+      data-testid="rancher-ai-ui-required-tools-action-message"
     >
       <div class="chat-required-tools-action-msg-text">
         <RichTranslation

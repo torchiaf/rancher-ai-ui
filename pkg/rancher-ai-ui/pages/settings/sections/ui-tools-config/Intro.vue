@@ -37,11 +37,14 @@ const docsUrl = 'https://rancher.github.io/rancher-ai-product-docs/rancher-ai/la
 </script>
 
 <template>
-  <div class="ui-tools-definition-notice">
-    <!-- Action Banner Section -->
+  <div
+    class="ui-tools-definition-intro"
+    data-testid="rancher-ai-ui-tools-config-intro"
+  >
     <div
       v-if="props.requiredAction !== ToolsDefinitionActionType.None"
       class="tools-action-section"
+      data-testid="rancher-ai-ui-tools-config-info-banner"
     >
       <Banner
         class="m-0"
@@ -63,6 +66,7 @@ const docsUrl = 'https://rancher.github.io/rancher-ai-product-docs/rancher-ai/la
       <RcButton
         v-if="!props.readOnly"
         primary
+        data-testid="rancher-ai-ui-tools-config-action-button"
         @click="emit('publish:tools')"
       >
         {{ t(`aiConfig.form.section.tools.publish.message.admin.${ props.requiredAction }.action.label`, {}, true) }}
