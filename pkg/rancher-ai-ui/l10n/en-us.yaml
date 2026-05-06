@@ -23,16 +23,15 @@ ai:
         label: What’s New
         message:
           info: 'UI tools are here! I can use contextual buttons, shortcuts and other UI enhancements to provide you a more powerful and compelling experience.'
-          action:
-            admin:
-              create: '<br><br><installTools>Install the UI tools</installTools> to enable full AI capabilities.'
-              update: '<br><br>The UI tools are <b>disabled</b> due to definition change.<br><refreshTools>Refresh the UI tools</refreshTools> to install the new definition and get the latest updates.'
-            user:
-              create: '<br><br>Please contact your administrator to install the UI tools.'
-              update: '<br><br>The UI tools are <b>disabled</b> due to definition change.<br>Please ask your administrator to refresh and enable the UI tools to get the latest updates.'
-            refreshTooltip: 'Go to settings to handle the UI tools.'
-      suggestions:
-        label: 'Here are a few suggestions based on your context:'
+      tools:
+        action:
+          admin:
+            create: '<installTools>Install the UI tools</installTools> to enable full AI capabilities.'
+            update: 'The UI tools are <b>disabled</b> due to definition change.<br><refreshTools>Refresh the UI tools</refreshTools> to install the new definition and get the latest updates.'
+          user:
+            create: 'Please contact your administrator to install the UI tools.'
+            update: 'The UI tools are <b>disabled</b> due to definition change.<br>Please ask your administrator to refresh and enable the UI tools to get the latest updates.'
+          refreshTooltip: 'Go to settings to handle the UI tools.'
       switchAgent:
         info: '<code>{agent}</code> Agent has been selected in adaptive mode for the last few prompts.<br>Usually, manual selection is best for faster response times.<br><br>Would you like me to switch over to <b>manual</b> agent selection?<br>'
         actions:

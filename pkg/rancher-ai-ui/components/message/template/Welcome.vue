@@ -10,6 +10,7 @@ import { useInputComposable } from '../../../composables/useInputComposable';
 import lizIcon from '../../../assets/liz-icon.svg';
 import Tool from '../../tools/Tool.vue';
 import News from '../../News.vue';
+import RequiredToolsAction from '../../tools/RequiredAction.vue';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -100,6 +101,8 @@ function handleToolAction(event: ToolActionEvent) {
     </div>
 
     <News />
+
+    <RequiredToolsAction />
 
     <div
       v-if="props.message.completed && props.message.messageContent"
