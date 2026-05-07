@@ -1,7 +1,7 @@
 {
   "name": "rancher-ai-ui",
   "description": "AI Assistant extension",
-  "version": "0.1.57",
+  "version": "0.1.58",
   "private": false,
   "rancher": {
     "annotations": {
