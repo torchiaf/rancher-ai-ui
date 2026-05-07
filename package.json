@@ -1,6 +1,6 @@
 {
   "name": "rancher-ai-ui",
-  "version": "0.1.52",
+  "version": "0.1.57",
   "private": false,
   "engines": {
     "node": ">=24"
