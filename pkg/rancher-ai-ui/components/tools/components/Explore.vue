@@ -117,6 +117,10 @@ const route = computed(() => {
     return null;
   }
 
+  if (!props.tool.input.cluster) {
+    return resolve();
+  }
+
   if (cluster.value) {
     return resolve(cluster.value.name);
   }
