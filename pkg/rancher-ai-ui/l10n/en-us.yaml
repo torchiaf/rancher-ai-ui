@@ -352,6 +352,7 @@ aiConfig:
               none: No authentication
               basic: Basic authentication
               rancher: Rancher authentication
+              header: Custom Headers authentication
           
     EMBEDDINGS_MODEL:
       label: Embeddings Model

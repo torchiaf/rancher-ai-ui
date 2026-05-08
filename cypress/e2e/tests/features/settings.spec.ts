@@ -14,9 +14,9 @@ describe('AI Assistant Configuration', () => {
   };
 
   const updatedValues = {
-    llm:         'gemini',
-    apiKey:      'my-api-key',
-    customAgent: 'agent-4'
+    llm:               'gemini',
+    apiKey:            'my-api-key',
+    customAgentPrefix: 'agent-4-'
   };
 
   beforeEach(() => {
@@ -61,6 +61,8 @@ describe('AI Assistant Configuration', () => {
 
       new ApplySettingsPromptPo().confirm();
 
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
       settingsPage.waitForPage();
@@ -77,6 +79,8 @@ describe('AI Assistant Configuration', () => {
       settingsPage.settings().saveButton().click();
 
       new ApplySettingsPromptPo().confirm();
+
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
     });
   });
 
@@ -104,9 +108,9 @@ describe('AI Assistant Configuration', () => {
       // Add a custom AI Agent
       aiAgentConfigs.tabs().addTab();
 
-      aiAgentConfigs.tabs().getTab(updatedValues.customAgent).checkExists();
+      aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkExists();
 
-      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ updatedValues.customAgent }"]`);
+      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid^="${ updatedValues.customAgentPrefix }"]`);
       aiAgentConfigs.self().should('not.contain', 'This AI agent is locked');
 
       // Check that Save button is disabled since the new agent has validation errors -> missing MCP URL
@@ -123,33 +127,37 @@ describe('AI Assistant Configuration', () => {
 
       new ApplySettingsPromptPo().confirm();
 
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
       // Check that the new agent tab is showing error status due to invalid MCP URL
-      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-error');
+      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid^="${ updatedValues.customAgentPrefix }"]`, 'icon-error');
 
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
       settingsPage.waitForPage();
 
-      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ updatedValues.customAgent }"]`);
+      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid^="${ updatedValues.customAgentPrefix }"]`);
       aiAgentConfigs.mcpUrlInput().value().should('eq', 'http://my-mcp-url:8080');
 
       // Check that the new agent tab is showing error status due to invalid MCP URL
-      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid="${ updatedValues.customAgent }"]`, 'icon-error');
+      aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid^="${ updatedValues.customAgentPrefix }"]`, 'icon-error');
 
       // Remove the custom AI Agent
       aiAgentConfigs.tabs().removeTab();
 
-      aiAgentConfigs.tabs().getTab(updatedValues.customAgent).checkNotExists();
+      aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkNotExists();
 
       settingsPage.settings().saveButton().click();
 
       new ApplySettingsPromptPo().confirm();
 
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
       settingsPage.waitForPage();
 
-      aiAgentConfigs.tabs().getTab(updatedValues.customAgent).checkNotExists();
+      aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkNotExists();
       aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ initValues.rancherAgent }"]`);
     });
   });

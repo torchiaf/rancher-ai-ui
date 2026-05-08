@@ -2,6 +2,7 @@
 import { ref, computed, PropType, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
+import { randomStr } from '@shell/utils/string';
 import { AGENT_NAMESPACE } from '../../../product';
 import { AIAgentConfigCRD } from '../../../types';
 import { AIAgentConfigAuthType, AiAgentConfigSecretPayload } from '../types';
@@ -14,6 +15,7 @@ import Checkbox from '@components/Form/Checkbox/Checkbox.vue';
 import Banner from '@components/Banner/Banner.vue';
 import TextAreaAutoGrow from '@components/Form/TextArea/TextAreaAutoGrow.vue';
 import SelectOrCreateAuthSecret from '@shell/components/form/SelectOrCreateAuthSecret.vue';
+import SecretSelector from '@shell/components/form/SecretSelector.vue';
 import FileSelector from '@shell/components/form/FileSelector.vue';
 import formRulesGenerator from '@shell/utils/validators/formRules';
 
@@ -26,6 +28,10 @@ const validators = (key: string) => formRulesGenerator(t, { key });
 
 const props = defineProps({
   value: {
+    type:     Array as PropType<AIAgentConfigCRD[]>,
+    default:  () => [],
+  },
+  initValue: {
     type:     Array as PropType<AIAgentConfigCRD[]>,
     default:  () => [],
   },
@@ -45,6 +51,10 @@ const authOptions = [
   {
     label: t('aiConfig.form.section.aiAgent.options.mcp.authOptions.basic'),
     value: AIAgentConfigAuthType.BASIC
+  },
+  {
+    label: t('aiConfig.form.section.aiAgent.options.mcp.authOptions.header'),
+    value: AIAgentConfigAuthType.HEADER
   },
   {
     label: t('aiConfig.form.section.aiAgent.options.mcp.authOptions.rancher'),
@@ -70,7 +80,9 @@ const agents = computed(() => {
   const builtIn = all
     .filter((a) => a.spec.builtIn)
     .sort((a) => a.metadata.name === DEFAULT_AI_AGENT ? -1 : 1);
-  const custom = all.filter((a) => !a.spec.builtIn);
+  const custom = all
+    .filter((a) => !a.spec.builtIn)
+    .sort((a, b) => b.metadata.name.localeCompare(a.metadata.name));
 
   return [
     ...custom,
@@ -148,7 +160,35 @@ function tabLabelIcon(agent: AIAgentConfigCRD) {
   return 'icon-close';
 }
 
-function updateAuthenticationSecret(value: AiAgentConfigSecretPayload) {
+function updateAuthType(value: AIAgentConfigAuthType) {
+  const updatedSpecValue = {
+    spec: {
+      ...selectedAgent.value.spec,
+      authenticationType: value
+    }
+  };
+
+  const initAgent = props.initValue.find((a) => a.metadata?.name === selectedAgentName.value);
+
+  if (updatedSpecValue.spec.authenticationType !== initAgent?.spec.authenticationType) {
+    // When the authentication type changes, we need to clear the authentication secret live value
+    updatedSpecValue.spec.authenticationSecret = undefined;
+  } else {
+    // Else keep the initial value
+    updatedSpecValue.spec.authenticationSecret = initAgent?.spec.authenticationSecret;
+  }
+
+  updateAgent(updatedSpecValue);
+
+  // Cleaning up the agentSecrets to avoid creating new secrets when the type is not BASIC
+  if (updatedSpecValue.spec.authenticationType !== AIAgentConfigAuthType.BASIC) {
+    delete agentSecrets.value[selectedAgentName.value];
+
+    emit('update:authentication-secrets', undefined);
+  }
+}
+
+function updateBasicAuthSecret(value: AiAgentConfigSecretPayload) {
   const { selected, privateKey, publicKey } = value;
 
   // Clear the authenticationSecret fields
@@ -209,7 +249,10 @@ function addAgent() {
     return;
   }
 
-  const name = `agent-${ agents.value.length + 1 }`;
+  // Random string is added to ensure the name is unique even when multiple agents are being added without saving in between
+  const name = `agent-${ agents.value.length + 1 }-${ randomStr(8) }`.toLocaleLowerCase();
+
+  const newAgentsCount = agents.value.filter((a) => a.spec?.displayName?.trim().startsWith('New Agent')).length;
 
   const newList: AIAgentConfigCRD[] = [
     {
@@ -218,7 +261,7 @@ function addAgent() {
         namespace: AGENT_NAMESPACE
       },
       spec:     {
-        displayName:          'New Agent',
+        displayName:          `New Agent${ newAgentsCount === 0 ? '' : ` ${ newAgentsCount }` }`,
         enabled:              true,
         mcpURL:               '',
         authenticationType:   AIAgentConfigAuthType.RANCHER,
@@ -416,7 +459,7 @@ watch(validationErrors, (errors) => {
                 :disabled="isAgentLocked || props.readOnly"
                 :label="t('aiConfig.form.section.aiAgent.fields.authenticationType.label')"
                 :options="authOptions"
-                @update:value="(val: AIAgentConfigAuthType) => updateAgent({ spec: { ...selectedAgent.spec, authenticationType: val } })"
+                @update:value="updateAuthType"
               />
             </div>
           </div>
@@ -436,7 +479,20 @@ watch(validationErrors, (errors) => {
                 :register-before-hook="() => {}"
                 in-store="management"
                 label-key="aiConfig.form.section.aiAgent.fields.authenticationSecret.label"
-                @inputauthval="updateAuthenticationSecret"
+                @inputauthval="updateBasicAuthSecret"
+              />
+            </div>
+          </div>
+          <div
+            v-else-if="selectedAgent.spec.authenticationType === AIAgentConfigAuthType.HEADER && !isAgentLocked && !props.readOnly"
+            class="row"
+          >
+            <div class="col span-6">
+              <SecretSelector
+                :value="selectedAgent.spec.authenticationSecret || undefined"
+                :secret-name-label="t('aiConfig.form.section.aiAgent.fields.authenticationSecret.label')"
+                :namespace="AGENT_NAMESPACE"
+                @update:value="(value: string) => updateAgent({ spec: { ...selectedAgent.spec, authenticationSecret: value || undefined } })"
               />
             </div>
           </div>

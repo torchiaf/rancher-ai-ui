@@ -5,7 +5,11 @@ export default class ApplySettingsPromptPo extends ComponentPo {
     super(cy.get('[data-testid="card"].prompt-apply-settings'));
   }
 
+  applyButton() {
+    return this.self().getId('prompt-apply-settings-confirm-button');
+  }
+
   confirm() {
-    return this.self().getId('prompt-apply-settings-confirm-button').click();
+    return this.applyButton().click();
   }
 }

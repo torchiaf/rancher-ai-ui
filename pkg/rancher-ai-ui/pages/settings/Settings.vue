@@ -49,8 +49,11 @@ const applySettingsCb = ref<AsyncButtonCallback | null>(null);
 
 const aiAgentDeployment = ref<Workload | null>(null);
 const chatSettings = ref<AgentSettings | null>(null);
+
 const aiAgentSettings = ref<SettingsFormData | null>(null);
+
 const aiAgentConfigCRDs = ref<AIAgentConfigCRD[] | null>(null);
+const initAiAgentConfigCRDs = ref<AIAgentConfigCRD[]>([]);
 const authenticationSecrets = ref<Record<string, AiAgentConfigSecretPayload | null>>({});
 
 const permissions = ref<SettingsPermissions | null>(null);
@@ -153,6 +156,7 @@ async function fetchAiAgentConfigCRDs() {
   }
 
   aiAgentConfigCRDs.value = crds;
+  initAiAgentConfigCRDs.value = [...crds];
 }
 
 /**
@@ -239,7 +243,7 @@ async function saveAiAgentConfigCRDs() {
     }
 
     // Normalize authenticationSecret
-    if (aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.BASIC) {
+    if (aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.BASIC || aiAgentConfigCRD.spec.authenticationType === AIAgentConfigAuthType.HEADER) {
       aiAgentConfigCRD.spec.authenticationSecret = aiAgentConfigCRD.spec.authenticationSecret?.replaceAll(`${ AGENT_NAMESPACE }/`, '');
     } else {
       delete aiAgentConfigCRD.spec.authenticationSecret;
@@ -251,6 +255,8 @@ async function saveAiAgentConfigCRDs() {
       warn(`Unable to create AI Agent Config CRD ${ crd.metadata.name }: `, { err });
     }
   }
+
+  initAiAgentConfigCRDs.value = [...crdsToSave];
 }
 
 /**
@@ -491,6 +497,7 @@ onMounted(async() => {
         <AIAgentConfigs
           v-if="aiAgentConfigCRDs"
           :value="aiAgentConfigCRDs"
+          :init-value="initAiAgentConfigCRDs"
           :read-only="!permissions?.create.canCreateSecrets || !permissions?.create.canCreateAiAgentCRDS"
           @update:value="aiAgentConfigCRDs = $event"
           @update:authentication-secrets="authenticationSecrets = $event"

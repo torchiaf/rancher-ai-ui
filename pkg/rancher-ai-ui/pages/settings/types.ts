@@ -58,7 +58,8 @@ export interface Workload {
 export const enum AIAgentConfigAuthType {
   NONE = 'NONE',
   RANCHER = 'RANCHER',
-  BASIC = 'BASIC'
+  BASIC = 'BASIC',
+  HEADER = 'HEADER',
 }
 
 export interface AiAgentConfigSecretPayload {
