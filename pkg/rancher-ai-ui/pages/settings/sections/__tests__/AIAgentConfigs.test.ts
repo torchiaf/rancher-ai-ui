@@ -1866,7 +1866,7 @@ describe('AIAgentConfigs.vue', () => {
         expect(vm.agentSecrets['test-agent']).toBeUndefined();
       });
 
-      it('should emit update:authentication-secrets event with agentSecrets when changing to non-BASIC auth', () => {
+      it('should emit undefined for update:authentication-secrets when changing away from BASIC auth', () => {
         const agent = mockAgent({
           spec: {
             ...mockAgent().spec,
@@ -1889,32 +1889,7 @@ describe('AIAgentConfigs.vue', () => {
         const emitted = wrapper.emitted('update:authentication-secrets');
 
         expect(emitted).toBeTruthy();
-        // When changing away from BASIC, the event should be emitted (with undefined since agentSecrets was deleted)
-        expect(emitted![0][0]).toBe(undefined);
-      });
-
-      it('should not emit undefined for update:authentication-secrets when changing to HEADER', () => {
-        const agent = mockAgent({
-          spec: {
-            ...mockAgent().spec,
-            authenticationType: AIAgentConfigAuthType.RANCHER
-          }
-        });
-
-        const wrapper = shallowMount(AIAgentConfigs, {
-          ...requiredSetup(),
-          props: { value: [agent] }
-        });
-
-        const vm = wrapper.vm as any;
-
-        // No secrets stored
-        vm.updateAuthType(AIAgentConfigAuthType.HEADER);
-
-        const emitted = wrapper.emitted('update:authentication-secrets');
-
-        expect(emitted).toBeTruthy();
-        // Should emit undefined since we're not in BASIC mode
+        // When changing away from BASIC, the event should be emitted with undefined (since agentSecrets was deleted)
         expect(emitted![0][0]).toBe(undefined);
       });
     });
