@@ -109,8 +109,8 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      expect(vm.agents[0].metadata.name).toBe('custom-1');
-      expect(vm.agents[1].metadata.name).toBe('custom-2');
+      expect(vm.agents[0].metadata.name).toBe('custom-2');
+      expect(vm.agents[1].metadata.name).toBe('custom-1');
       expect(vm.agents[2].metadata.name).toBe(DEFAULT_AI_AGENT);
     });
 
@@ -309,11 +309,11 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      expect(vm.selectedAgent.metadata.name).toBe('agent-1');
-
-      vm.tabChanged({ selectedName: 'agent-2' });
-
       expect(vm.selectedAgent.metadata.name).toBe('agent-2');
+
+      vm.tabChanged({ selectedName: 'agent-1' });
+
+      expect(vm.selectedAgent.metadata.name).toBe('agent-1');
     });
   });
 
@@ -354,6 +354,25 @@ describe('AIAgentConfigs.vue', () => {
       expect(newAgent.spec.authenticationType).toBe(AIAgentConfigAuthType.RANCHER);
       expect(newAgent.spec.humanValidationTools).toEqual([]);
       expect(newAgent.spec.mcpURL).toBe('');
+    });
+
+    it('should add new custom agent with correct name format', () => {
+      const wrapper = shallowMount(AIAgentConfigs, {
+        ...requiredSetup(),
+        props: { value: [mockBuiltInAgent()] }
+      });
+
+      const vm = wrapper.vm as any;
+
+      vm.addAgent();
+
+      const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
+      const newAgent = emitted[0];
+
+      // Name should be in format: agent-{count}-{randomString} in lowercase
+      expect(newAgent.metadata.name).toMatch(/^agent-\d+-[a-z0-9]+$/);
+      // The count is based on agents.value.length + 1, which is 2 (1 builtIn agent already exists)
+      expect(newAgent.metadata.name).toMatch(/^agent-2-/);
     });
   });
 
@@ -431,10 +450,14 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
+      // After sorting, agents are ordered: agent-2, agent-1, rancher
+      // Select agent-1 (which is at index 1)
       vm.selectedAgentName = 'agent-1';
       vm.removeAgent();
 
-      expect(vm.selectedAgentName).toBe(agent2.metadata.name);
+      // After removal, the next agent in the list should be selected
+      // Since agents are sorted descending, after removing agent-1, the default (rancher) should be selected
+      expect(vm.selectedAgentName).toBe(DEFAULT_AI_AGENT);
     });
 
     it('should clear secrets for removed agent', () => {
@@ -1825,7 +1848,10 @@ describe('AIAgentConfigs.vue', () => {
 
         const wrapper = shallowMount(AIAgentConfigs, {
           ...requiredSetup(),
-          props: { value: [initAgent] }
+          props: {
+            value:     [initAgent],
+            initValue: [initAgent]
+          }
         });
 
         const vm = wrapper.vm as any;
@@ -2017,7 +2043,10 @@ describe('AIAgentConfigs.vue', () => {
 
         const wrapper = shallowMount(AIAgentConfigs, {
           ...requiredSetup(),
-          props: { value: [initAgent] }
+          props: {
+            value:     [initAgent],
+            initValue: [initAgent]
+          }
         });
 
         const vm = wrapper.vm as any;
