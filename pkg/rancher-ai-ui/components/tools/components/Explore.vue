@@ -165,7 +165,7 @@ onMounted(async() => {
   <span v-if="isLoading">
     <i class="icon icon-spinner icon-spin ml-5" />
   </span>
-  <div v-if="route">
+  <div v-else-if="route">
     <RcButton
       v-clean-tooltip="tooltip"
       small
