@@ -30,6 +30,10 @@ const props = defineProps({
     type:     Array as PropType<AIAgentConfigCRD[]>,
     default:  () => [],
   },
+  initValue: {
+    type:     Array as PropType<AIAgentConfigCRD[]>,
+    default:  () => [],
+  },
   readOnly: {
     type:    Boolean,
     default: false,
@@ -60,8 +64,6 @@ const authOptions = [
     value: AIAgentConfigAuthType.NONE
   }
 ];
-
-const initAgents = [...props.value];
 
 const agents = computed(() => {
   /**
@@ -163,7 +165,7 @@ function updateAuthType(value: AIAgentConfigAuthType) {
     }
   };
 
-  const initAgent = initAgents.find((a) => a.metadata?.name === selectedAgentName.value);
+  const initAgent = props.initValue.find((a) => a.metadata?.name === selectedAgentName.value);
 
   if (updatedSpecValue.spec.authenticationType !== initAgent?.spec.authenticationType) {
     // When the authentication type changes, we need to clear the authentication secret live value
