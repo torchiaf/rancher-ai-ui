@@ -385,7 +385,6 @@ const resetToolsToDefaults = () => {
                 <p class="total-message">
                   {{ totalMessage }}
                   <span
-                    v-if="enabledToolsCount > 0"
                     class="enabled-count"
                   >
                     {{ t('aiConfig.form.section.tools.enabledCount', { count: enabledToolsCount }) }}

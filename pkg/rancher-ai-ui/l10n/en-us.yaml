@@ -460,7 +460,11 @@ aiConfig:
         noMatchingTools: No matching tools
         tryAdjustingFilters: Try adjusting your filters or search query
         resetFilters: Clear all filters
-        enabledCount: "({count} enabled)."
+        enabledCount: |-
+          {count, plural,
+            =0 { (none enabled). }
+            other { ({count} enabled). }
+          }
         interactive: Interactive
         matched: |-
           {count, plural,
