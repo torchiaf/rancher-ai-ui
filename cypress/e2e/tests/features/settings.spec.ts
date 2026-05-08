@@ -61,6 +61,8 @@ describe('AI Assistant Configuration', () => {
 
       new ApplySettingsPromptPo().confirm();
 
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
       settingsPage.waitForPage();
@@ -77,6 +79,8 @@ describe('AI Assistant Configuration', () => {
       settingsPage.settings().saveButton().click();
 
       new ApplySettingsPromptPo().confirm();
+
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
     });
   });
 
@@ -123,6 +127,8 @@ describe('AI Assistant Configuration', () => {
 
       new ApplySettingsPromptPo().confirm();
 
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
       // Check that the new agent tab is showing error status due to invalid MCP URL
       aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid^="${ updatedValues.customAgentPrefix }"]`, 'icon-error');
 
@@ -144,6 +150,8 @@ describe('AI Assistant Configuration', () => {
       settingsPage.settings().saveButton().click();
 
       new ApplySettingsPromptPo().confirm();
+
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
 
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
