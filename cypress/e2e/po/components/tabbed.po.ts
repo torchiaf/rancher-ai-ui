@@ -1,8 +1,13 @@
+import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import DefaultTabbedPo from '@rancher/cypress/e2e/po/components/tabbed.po';
 
 export default class TabbedPo extends DefaultTabbedPo {
   constructor(selector: string) {
     super(selector);
+  }
+
+  getTabByPrefix(prefix: string) {
+    return new ComponentPo(`[data-testid^="${ prefix }"]`, this.self());
   }
 
   addTab() {
