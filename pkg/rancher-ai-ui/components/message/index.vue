@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
         <template v-if="!props.message.confirmation">
           <Tools
             :key="props.message.tools?.length"
-            class="chat-msg-section-footer"
+            class="mmt-2"
             :message="props.message"
             :exclude="[
               ToolName.SelectOption,
@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
             :disabled="props.disabled"
           />
           <Tool
-            class="chat-msg-section-footer"
+            class="mmt-2"
             :name="ToolName.SelectOption"
             :message="props.message"
             :disabled="props.disabled || props.pendingConfirmation"
@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
           />
           <Tool
             v-if="!props.message.tools?.find((t) => t.toolName === ToolName.SelectOption)"
-            class="chat-msg-section-footer"
+            class="mmt-2"
             :name="ToolName.Suggestions"
             :message="props.message"
             :disabled="props.disabled || props.pendingConfirmation"
@@ -231,7 +231,7 @@ onBeforeUnmount(() => {
         </template>
         <div
           v-if="props.message.confirmation"
-          class="chat-msg-section-footer"
+          class="mmt-2"
         >
           <Confirmation
             :message="props.message"
@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
       </div>
       <div
         v-if="props.message.role === RoleEnum.User && props.message.contextContent?.length"
-        class="chat-msg-section chat-msg-user-context-tags"
+        class="mmt-2 chat-msg-user-context-tags"
       >
         <ContextTag
           v-for="(item, index) in props.message.contextContent"
@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
       </div>
       <div
         v-if="props.message.sourceLinks?.length"
-        class="chat-msg-section"
+        class="mmt-2"
       >
         <SourceLinks
           :links="props.message.sourceLinks"
@@ -283,7 +283,7 @@ onBeforeUnmount(() => {
       </div>
       <div
         v-if="props.message.relatedResourcesActions?.length"
-        class="chat-msg-section"
+        class="mmt-2"
       >
         <Actions
           :label="t('ai.message.relatedResourcesActions.label')"
@@ -292,7 +292,7 @@ onBeforeUnmount(() => {
       </div>
       <div
         v-if="props.message.actions?.length"
-        class="chat-msg-section"
+        class="mmt-2"
       >
         <Actions
           :label="t('ai.message.quickActions.label')"
@@ -410,14 +410,6 @@ onBeforeUnmount(() => {
 
 .theme-dark .chat-msg-text :deep(code) {
   color: #C0EFDE;
-}
-
-.chat-msg-section {
-  margin-top: 8px;
-}
-
-.chat-msg-section-footer {
-  margin-top: 8px;
 }
 
 .chat-msg-timestamp {

@@ -237,8 +237,4 @@ function handleToolAction(event: ToolActionEvent) {
   gap: 4px;
   margin-bottom: 4px;
 }
-
-.chat-msg-section {
-  margin-top: 8px;
-}
 </style>

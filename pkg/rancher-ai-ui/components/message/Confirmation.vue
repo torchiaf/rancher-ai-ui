@@ -154,7 +154,7 @@ const confirmationText = computed(() => {
     </div>
     <Tools
       :key="props.message.tools?.length"
-      class="chat-msg-section-footer"
+      class="mmt-2"
       :message="props.message"
       :include="[
         ToolName.ShowYaml,
@@ -231,10 +231,6 @@ const confirmationText = computed(() => {
       color: var(--error);
     }
   }
-}
-
-.chat-msg-section-footer {
-  margin-top: 8px;
 }
 
 .rc-button-label {
