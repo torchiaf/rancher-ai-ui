@@ -4,6 +4,7 @@ import { ToggleGroupPo } from './components/toggle-group.po';
 import TabbedPo from './components/tabbed.po';
 import CheckboxInputPo from '@rancher/cypress/e2e/po/components/checkbox-input.po';
 import LabeledInputPo from '@rancher/cypress/e2e/po/components/labeled-input.po';
+import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 
 export class SettingsPagePo extends PagePo {
   private static createPath() {
@@ -38,6 +39,18 @@ export class SettingsPo extends ComponentPo {
 
   saveButton() {
     return this.self().get('[data-testid="rancher-ai-ui-settings-save-button"]');
+  }
+
+  apply(args: { waitForApply?: boolean } = {}) {
+    const { waitForApply = true } = args;
+
+    this.saveButton().click();
+
+    new ApplySettingsPromptPo().confirm();
+
+    if (waitForApply) {
+      this.saveButton().should('contain.text', 'Saved');
+    }
   }
 }
 

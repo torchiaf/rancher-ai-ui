@@ -1,7 +1,6 @@
 import ProductNavPo from '@rancher/cypress/e2e/po/side-bars/product-side-nav.po';
 import { SettingsPagePo as GlobalSettings } from '@rancher/cypress/e2e/po/pages/global-settings/settings.po';
 import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
-import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 
 describe('AI Assistant Configuration', () => {
   const settingsPage = new SettingsPagePo();
@@ -57,11 +56,7 @@ describe('AI Assistant Configuration', () => {
 
       aiAgentSettings.apiKeyInput().clear().type(updatedValues.apiKey);
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
-
-      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+      settingsPage.settings().apply();
 
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();
@@ -76,11 +71,7 @@ describe('AI Assistant Configuration', () => {
       aiAgentSettings.apiKeyInput().clear().type(initValues.apiKey);
       aiAgentSettings.llm(initValues.llm).select();
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
-
-      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+      settingsPage.settings().apply();
     });
   });
 
@@ -123,11 +114,7 @@ describe('AI Assistant Configuration', () => {
 
       settingsPage.settings().saveButton().should('be.enabled');
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
-
-      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+      settingsPage.settings().apply();
 
       // Check that the new agent tab is showing error status due to invalid MCP URL
       aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid^="${ updatedValues.customAgentPrefix }"]`, 'icon-error');
@@ -147,11 +134,7 @@ describe('AI Assistant Configuration', () => {
 
       aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkNotExists();
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
-
-      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+      settingsPage.settings().apply();
 
       // Revisit the page to check if the settings were saved correctly
       settingsPage.goTo();

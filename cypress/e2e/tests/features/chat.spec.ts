@@ -120,9 +120,7 @@ describe('Chat', () => {
 
       resultMessage.isCompleted();
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
+      settingsPage.settings().apply({ waitForApply: false });
 
       // Check for the reconnecting phase
       chat.isNotReady();
@@ -174,9 +172,7 @@ describe('Chat', () => {
 
       resultMessage.isCompleted();
 
-      settingsPage.settings().saveButton().click();
-
-      new ApplySettingsPromptPo().confirm();
+      settingsPage.settings().apply({ waitForApply: false });
 
       // Check for the reconnecting phase
       chat.isNotReady();
