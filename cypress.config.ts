@@ -7,6 +7,7 @@ export default extendConfig({
     chatServiceProxyPath: '/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-agent:80/proxy/v1/api'
   },
   e2e: {
-    supportFile: 'cypress/support/e2e.ts'
+    supportFile: 'cypress/support/e2e.ts',
+    specPattern: 'cypress/e2e/tests/**/*.spec.ts'
   }
 });

@@ -1,0 +1,75 @@
+name: Record E2E Test Video
+
+on:
+  push:
+    tags:
+      - 'record-e2e-*'
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Branch to push videos to'
+        required: true
+        default: 'e2e-screenshots'
+
+env:
+  RANCHER_VERSION: head
+  CATTLE_SERVER_URL: https://172.17.0.1
+  CATTLE_BOOTSTRAP_PASSWORD: password
+  KUBECONFIG_PATH: ${{ github.workspace }}/kubeconfig.yaml
+  DEV_UI_URL: https://localhost:8005
+
+jobs:
+  record-video:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node env
+        uses: ./.github/actions/setup
+
+      - name: Start Rancher
+        run: .github/scripts/install-rancher.sh ${{ env.RANCHER_VERSION }} ${{ env.CATTLE_SERVER_URL }} ${{ env.CATTLE_BOOTSTRAP_PASSWORD }}
+
+      - name: Deploy Rancher AI charts
+        run: .github/scripts/deploy-rancher-ai.sh ${{ env.KUBECONFIG_PATH }}
+
+      - name: Start dev UI
+        env:
+          API: ${{ env.CATTLE_SERVER_URL }}
+        run: |
+          nohup yarn dev > dev.log 2>&1 & echo $! > dev.pid
+
+      - name: Wait for dev UI to be ready
+        run: |
+          npx wait-on ${{ env.DEV_UI_URL }}
+
+      - name: Run video recording tests
+        env:
+          TEST_USERNAME: admin
+          CATTLE_BOOTSTRAP_PASSWORD: ${{ env.CATTLE_BOOTSTRAP_PASSWORD }}
+          API: ${{ env.CATTLE_SERVER_URL }}
+        run: |
+          yarn e2e --spec "cypress/e2e/screenshots/**/*.spec.ts" --browser chrome --config video=true,videoCompression=32
+
+      - name: Configure Git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Create video branch and push
+        run: |
+          if [ -d "cypress/videos" ] && [ "$(ls -A cypress/videos)" ]; then
+            git checkout -b ${{ inputs.branch_name }} || git checkout ${{ inputs.branch_name }}
+            git add cypress/videos/
+            git commit -m "Add video recording from test run" || true
+            git push origin ${{ inputs.branch_name }} -f
+          else
+            echo "No videos found"
+            exit 1
+          fi
+
+      - name: Tear down background processes
+        run: |
+          if [ -f dev.pid ]; then kill $(cat dev.pid) || true; fi
