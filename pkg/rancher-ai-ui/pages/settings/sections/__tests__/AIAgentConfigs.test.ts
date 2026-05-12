@@ -2110,7 +2110,7 @@ describe('AIAgentConfigs.vue', () => {
         expect(lastEmitted.find((a) => a.metadata.name === 'agent-2')?.spec.authenticationType).toBe(AIAgentConfigAuthType.BASIC);
 
         // Update props with new state
-        await wrapper.setProps({ value: lastEmitted });
+        await wrapper.setProps({ value: lastEmitted } as any);
 
         // Now switch to agent-2 and change to HEADER
         vm.selectedAgentName = 'agent-2';
