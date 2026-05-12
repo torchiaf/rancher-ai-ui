@@ -30,6 +30,10 @@ declare global {
       installUIToolsDefinition(): void;
       updateUIToolsDefinition(): void;
       uninstallUIToolsDefinition(): void;
+      // Utils for video recording
+      recordTimestampStart(name: string): void;
+      recordTimestampEnd(name: string): void;
+      setFullScreen(): void;
     }
   }
 }

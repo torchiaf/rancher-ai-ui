@@ -12,6 +12,7 @@ This guide explains how to define tools for the Rancher AI UI in `ui-tools.json`
 6. [Validation Rules](#validation-rules)
 7. [Complete Example](#complete-example)
 8. [Best Practices](#best-practices)
+9. [Generating UI Tool GIFs](#generating-ui-tool-gifs)
 
 ---
 
@@ -367,6 +368,85 @@ Different categories enforce different rules. The `selector` category requires t
 8. **Documentation**: Include TOOL SCOPE and USE/NEVER USE keywords in prompts
 9. **Versioning**: Only increment `revision` when you intentionally want to reset user settings. Each increment will overwrite all user-configured values (enabled state, tool parameters, etc.). This is useful for major breaking changes but should be used sparingly.
 10. **Testing**: Validate that LLM correctly interprets your prompts and selects the right parameters
+
+---
+
+## Generating UI Tool GIFs
+
+UI tool previews are generated from recorded Cypress tests. This section explains how to create GIF preview videos for your tools.
+
+### Overview
+
+The `record:ui-tools` npm script:
+1. Runs Cypress tests with video recording enabled
+2. Timestamps key interactions using `recordTimestampStart()` and `recordTimestampEnd()`
+3. Extracts video segments based on timestamp markers
+4. Converts extracted videos to optimized GIF format
+5. Outputs GIFs to a configurable assets directory
+
+### Running the Recording Script
+
+```bash
+TEST_PASSWORD={password} yarn record:ui-tools
+```
+
+This command:
+- Runs all test specs in `cypress/e2e/tests/global-ui/screenshots/ui-tools/*.spec.ts`
+- Records videos with compression (32) and no upload on pass
+- Extracts and converts videos to GIFs in `pkg/rancher-ai-ui/pages/settings/sections/ui-tools-config/assets/`
+
+### Creating a New UI Tool Recording Test
+
+1. **Create a test spec file** in `cypress/e2e/tests/global-ui/screenshots/ui-tools/`:
+
+```typescript
+import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
+import ChatPo from '@/cypress/e2e/po/chat.po';
+
+const name = 'my-tool-name';  // ← Matches the tool name in ui-tools.json
+
+describe(`UI tool: ${ name }`, () => {
+  const chat = new ChatPo();
+
+  it('recording timestamp', () => {
+    cy.login();
+    HomePagePo.goTo();
+    chat.open();
+    
+    // Set full screen for consistent recording
+    cy.setFullScreen();
+    
+    // Trigger tool response
+    cy.enqueueLLMResponse({
+      text: ['Response text'],
+      uiTools: [{
+        name: name,
+        args: { /* tool parameters */ }
+      }]
+    });
+    
+    chat.sendMessage('User message');
+    
+    // START recording BEFORE interactions you want to capture
+    cy.recordTimestampStart(name);
+    
+    // Perform actions to demonstrate the tool
+    // ...
+    
+    // END recording AFTER interactions are complete
+    cy.recordTimestampEnd(name);
+  });
+});
+```
+
+2. **Use timestamp commands**:
+   - `cy.recordTimestampStart(name)`: Marks the start of the recording segment
+   - `cy.recordTimestampEnd(name)`: Marks the end of the recording segment
+   - Timestamps are stored in `cypress/timestamp/{name}.log` in ISO 8601 format
+
+3. **Video recording details**:
+   - Cypress UI panels are automatically hidden during recording
+   - Ensures consistent, focused preview of the tool
 
 ---
 
