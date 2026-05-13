@@ -53,6 +53,10 @@ watch(() => props.options, (newVal) => {
   emit('update', selected.value);
 });
 
+function showRemoveIcon(item: Context) {
+  return !!selected.value.find((i) => _id(i) === _id(item));
+}
+
 function toggleItem(item: Context) {
   if (selected.value.find((i) => _id(i) === _id(item))) {
     removeItem(item);
@@ -112,10 +116,8 @@ function reset() {
           >
             {{ opt.tag }}:{{ contextLabel(opt) }}
             <i
-              v-if="selected.find((s: Context) => _id(s) === _id(opt))"
-              :class="{
-                'icon icon-close': selected.find((s: Context) => _id(s) === _id(opt)),
-              }"
+              v-if="showRemoveIcon(opt)"
+              class="icon icon-close"
             />
             <template
               #before
