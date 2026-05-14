@@ -94,4 +94,10 @@ for LOG_FILE in cypress/timestamp/*.log; do
   echo ""
 done
 
-echo "✓ Done"
+# Calculate total size of all produced files
+TOTAL_SIZE=$(du -sb "$OUTPUT_DIR" 2>/dev/null | awk '{print $1}')
+TOTAL_MB=$(echo "scale=2; $TOTAL_SIZE / 1048576" | bc)
+
+echo ""
+echo "📊 Total size: ${TOTAL_MB} MB"
+echo ""

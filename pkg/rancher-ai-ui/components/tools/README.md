@@ -442,7 +442,7 @@ describe(`UI tool: ${ name }`, () => {
 2. **Use timestamp commands**:
    - `cy.recordTimestampStart(name)`: Marks the start of the recording segment
    - `cy.recordTimestampEnd(name)`: Marks the end of the recording segment
-   - Timestamps are stored in `cypress/timestamp/{name}.log` in ISO 8601 format
+   - Timestamps are stored in `cypress/timestamp/{name}.log`
 
 3. **Video recording details**:
    - Cypress UI panels are automatically hidden during recording
