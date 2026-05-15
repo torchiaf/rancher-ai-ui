@@ -56,7 +56,7 @@ describe(`UI tool: ${ name }`, () => {
 
     showYamlTool.realHover();
 
-    cy.wait(500);
+    cy.wait(1000);
 
     showYamlTool.realClick();
 

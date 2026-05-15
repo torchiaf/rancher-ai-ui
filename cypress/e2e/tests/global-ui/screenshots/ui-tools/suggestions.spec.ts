@@ -53,11 +53,11 @@ describe(`UI tool: ${ name }`, () => {
 
     cy.recordTimestampStart(name);
 
-    cy.wait(1000);
+    cy.wait(1500);
 
     resultMessage.tool().suggestions(2).realHover();
 
-    cy.wait(1000);
+    cy.wait(1500);
 
     cy.enqueueLLMResponse({ text: 'The local cluster is running smoothly with all nodes healthy. No issues detected in the last 24 hours.' });
 

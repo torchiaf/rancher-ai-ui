@@ -87,17 +87,17 @@ describe(`UI tool: ${ name }`, () => {
 
       cy.recordTimestampStart(name);
 
-      cy.wait(500);
+      cy.wait(1000);
 
       openConsoleTool.realHover();
 
-      cy.wait(500);
+      cy.wait(1000);
 
       openConsoleTool.realClick();
 
       moveMouseAway();
 
-      cy.wait(1500);
+      cy.wait(2500);
 
       cy.recordTimestampEnd(name);
 

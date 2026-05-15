@@ -53,21 +53,21 @@ describe(`UI tool: ${ name }`, () => {
 
     cy.recordTimestampStart(name);
 
-    cy.wait(500);
+    cy.wait(1000);
 
     resultMessage.tool().selectOption(0).realHover();
 
-    cy.wait(500);
+    cy.wait(1000);
     moveMouseAway();
 
     resultMessage.tool().selectOption(1).realHover();
 
-    cy.wait(500);
+    cy.wait(1000);
     moveMouseAway();
 
     resultMessage.tool().selectOption(2).realHover();
 
-    cy.wait(500);
+    cy.wait(1000);
 
     cy.enqueueLLMResponse({ text: 'Selected namespace: cattle-system' });
 

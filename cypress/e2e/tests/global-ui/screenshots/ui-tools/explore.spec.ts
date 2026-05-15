@@ -50,13 +50,13 @@ describe(`UI tool: ${ name }`, () => {
 
     cy.recordTimestampStart(name);
 
-    cy.wait(500);
+    cy.wait(1000);
 
     const exploreTool = resultMessage.tool().explore('pods');
 
     exploreTool.realHover();
 
-    cy.wait(500);
+    cy.wait(1000);
 
     exploreTool.realClick();
 

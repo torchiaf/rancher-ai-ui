@@ -2,14 +2,16 @@
 
 # Video extraction script - extracts video portions based on START/END timestamps
 # Loops through all timestamp_*.log files and extracts corresponding video portions
-# Usage: sh scripts/extract-video-from-timestamps.sh [outputDir] [format] [startDelay]
+# Usage: sh scripts/extract-video-from-timestamps.sh [outputDir] [format] [startDelay] [fps]
 # Formats: gif (default), mp4
 # startDelay: seconds to add to START timestamp (default: 2)
+# fps: frames per second for GIF (default: 20)
 
 VIDEO_DIR="cypress/videos"
 OUTPUT_DIR="${1:-cypress/records}"
 OUTPUT_FORMAT="${2:-gif}"
 START_DELAY="${3:-2}"
+GIF_FPS="${4:-20}"
 
 FFMPEG_CMD=$(command -v ffmpeg 2>/dev/null || echo "/usr/bin/ffmpeg")
 
@@ -76,7 +78,7 @@ for LOG_FILE in cypress/timestamp/*.log; do
   if [ "$OUTPUT_FORMAT" = "mp4" ]; then
     CODEC_OPTS="-c:v libx264 -preset fast -c:a aac"
   elif [ "$OUTPUT_FORMAT" = "gif" ]; then
-    CODEC_OPTS="-vf \"fps=25,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" -loop 0"
+    CODEC_OPTS="-vf \"fps=$GIF_FPS,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" -loop 0"
   else
     echo "  ❌ Unknown format"; echo ""; continue
   fi
