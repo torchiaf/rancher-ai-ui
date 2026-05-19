@@ -12,7 +12,7 @@ export default class ChatPo extends ComponentPo {
   }
 
   phase(label: string) {
-    return this.self().get(`[data-testid="rancher-ai-ui-processing-phase-${ label }"]`);
+    return this.self().get(`[data-testid="rancher-ai-ui-processing-phase-${ label.toLowerCase().replace(/\s/g, '-') }"]`);
   }
 
   closeButton() {
@@ -25,6 +25,10 @@ export default class ChatPo extends ComponentPo {
 
   console() {
     return new ConsolePo();
+  }
+
+  scrollButton() {
+    return new ComponentPo('[data-testid="rancher-ai-ui-scroll-button"]');
   }
 
   isReady(timeout = 10000) {

@@ -287,6 +287,7 @@ function handleToolAction(event: ToolActionEvent) {
       </div>
       <div
         v-if="props.message.timestamp"
+        data-testid="rancher-ai-ui-chat-message-timestamp"
         class="chat-msg-timestamp"
       >
         {{ props.message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}

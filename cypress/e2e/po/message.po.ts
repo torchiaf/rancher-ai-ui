@@ -16,6 +16,10 @@ class RawMessagePo extends ComponentPo {
     return this.self().get('[data-testid="rancher-ai-ui-chat-message-formatted-content"]');
   }
 
+  timestamp() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-message-timestamp"]');
+  }
+
   context(label: string) {
     return this.self().get(`[data-testid="rancher-ai-ui-context-tag-${ label }"]`);
   }
