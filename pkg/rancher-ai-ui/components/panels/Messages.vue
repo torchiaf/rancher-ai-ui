@@ -1,6 +1,7 @@
 <script lang="ts" setup>
+import { debounce } from 'lodash';
 import {
-  ref, computed, watch, nextTick, type PropType,
+  ref, computed, watch, onBeforeUnmount, type PropType, type ComponentPublicInstance
 } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
@@ -57,8 +58,44 @@ const emit = defineEmits(['update:message', 'confirm:message', 'send:message']);
 
 const messagesView = ref<HTMLDivElement | null>(null);
 
+const lastMessageContainer = ref<HTMLDivElement | null>(null);
+const lastMessageObserver = ref<MutationObserver | null>(null);
+
+// Ref callback to assign the last message container for auto-scrolling for each message/error list
+const containerRef = (count: number, index: number) => {
+  return (elem: Element | ComponentPublicInstance | null) => {
+    if (index === count - 1) {
+      lastMessageContainer.value = (elem as ComponentPublicInstance)?.$el || elem;
+    }
+  };
+};
+
+// Observes changes to the last message container to trigger auto-scrolling when content changes
+const setupObserver = debounce((newContainer: HTMLDivElement | null) => {
+  // Clean up old observer
+  if (lastMessageObserver.value) {
+    lastMessageObserver.value.disconnect();
+    lastMessageObserver.value = null;
+  }
+
+  // Setup new observer on the last message container
+  if (newContainer) {
+    lastMessageObserver.value = new MutationObserver(() => {
+      const isUserMessage = props.messages && props.messages[props.messages.length - 1]?.role === Role.User;
+      const isErrorMessage = props.systemErrors?.length > 0;
+
+      scrollToBottom({ force: isUserMessage || isErrorMessage });
+    });
+
+    lastMessageObserver.value.observe(newContainer, {
+      childList:     true,
+      subtree:       true,
+      characterData: true,
+    });
+  }
+}, 100);
+
 const {
-  autoScrollEnabled,
   fastScrollEnabled,
   updateScrollState,
   scrollToBottom
@@ -107,59 +144,43 @@ function getMessageTemplate(component: MessageTemplateComponent) {
   }
 }
 
-// Watch activeChatId to handle auto-scroll and scroll button visibility when switching between chats
+// Scroll when the active chat changes
 watch(
   () => props.activeChatId,
   (newVal, oldVal) => {
     if (oldVal && newVal !== oldVal) {
-      nextTick(() => {
+      // Wait for the DOM to update with the new messages before scrolling
+      requestAnimationFrame(() => {
+        // Update scroll state to show/hide scroll button based on new content height
         updateScrollState();
-        scrollToBottom();
+        scrollToBottom({ force: true });
       });
     }
   }
 );
 
-// Watch both messages and messagePhase to handle auto-scroll when new messages arrive or phase changes
+// Scroll when the phase changes
 watch(
-  () => [
-    props.messages,
-    props.messagePhase
-  ],
-  (neu, old) => {
-    const newMsgs = (neu || [])[0] as Message[];
-    const oldMsgs = (old || [])[0] as Message[];
-
-    nextTick(() => {
-      // Auto scroll only if enabled or if NEW user messages are added
-      const doScroll = autoScrollEnabled.value || (oldMsgs && newMsgs && newMsgs.length > oldMsgs.length && newMsgs[newMsgs.length - 1].role === Role.User);
-
-      if (doScroll) {
-        scrollToBottom();
-      }
-    });
-  },
-  {
-    immediate: true,
-    deep:      true
-  }
+  () => props.messagePhase,
+  () => scrollToBottom()
 );
 
-const stopSystemErrorsWatcher = watch(
-  () => props.systemErrors,
-  (neu, old) => {
-    nextTick(() => {
-      if (messagesView.value && (neu || []).length > (old || []).length) {
-        messagesView.value.scrollTop = messagesView.value.scrollHeight;
-        stopSystemErrorsWatcher();
-      }
-    });
-  },
-  {
-    immediate: true,
-    deep:      true
-  }
+// Scroll when the last message/error changes (HTML content update)
+watch(
+  lastMessageContainer,
+  (container) => setupObserver(container)
 );
+
+onBeforeUnmount(() => {
+  // Cancel pending debounced calls
+  setupObserver.cancel();
+
+  // Cleanup observer
+  if (lastMessageObserver.value) {
+    lastMessageObserver.value.disconnect();
+    lastMessageObserver.value = null;
+  }
+});
 </script>
 
 <template>
@@ -174,6 +195,7 @@ const stopSystemErrorsWatcher = watch(
       <component
         :is="getMessageTemplate(message.templateContent?.component)"
         v-if="!!message.templateContent"
+        :ref="containerRef(formattedMessages.length, i)"
         :class="{
           'chat-message-template': formattedMessages.length > 1,
         }"
@@ -187,6 +209,7 @@ const stopSystemErrorsWatcher = watch(
       />
       <MessageComponent
         v-else
+        :ref="containerRef(formattedMessages.length, i)"
         :data-testid="`rancher-ai-ui-chat-message-box-${ message.id }`"
         :data-teststatus="`rancher-ai-ui-chat-message-status-${ message.id }-${ message.completed ? 'completed' : 'inprogress' }`"
         :message="message"
@@ -200,6 +223,7 @@ const stopSystemErrorsWatcher = watch(
     <MessageComponent
       v-for="(error, i) in systemErrorMessages"
       :key="i"
+      :ref="containerRef(systemErrorMessages.length, i)"
       :data-testid="`rancher-ai-ui-chat-system-error-message-box-${ i + 1 }`"
       :message="error"
       :disabled="false"
@@ -216,7 +240,7 @@ const stopSystemErrorsWatcher = watch(
     <ScrollButton
       v-if="fastScrollEnabled && !props.disabled"
       class="chat-message-fast-scroll"
-      @scroll="scrollToBottom"
+      @scroll="scrollToBottom({ force: true })"
     />
   </div>
 </template>

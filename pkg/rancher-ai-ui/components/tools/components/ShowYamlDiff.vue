@@ -135,6 +135,7 @@ function emitConfirmationAction(value: boolean) {
       <RcButton
         small
         variant="tertiary"
+        :data-testid="`rancher-ai-ui-tool-show-yaml-diff-${ props.tool.input.resourceKind }-${ props.tool.input.resourceNamespace }-${ props.tool.input.resourceName }`"
         :disabled="props.disabled"
         @click="navigateToStaging"
       >

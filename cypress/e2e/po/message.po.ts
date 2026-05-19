@@ -1,4 +1,6 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
+import ToolPo from '@/cypress/e2e/po/ui-tools/tool.po';
+import BubbleButtonPo from '@/cypress/e2e/po/components/bubble-button.po';
 
 class RawMessagePo extends ComponentPo {
   private id: string;
@@ -16,12 +18,12 @@ class RawMessagePo extends ComponentPo {
     return this.self().get('[data-testid="rancher-ai-ui-chat-message-formatted-content"]');
   }
 
-  context(label: string) {
-    return this.self().get(`[data-testid="rancher-ai-ui-context-tag-${ label }"]`);
+  timestamp() {
+    return this.self().get('[data-testid="rancher-ai-ui-chat-message-timestamp"]');
   }
 
-  option(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-list-option-${ index }"]`);
+  context(label: string) {
+    return this.self().get(`[data-testid="rancher-ai-ui-context-tag-${ label }"]`);
   }
 
   sourceLink(index: number) {
@@ -30,6 +32,10 @@ class RawMessagePo extends ComponentPo {
 
   resourceButton(resourceIdPrefix: string) {
     return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ resourceIdPrefix }"]`);
+  }
+
+  tool() {
+    return new ToolPo(this.self());
   }
 
   confirmButton() {
@@ -57,9 +63,11 @@ class RawMessagePo extends ComponentPo {
   }
 
   thinkingButton() {
-    this.self().trigger('mouseenter', { force: true });
+    return new BubbleButtonPo('icon-thinking-process', this.self());
+  }
 
-    return this.self().find('[data-testid="rancher-ai-ui-chat-message-show-thinking-button"]');
+  resendButton() {
+    return new BubbleButtonPo('icon-backup', this.self());
   }
 
   containsText(value: string) {

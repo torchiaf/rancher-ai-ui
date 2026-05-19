@@ -1,7 +1,7 @@
 import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 
 import ChatPo from '@/cypress/e2e/po/chat.po';
-import RequiredActionPo from '@/cypress/e2e/po/ui-tools/requied-action.po';
+import RequiredActionPo from '@/cypress/e2e/po/ui-tools/required-action.po';
 import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
 
 describe('UI Tools', () => {
@@ -195,9 +195,12 @@ describe('UI Tools', () => {
 
       const resultMessage = chat.getMessage(3);
 
-      resultMessage.option(0).scrollIntoView().should('be.visible').and('contain.text', 'Show me the resources');
-      resultMessage.option(1).scrollIntoView().should('be.visible').and('contain.text', 'The list of clusters');
-      resultMessage.option(2).scrollIntoView().should('be.visible').and('contain.text', 'Another suggestion');
+      resultMessage.tool().suggestions(0).scrollIntoView().should('be.visible')
+        .and('contain.text', 'Show me the resources');
+      resultMessage.tool().suggestions(1).scrollIntoView().should('be.visible')
+        .and('contain.text', 'The list of clusters');
+      resultMessage.tool().suggestions(2).scrollIntoView().should('be.visible')
+        .and('contain.text', 'Another suggestion');
 
       // TODO: add check for edit mode and send message on click
     });

@@ -127,6 +127,7 @@ onMounted(async() => {
     <RcButton
       small
       variant="tertiary"
+      :data-testid="`rancher-ai-ui-tool-open-console-logs-${ props.tool.input.cluster }-${ props.tool.input.namespace }-${ props.tool.input.name }-${ props.tool.input.containerName }`"
       :disabled="props.disabled"
       @click="() => openConsoleLogs()"
     >
