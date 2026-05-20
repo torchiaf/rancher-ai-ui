@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { debounce } from 'lodash';
 import {
   ref, computed, watch, onBeforeUnmount, type PropType, type ComponentPublicInstance
 } from 'vue';
@@ -68,6 +69,31 @@ const containerRef = (count: number, index: number) => {
     }
   };
 };
+
+// Observes changes to the last message container to trigger auto-scrolling when content changes
+const setupObserver = debounce((newContainer: HTMLDivElement | null) => {
+  // Clean up old observer
+  if (lastMessageObserver.value) {
+    lastMessageObserver.value.disconnect();
+    lastMessageObserver.value = null;
+  }
+
+  // Setup new observer on the last message container
+  if (newContainer) {
+    lastMessageObserver.value = new MutationObserver(() => {
+      const isUserMessage = props.messages && props.messages[props.messages.length - 1]?.role === Role.User;
+      const isErrorMessage = props.systemErrors?.length > 0;
+
+      scrollToBottom({ force: isUserMessage || isErrorMessage });
+    });
+
+    lastMessageObserver.value.observe(newContainer, {
+      childList:     true,
+      subtree:       true,
+      characterData: true,
+    });
+  }
+}, 100);
 
 const {
   fastScrollEnabled,
@@ -142,32 +168,14 @@ watch(
 // Scroll when the last message/error changes (HTML content update)
 watch(
   lastMessageContainer,
-  (newContainer) => {
-    // Clean up old observer
-    if (lastMessageObserver.value) {
-      lastMessageObserver.value.disconnect();
-      lastMessageObserver.value = null;
-    }
-
-    // Setup new observer on the last message container
-    if (newContainer) {
-      lastMessageObserver.value = new MutationObserver(() => {
-        const isUserMessage = props.messages && props.messages[props.messages.length - 1]?.role === Role.User;
-        const isErrorMessage = props.systemErrors?.length > 0;
-
-        scrollToBottom({ force: isUserMessage || isErrorMessage });
-      });
-
-      lastMessageObserver.value.observe(newContainer, {
-        childList:     true,
-        subtree:       true,
-        characterData: true,
-      });
-    }
-  }
+  (container) => setupObserver(container)
 );
 
 onBeforeUnmount(() => {
+  // Cancel pending debounced calls
+  setupObserver.cancel();
+
+  // Cleanup observer
   if (lastMessageObserver.value) {
     lastMessageObserver.value.disconnect();
     lastMessageObserver.value = null;
