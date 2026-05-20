@@ -1,4 +1,5 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
+import ToolPo from '@/cypress/e2e/po/ui-tools/tool.po';
 
 class RawMessagePo extends ComponentPo {
   private id: string;
@@ -24,16 +25,16 @@ class RawMessagePo extends ComponentPo {
     return this.self().get(`[data-testid="rancher-ai-ui-context-tag-${ label }"]`);
   }
 
-  option(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-list-option-${ index }"]`);
-  }
-
   sourceLink(index: number) {
     return this.self().get(`[data-testid="rancher-ai-ui-chat-message-source-link-${ index }"]`);
   }
 
   resourceButton(resourceIdPrefix: string) {
     return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ resourceIdPrefix }"]`);
+  }
+
+  tool() {
+    return new ToolPo(this.self());
   }
 
   confirmButton() {
