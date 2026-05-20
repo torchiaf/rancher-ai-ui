@@ -12,6 +12,7 @@ import {
   ConfirmationResponse,
   ConfirmationStatus,
   Message,
+  MessageAction,
   MessageInternalSource,
   MessageLabelKey,
   MessagePhase,
@@ -217,23 +218,43 @@ export function useChatMessageComposable(
     };
   }
 
-  function buildSystemSuggestionMessage(agent?: Agent): Message {
+  function buildSystemRequestMessage(args: { content: any; component?: MessageTemplateComponent; actions: MessageAction[] }): Message {
+    const {
+      component = MessageTemplateComponent.SystemRequest,
+      content,
+      actions
+    } = args;
+
     return {
       role:            Role.System,
       completed:       true,
       templateContent: {
-        component: MessageTemplateComponent.SystemSuggestion,
-        content:   { message: t('ai.message.system.switchAgent.info', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true) }
+        component,
+        content
       },
-      actions: [
+      actions
+    };
+  }
+
+  async function ensureSwitchAgentSuggestion(agentName = '') {
+    if (
+      agentName &&
+      !store.getters['rancher-ai-ui/chat/session']?.[DISMISS_RECOMMENDED_AGENT_KEY] &&
+      currentMsg.value.agentMetadata?.selectionMode === AgentSelectionMode.Auto &&
+      Number(currentMsg.value.id) > 10
+    ) {
+      const agent = agents.value.find((a) => a.name === agentName);
+
+      const content = { message: t('ai.message.system.switchAgent.info', { agent: agent?.displayName || agentName }, true) };
+      const actions = [
         {
           label:  t('ai.message.system.switchAgent.actions.confirm'),
           type:   ActionType.Button,
           action: () => {
-            selectAgent(currentMsg.value.agentMetadata?.recommended || '');
+            selectAgent(agentName);
 
             return {
-              label:  t('ai.message.system.switchAgent.results.confirm', { agent: agent?.displayName || currentMsg.value.agentMetadata?.recommended }, true),
+              label:  t('ai.message.system.switchAgent.results.confirm', { agent: agent?.displayName || agentName }, true),
               status: ConfirmationStatus.Confirmed,
               icon:   'icon-checkmark'
             };
@@ -253,8 +274,15 @@ export function useChatMessageComposable(
             };
           },
         }
-      ],
-    };
+      ];
+
+      const message = buildSystemRequestMessage({
+        content,
+        actions
+      });
+
+      await addMessage(message);
+    }
   }
 
   function onopen(event: { target: WebSocket }) {
@@ -432,16 +460,7 @@ export function useChatMessageComposable(
       currentMsg.value.thinking = false;
       currentMsg.value.completed = true;
 
-      if (
-        !store.getters['rancher-ai-ui/chat/session']?.[DISMISS_RECOMMENDED_AGENT_KEY] &&
-        currentMsg.value.agentMetadata?.recommended &&
-        currentMsg.value.agentMetadata?.selectionMode === AgentSelectionMode.Auto &&
-        Number(currentMsg.value.id) > 10
-      ) {
-        const agent = agents.value.find((a) => a.name === currentMsg.value.agentMetadata?.recommended);
-
-        await addMessage(buildSystemSuggestionMessage(agent));
-      }
+      await ensureSwitchAgentSuggestion(currentMsg.value.agentMetadata?.recommended);
 
       break;
     default:

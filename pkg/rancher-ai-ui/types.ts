@@ -185,17 +185,16 @@ export interface MessageConfirmationAction {
 export const enum MessageTemplateComponent {
   Welcome = 'welcome',
   NoPermission = 'no-permission',
-  SystemSuggestion = 'system-suggestion',
+  SystemRequest = 'system-request',
 }
 
 export interface MessageTemplate {
   component: MessageTemplateComponent;
-  content: MessageTemplateContent;
-}
-
-export interface MessageTemplateContent {
-  principal?: any;
-  message: string;
+  content: {
+    message?: string;
+    principal?: any;
+    [key: string]: unknown;
+  };
 }
 
 export const enum MessageLabelKey {
