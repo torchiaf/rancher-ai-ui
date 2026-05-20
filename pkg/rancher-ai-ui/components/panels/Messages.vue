@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { ref, computed, watch, type PropType } from 'vue';
+import {
+  ref, computed, watch, onBeforeUnmount, type PropType, type ComponentPublicInstance
+} from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import {
@@ -60,9 +62,9 @@ const lastMessageObserver = ref<MutationObserver | null>(null);
 
 // Ref callback to assign the last message container for auto-scrolling for each message/error list
 const containerRef = (count: number, index: number) => {
-  return (elem: any) => {
+  return (elem: Element | ComponentPublicInstance | null) => {
     if (index === count - 1) {
-      lastMessageContainer.value = elem?.$el || elem as HTMLDivElement;
+      lastMessageContainer.value = (elem as ComponentPublicInstance)?.$el || elem;
     }
   };
 };
@@ -164,6 +166,13 @@ watch(
     }
   }
 );
+
+onBeforeUnmount(() => {
+  if (lastMessageObserver.value) {
+    lastMessageObserver.value.disconnect();
+    lastMessageObserver.value = null;
+  }
+});
 </script>
 
 <template>
