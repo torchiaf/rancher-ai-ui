@@ -43,7 +43,7 @@ describe('Messages', () => {
     const suggestions = ['View resources', 'Analyze logs', 'Do action'];
 
     suggestions.forEach((value, index) => {
-      welcomeMessage.tool().suggestions(index).should('contain.text', value);
+      welcomeMessage.tool().suggestions(index).label().should('contain.text', value);
     });
   });
 

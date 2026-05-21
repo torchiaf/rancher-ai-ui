@@ -60,12 +60,14 @@ const hoveredIndex = ref<number | null>(null);
           @mouseenter="hoveredIndex = index"
           @mouseleave="hoveredIndex = null"
         >
-          <div class="button-group">
+          <div
+            class="button-group"
+            :data-testid="`rancher-ai-ui-chat-message-list-options-${index}`"
+          >
             <RcButton
               class="button-group-label"
               variant="tertiary"
               small
-              :data-testid="`rancher-ai-ui-chat-message-list-option-${index}`"
               @click="props.disabled ? undefined : emit('select', option)"
             >
               <span class="rc-button-label">

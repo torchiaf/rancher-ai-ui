@@ -433,7 +433,8 @@ describe('Chat', () => {
       responseMessage.isCompleted();
 
       // Wait for the UI tools to be rendered
-      chat.getMessage(3).tool().suggestions(0).should('exist');
+      chat.getMessage(3).tool().suggestions(0).self()
+        .should('exist');
 
       // Verify that the Request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom during the stream
       chat.getMessage(2).self().should('not.be.visible');

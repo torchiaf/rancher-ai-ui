@@ -1,12 +1,13 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
+import ListOptionsPo from '@/cypress/e2e/po/components/list-options.po';
 
 export default class ToolPo extends ComponentPo {
   suggestions(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-list-option-${ index }"]`);
+    return new ListOptionsPo(index);
   }
 
   selectOption(index: number) {
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-list-option-${ index }"]`);
+    return new ListOptionsPo(index);
   }
 
   explore(route: string) {

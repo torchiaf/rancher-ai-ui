@@ -10,6 +10,7 @@ describe('History Messages', () => {
   before(() => {
     cy.login();
     cy.cleanChatHistory();
+    cy.installUIToolsDefinition();
   });
 
   beforeEach(() => {
@@ -53,6 +54,41 @@ describe('History Messages', () => {
           namespace: 'cattle-ai-agent-system'
         }
       },
+      uiTools: [
+        {
+          name: 'suggestions',
+          args: {
+            suggestion1: 'Show me the resources in local cluster',
+            suggestion2: 'Find my deployments',
+            suggestion3: 'Analyze the health status of my clusters',
+          }
+        },
+        {
+          name: 'explore',
+          args: {
+            route:   'pods',
+            cluster: 'local',
+            label:   'View Pods'
+          }
+        },
+        {
+          name: 'explore',
+          args: {
+            route:   'clusters',
+            label:   'View Clusters'
+          }
+        },
+        {
+          name: 'show-yaml',
+          args: {
+            yaml:              'apiVersion: v1\nkind: Pod\nmetadata:\n  name: test-pod\n  namespace: default\nspec:\n  containers:\n  - name: test-container\n    image: nginx:stable-alpine3.20-perl\n',
+            resourceKind:      'pod',
+            resourceName:      'test-pod',
+            resourceNamespace: 'default',
+            title:             'Pod YAML'
+          }
+        }
+      ]
     });
 
     chat.sendMessage('Request message.');
@@ -191,6 +227,25 @@ describe('History Messages', () => {
     historyResponseMessage.sourceLink(0).should('contain.text', 'Why Rancher');
     historyResponseMessage.sourceLink(1).should('contain.text', 'Support');
 
+    // Verify UI tools
+    historyResponseMessage.tool().suggestions(0).self().scrollIntoView()
+      .should('be.visible')
+      .and('contain.text', 'Show me the resources in local cluster');
+    historyResponseMessage.tool().suggestions(1).self().scrollIntoView()
+      .should('be.visible')
+      .and('contain.text', 'Find my deployments');
+    historyResponseMessage.tool().suggestions(2).self().scrollIntoView()
+      .should('be.visible')
+      .and('contain.text', 'Analyze the health status of my clusters');
+    historyResponseMessage.tool().explore('pods').scrollIntoView().should('be.visible')
+      .and('contain.text', 'View Pods');
+    historyResponseMessage.tool().explore('clusters').scrollIntoView().should('be.visible')
+      .and('contain.text', 'View Clusters');
+    historyResponseMessage.tool().showYaml('pod', 'default', 'test-pod')
+      .scrollIntoView()
+      .should('be.visible')
+      .and('contain.text', 'test-pod');
+
     // Verify confirmation action
     let historyUserMessage = chat.getMessage(3);
 
@@ -228,5 +283,6 @@ describe('History Messages', () => {
   after(() => {
     cy.login();
     cy.cleanChatHistory();
+    cy.uninstallUIToolsDefinition();
   });
 });
