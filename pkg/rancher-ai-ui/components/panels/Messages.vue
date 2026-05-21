@@ -148,7 +148,7 @@ function getMessageTemplate(component: MessageTemplateComponent) {
 watch(
   () => props.activeChatId,
   (newVal, oldVal) => {
-    if (oldVal && newVal !== oldVal) {
+    if (newVal !== oldVal) {
       // Wait for the DOM to update with the new messages before scrolling
       requestAnimationFrame(() => {
         // Update scroll state to show/hide scroll button based on new content height
@@ -156,7 +156,8 @@ watch(
         scrollToBottom({ force: true });
       });
     }
-  }
+  },
+  { immediate: true }
 );
 
 // Scroll when the phase changes

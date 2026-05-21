@@ -536,6 +536,40 @@ describe('Chat', () => {
       chat.scrollButton().checkNotExists();
     });
 
+    it('It should automatically scroll to bottom when close and reopen the chat panel', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+
+      chat.close();
+      chat.open();
+
+      // Verify that the chat has scrolled to the bottom after reopening and the last message is visible
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
     it('it should scroll to bottom when clicking the scroll button', () => {
       HomePagePo.goTo();
 
