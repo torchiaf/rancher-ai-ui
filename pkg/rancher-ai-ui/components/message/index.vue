@@ -123,7 +123,6 @@ function handleToolAction(event: ToolActionEvent) {
         >
           <BubbleButton
             v-if="props.message.role === RoleEnum.Assistant && !!props.message.thinkingContent"
-            data-testid="rancher-ai-ui-chat-message-show-thinking-button"
             :icon="'icon-thinking-process'"
             :tooltip="props.message.showThinking ? t('ai.message.actions.tooltip.hideThinking') : t('ai.message.actions.tooltip.showThinking')"
             @click="handleShowThinking"
@@ -287,6 +286,7 @@ function handleToolAction(event: ToolActionEvent) {
       </div>
       <div
         v-if="props.message.timestamp"
+        data-testid="rancher-ai-ui-chat-message-timestamp"
         class="chat-msg-timestamp"
       >
         {{ props.message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}

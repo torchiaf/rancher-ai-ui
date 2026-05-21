@@ -1,4 +1,3 @@
-import { throttle } from 'lodash';
 import {
   ref, nextTick, watch, onMounted, onBeforeUnmount, type Ref,
 } from 'vue';
@@ -18,6 +17,7 @@ export function useScrollComposable(containerRef: Ref<HTMLDivElement | null>, la
 
   /**
    * Update scroll state flags based on container scroll position
+   * This can't be throttled/debounced as it would generate flickering on ScrollButton click
    */
   function updateScrollState() {
     const container = containerRef.value;
@@ -33,17 +33,33 @@ export function useScrollComposable(containerRef: Ref<HTMLDivElement | null>, la
     lastScrollPosition.value = container.scrollTop;
   }
 
-  const handleScroll = throttle(updateScrollState, 100);
-
   /**
    * Scroll to bottom of container
    */
-  function scrollToBottom() {
+  function scrollToBottom(args?: { force: boolean }) {
     if (!containerRef.value) {
       return;
     }
 
+    if (!args?.force && !autoScrollEnabled.value) {
+      return;
+    }
+
+    // Remove scroll listener to prevent interference with scroll state updates during programmatic scroll
+    containerRef.value.removeEventListener('scroll', updateScrollState);
+
     containerRef.value.scrollTop = containerRef.value.scrollHeight;
+
+    requestAnimationFrame(() => {
+      if (containerRef.value) {
+        // Re-add listener after scroll event fires
+        containerRef.value.addEventListener('scroll', updateScrollState);
+
+        // Manually set scroll state after programmatic scroll to ensure state is consistent
+        autoScrollEnabled.value = true;
+        fastScrollEnabled.value = false;
+      }
+    });
   }
 
   /**
@@ -68,7 +84,7 @@ export function useScrollComposable(containerRef: Ref<HTMLDivElement | null>, la
    */
   onMounted(() => {
     if (containerRef.value) {
-      containerRef.value.addEventListener('scroll', handleScroll);
+      containerRef.value.addEventListener('scroll', updateScrollState);
     }
   });
 
@@ -77,14 +93,12 @@ export function useScrollComposable(containerRef: Ref<HTMLDivElement | null>, la
    */
   onBeforeUnmount(() => {
     if (containerRef.value) {
-      containerRef.value.removeEventListener('scroll', handleScroll);
+      containerRef.value.removeEventListener('scroll', updateScrollState);
     }
-    handleScroll.cancel();
   });
 
   return {
     lastScrollPosition,
-    autoScrollEnabled,
     fastScrollEnabled,
     updateScrollState,
     scrollToBottom,

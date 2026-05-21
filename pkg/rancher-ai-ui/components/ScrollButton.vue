@@ -13,6 +13,7 @@ const emit = defineEmits(['scroll']);
 <template>
   <div class="scroll-button">
     <button
+      data-testid="rancher-ai-ui-scroll-button"
       class="scroll-button-btn role-tertiary"
       type="button"
       role="button"
@@ -44,9 +45,6 @@ const emit = defineEmits(['scroll']);
 .scroll-button-btn:hover,
 .scroll-button-btn:focus {
   transform: translateY(-1px);
-
-  .icon {
-  }
 }
 
 .scroll-button-btn:active {

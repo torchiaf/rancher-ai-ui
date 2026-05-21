@@ -70,7 +70,7 @@ onBeforeUnmount(() => {
   <div
     v-if="label"
     class="processing-message"
-    :data-testid="`rancher-ai-ui-processing-phase-${ label }`"
+    :data-testid="`rancher-ai-ui-processing-phase-${ label.toLowerCase().replace(/\s/g, '-') }`"
   >
     <span>
       {{ label }}

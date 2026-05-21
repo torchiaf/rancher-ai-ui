@@ -170,6 +170,7 @@ onMounted(async() => {
       v-clean-tooltip="tooltip"
       small
       variant="tertiary"
+      :data-testid="`rancher-ai-ui-tool-explore-${ props.tool.input.route }`"
       :disabled="props.disabled"
       @click="navigateToRoute"
     >

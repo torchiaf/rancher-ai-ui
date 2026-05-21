@@ -8,6 +8,8 @@ import ProductNavPo from '@rancher/cypress/e2e/po/side-bars/product-side-nav.po'
 import { SettingsPagePo as GlobalSettings } from '@rancher/cypress/e2e/po/pages/global-settings/settings.po';
 import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
 import ChatPo from '@/cypress/e2e/po/chat.po';
+import { HistoryPo } from '@/cypress/e2e/po/history.po';
+import { SlidingBadgePo } from '@/cypress/e2e/po/hook.po';
 import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 import { rancherAgentConfig, fleetAgentConfig, provisioningAgentConfig } from '@/cypress/e2e/blueprints/aiAgentConfigs';
 
@@ -330,6 +332,586 @@ describe('Chat', () => {
 
     after(() => {
       cy.installRancherAIService();
+    });
+  });
+
+  describe('Scroll handling', () => {
+    const history = new HistoryPo();
+
+    before(() => {
+      cy.login();
+      cy.cleanChatHistory();
+      cy.installUIToolsDefinition();
+    });
+
+    beforeEach(() => {
+      cy.login();
+    });
+
+    it('it should automatically scroll to bottom when message stream is in progress', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      cy.enqueueLLMResponse({
+        text: [
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' long response',
+        ],
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+        uiTools:   [
+          {
+            name: 'suggestions',
+            args: {
+              suggestion1: 'Show me the resources',
+              suggestion2: 'The list of clusters',
+              suggestion3: 'Another suggestion',
+            }
+          },
+          {
+            name: 'explore',
+            args: {
+              cluster: 'local',
+              route:   'pods',
+              label:   'View Pods',
+            }
+          },
+          {
+            name: 'explore',
+            args: {
+              route:   'nodes',
+              label:   'View Nodes',
+            }
+          },
+          {
+            name: 'explore',
+            args: {
+              cluster: 'local',
+              route:   'deployments',
+              label:   'View Deployments',
+            }
+          },
+          {
+            name: 'show-yaml',
+            args: {
+              yaml:              'test',
+              label:             'Show YAML',
+              resourceKind:      'Deployment',
+              resourceName:      'llm-mock',
+              resourceNamespace: 'cattle-ai-agent-system',
+            }
+          }
+        ]
+      });
+
+      chat.sendMessage('Request');
+
+      const responseMessage = chat.getMessage(3);
+
+      responseMessage.isCompleted();
+
+      // Wait for the UI tools to be rendered
+      chat.getMessage(3).tool().suggestions(0).should('exist');
+
+      // Verify that the Request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom during the stream
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(3).self().should('be.visible');
+
+      // Verify that the Related Resources section is visible meaning that the chat has scrolled to the bottom even with the presence of UI tools and others elements in the message
+      const deployments = [
+        'llm-mock',
+        'rancher-ai-agent',
+        'rancher-mcp',
+      ];
+
+      deployments.forEach((name) => {
+        const btn = chat.getMessage(3).resourceButton(name);
+
+        btn.should('be.visible');
+      });
+
+      // Verify that the message is entirely visible and not cut, meaning that the chat has scrolled to the bottom and the user can see the full message
+      chat.getMessage(3).timestamp().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should not scroll to bottom when message stream is in progress and user scrolls up', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      cy.enqueueLLMResponse({
+        text: [
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' very very', ' very very', ' very very',
+          ' long response',
+        ],
+      });
+
+      chat.sendMessage('Request');
+
+      const userMessage = chat.getMessage(2);
+
+      userMessage.containsText('Request');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      const responseMessage = chat.getMessage(3);
+
+      // Verify that the Request and Response messages are not visible
+      userMessage.self().should('not.be.visible');
+      responseMessage.self().should('not.be.visible');
+
+      // Response is still streaming...
+      responseMessage.isCompleted();
+
+      // Verify that the Request and Response messages are still not visible meaning that the chat has not scrolled to the bottom
+      userMessage.self().should('not.be.visible');
+      responseMessage.self().should('not.be.visible');
+
+      chat.scrollButton().self().should('be.visible');
+    });
+
+    it('it should automatically scroll to bottom when new message arrives', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should scroll to bottom when clicking the scroll button', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Fast scroll button should be visible
+      chat.scrollButton().self().should('be.visible');
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+
+      chat.scrollButton().self().click();
+
+      // Verify that the chat has scrolled to the bottom and the last message is visible
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      // Verify that the scroll button is not visible anymore
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should scroll to bottom when the user sends a new message from the console', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+      chat.scrollButton().self().should('be.visible');
+
+      cy.enqueueLLMResponse({
+        text: [
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' long response',
+        ],
+      });
+
+      // Send a new message
+      chat.sendMessage('New Request');
+
+      // Verify that the chat has scrolled to the bottom and the new request is visible
+      chat.getMessage(6).self().should('be.visible');
+
+      const newResponseMessage = chat.getMessage(7);
+
+      newResponseMessage.isCompleted();
+
+      // Verify that the chat continues to scroll to the bottom and the new response is visible
+      chat.getMessage(6).self().should('not.be.visible');
+      chat.getMessage(7).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should scroll to bottom when the user re-sends a message', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+      chat.scrollButton().self().should('be.visible');
+
+      // Re-send the first message
+      chat.getMessage(2).resendButton().click();
+
+      // Verify that the chat has scrolled to the bottom and the new request is visible
+      chat.getMessage(6).self().should('be.visible');
+      chat.getMessage(6).containsText('Request 1');
+
+      // Verify that the chat continues to scroll to the bottom and the new response is visible
+      chat.getMessage(7).isCompleted();
+      chat.getMessage(7).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should scroll to bottom when the user sends a message from a sliding badge', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+      chat.scrollButton().self().should('be.visible');
+
+      cy.enqueueLLMResponse({
+        text: [
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' long response from sliding badge',
+        ],
+      });
+
+      const homePage = new HomePagePo();
+
+      const homeClusterList = homePage.list();
+
+      const statusColumn = homeClusterList.resourceTable().sortableTable().row(0).column(0);
+
+      const slidingBadge = new SlidingBadgePo(statusColumn);
+
+      slidingBadge.click();
+
+      // Verify that the chat has scrolled to the bottom and the new request is visible
+      chat.getMessage(6).self().should('be.visible');
+
+      const newResponseMessage = chat.getMessage(7);
+
+      newResponseMessage.isCompleted();
+
+      // Verify that the chat continues to scroll to the bottom and the new response is visible
+      chat.getMessage(6).self().should('not.be.visible');
+      chat.getMessage(7).self().should('be.visible');
+      chat.getMessage(7).containsText('long response from sliding badge');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should scroll to bottom when opening an old chat', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      cy.enqueueLLMResponse({
+        text: [
+          ' very very very very very very very very',
+          ' very very very very very very very very',
+          ' long response',
+        ],
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+        uiTools:   [
+          {
+            name: 'suggestions',
+            args: {
+              suggestion1: 'Show me the resources',
+              suggestion2: 'The list of clusters',
+              suggestion3: 'Another suggestion',
+            }
+          },
+          {
+            name: 'explore',
+            args: {
+              cluster: 'local',
+              route:   'pods',
+              label:   'View Pods',
+            }
+          }
+        ]
+      });
+
+      chat.sendMessage('Request');
+
+      const responseMessage = chat.getMessage(3);
+
+      responseMessage.isCompleted();
+
+      responseMessage.tool().explore('pods').should('exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      chat.scrollButton().self().should('be.visible');
+
+      // Verify that the last message is not visible
+      responseMessage.self().should('not.be.visible');
+
+      history.open();
+
+      // Create a new chat to have at least 2 chats in the history
+      history.createChat();
+
+      const newChatWelcomeMessage = chat.getMessage(1);
+
+      newChatWelcomeMessage.isCompleted();
+
+      // Verify that the scroll button is not visible
+      chat.scrollButton().checkNotExists();
+
+      // Send multiple messages to expand the second chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+      chat.scrollButton().self().should('be.visible');
+
+      history.open();
+
+      // Re-open the first chat
+      history.chatItem(1).select();
+
+      // Verify that the scroll button is not visible
+      chat.scrollButton().checkNotExists();
+
+      // Verify that the chat has scrolled to the bottom and the last message is visible
+      chat.getMessage(1).self().should('not.be.visible');
+      chat.getMessage(2).self().should('be.visible');
+
+      // Verify that the Related Resources section is visible meaning that the chat has scrolled to the bottom even with the presence of UI tools and others elements in the message
+      const deployments = [
+        'llm-mock',
+        'rancher-ai-agent',
+        'rancher-mcp',
+      ];
+
+      deployments.forEach((name) => {
+        const btn = chat.getMessage(2).resourceButton(name);
+
+        btn.should('be.visible');
+      });
+
+      // Verify that the message is entirely visible and not cut, meaning that the chat has scrolled to the bottom and the user can see the full message
+      chat.getMessage(2).timestamp().should('be.visible');
+    });
+
+    it('it should scroll to bottom on system error message', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.phase('Processing UI Tools').should('not.exist');
+
+      // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+
+      // Scroll to top
+      chat.getMessage(1).scrollIntoView();
+
+      // Verify that the last message is not visible
+      chat.getMessage(5).self().should('not.be.visible');
+      chat.scrollButton().self().should('be.visible');
+
+      cy.uninstallRancherAIService();
+
+      const systemErrorMessage = chat.getSystemErrorMessage(1);
+
+      systemErrorMessage.self().should('be.visible');
+      systemErrorMessage.containsText('Rancher AI Agent pod not found. Please ensure the Rancher AI assistant services are correctly installed and you have the necessary permissions to access it.');
+
+      cy.installRancherAIService({ waitForAIServiceReady: true });
+    });
+
+    after(() => {
+      cy.login();
+      cy.cleanChatHistory();
+      cy.uninstallUIToolsDefinition();
     });
   });
 });
