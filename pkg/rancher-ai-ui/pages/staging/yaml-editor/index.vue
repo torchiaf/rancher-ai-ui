@@ -144,7 +144,7 @@ watch(patched, (val) => {
         :initial-yaml-values="original"
         :editor-mode="props.value?.editorMode"
         :scrolling="true"
-        :component-testid="'rancher-ai-ui-staging-yaml-editor'"
+        data-testid="rancher-ai-ui-staging-yaml-editor-code-mirror-editor"
         class="yaml-editor"
       />
     </div>

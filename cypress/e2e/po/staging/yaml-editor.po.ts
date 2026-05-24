@@ -10,7 +10,7 @@ export default class YamlEditorPo extends ComponentPo {
   }
 
   content() {
-    return this.self().get('[data-testid="rancher-ai-ui-staging-yaml-editor-code-mirror"]');
+    return this.self().get('[data-testid="rancher-ai-ui-staging-yaml-editor-code-mirror-editor"]');
   }
 
   closeButton() {

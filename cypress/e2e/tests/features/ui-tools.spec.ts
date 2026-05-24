@@ -447,6 +447,15 @@ describe('UI Tools', () => {
         yamlEditor.title().should('contain.text', 'Pod YAML');
         yamlEditor.title().should('contain.text', 'default/test-pod');
 
+        // Edit mode buttons should not be visible
+        yamlEditor.content().should('not.contain.text', 'Unified')
+          .and('not.contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'kind: Pod')
+          .and('contain.text', 'name: test-pod')
+          .and('contain.text', 'namespace: default');
+
         yamlEditor.confirmButton().should('not.exist');
         yamlEditor.cancelButton().should('not.exist');
 
@@ -493,6 +502,15 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'default/my-pod');
+
+        // Edit mode buttons should not be visible
+        yamlEditor.content().should('not.contain.text', 'Unified')
+          .and('not.contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'kind: Pod')
+          .and('contain.text', 'name: my-pod')
+          .and('contain.text', 'namespace: default');
 
         yamlEditor.confirm();
 
@@ -550,6 +568,15 @@ describe('UI Tools', () => {
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'default/my-pod');
 
+        // Edit mode buttons should not be visible
+        yamlEditor.content().should('not.contain.text', 'Unified')
+          .and('not.contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'kind: Pod')
+          .and('contain.text', 'name: my-pod')
+          .and('contain.text', 'namespace: default');
+
         yamlEditor.cancel();
 
         yamlEditor.checkNotExists();
@@ -601,6 +628,15 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'default/my-pod');
+
+        // Edit mode buttons should not be visible
+        yamlEditor.content().should('not.contain.text', 'Unified')
+          .and('not.contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'kind: Pod')
+          .and('contain.text', 'name: my-pod')
+          .and('contain.text', 'namespace: default');
 
         confirmationRequestMessage.confirmButton().click();
 
@@ -657,6 +693,15 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'default/my-pod');
+
+        // Edit mode buttons should not be visible
+        yamlEditor.content().should('not.contain.text', 'Unified')
+          .and('not.contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'kind: Pod')
+          .and('contain.text', 'name: my-pod')
+          .and('contain.text', 'namespace: default');
 
         confirmationRequestMessage.cancelButton().click();
 
@@ -716,6 +761,14 @@ describe('UI Tools', () => {
         yamlEditor.title().should('contain.text', 'Show Yaml Diff');
         yamlEditor.title().should('contain.text', 'default/test-pod');
 
+        // Edit mode buttons should be visible
+        yamlEditor.content().should('contain.text', 'Unified')
+          .and('contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'labels:')
+          .and('contain.text', 'test:');
+
         yamlEditor.confirmButton().should('not.exist');
         yamlEditor.cancelButton().should('not.exist');
 
@@ -762,6 +815,14 @@ describe('UI Tools', () => {
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'cattle-ai-agent-system/test-pod');
 
+        // Edit mode buttons should be visible
+        yamlEditor.content().should('contain.text', 'Unified')
+          .and('contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'labels:')
+          .and('contain.text', 'test:');
+
         yamlEditor.confirm();
 
         yamlEditor.checkNotExists();
@@ -789,7 +850,7 @@ describe('UI Tools', () => {
                 {
                   op:    'add',
                   path:  '/metadata/labels',
-                  value: { test: 'true' }
+                  value: { test1: 'true' }
                 }
               ],
               name:      'test-pod',
@@ -800,11 +861,11 @@ describe('UI Tools', () => {
           },
         });
 
-        chat.sendMessage('Edit test-pod, add the label test=true');
+        chat.sendMessage('Edit test-pod, add the label test1=true');
 
         const userMessage = chat.getMessage(2);
 
-        userMessage.containsText('Edit test-pod, add the label test=true');
+        userMessage.containsText('Edit test-pod, add the label test1=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -816,6 +877,14 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'cattle-ai-agent-system/test-pod');
+
+        // Edit mode buttons should be visible
+        yamlEditor.content().should('contain.text', 'Unified')
+          .and('contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'labels:')
+          .and('contain.text', 'test1:');
 
         yamlEditor.cancel();
 
@@ -840,7 +909,7 @@ describe('UI Tools', () => {
                 {
                   op:    'add',
                   path:  '/metadata/labels',
-                  value: { test: 'true' }
+                  value: { test2: 'true' }
                 }
               ],
               name:      'test-pod',
@@ -851,11 +920,11 @@ describe('UI Tools', () => {
           },
         });
 
-        chat.sendMessage('Edit test-pod, add the label test=true');
+        chat.sendMessage('Edit test-pod, add the label test2=true');
 
         const userMessage = chat.getMessage(2);
 
-        userMessage.containsText('Edit test-pod, add the label test=true');
+        userMessage.containsText('Edit test-pod, add the label test2=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -867,6 +936,14 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'cattle-ai-agent-system/test-pod');
+
+        // Edit mode buttons should be visible
+        yamlEditor.content().should('contain.text', 'Unified')
+          .and('contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'labels:')
+          .and('contain.text', 'test2:');
 
         confirmationRequestMessage.confirmButton().click({ force: true });
 
@@ -895,7 +972,7 @@ describe('UI Tools', () => {
                 {
                   op:    'add',
                   path:  '/metadata/labels',
-                  value: { test: 'true' }
+                  value: { test3: 'true' }
                 }
               ],
               name:      'test-pod',
@@ -906,11 +983,11 @@ describe('UI Tools', () => {
           },
         });
 
-        chat.sendMessage('Edit test-pod, add the label test=true');
+        chat.sendMessage('Edit test-pod, add the label test3=true');
 
         const userMessage = chat.getMessage(2);
 
-        userMessage.containsText('Edit test-pod, add the label test=true');
+        userMessage.containsText('Edit test-pod, add the label test3=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -922,6 +999,15 @@ describe('UI Tools', () => {
 
         yamlEditor.title().should('contain.text', 'Pod');
         yamlEditor.title().should('contain.text', 'cattle-ai-agent-system/test-pod');
+
+        // Edit mode buttons should be visible
+        yamlEditor.content().should('contain.text', 'Unified')
+          .and('contain.text', 'Split');
+
+        yamlEditor.content()
+          .should('contain.text', 'labels:')
+          .and('contain.text', 'test2:') // Old label
+          .and('contain.text', 'test3:');
 
         confirmationRequestMessage.cancelButton().click({ force: true });
 
