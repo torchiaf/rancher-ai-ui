@@ -51,9 +51,10 @@ const tools = computed(() => {
     .filter((tool) => !props.exclude.includes(tool.toolName) &&
       (props.include.length === 0 || props.include.includes(tool.toolName)))
     // Add unique keys to each tool for rendering
-    .map((tool) => ({
+    // Use index if include prop is provided (stable keys), otherwise generate random keys to prevent caching issues when tools change dynamically
+    .map((tool, index) => ({
       ...tool,
-      key: `${ tool.toolName }-${ randomStr(4) }`,
+      key: `${ tool.toolName }-${ props.include.length > 0 ? index : randomStr(4) }`,
     }))
     // Sort tools based on predefined order
     .sort((a, b) => ToolsOrder[a.toolName] - ToolsOrder[b.toolName]);

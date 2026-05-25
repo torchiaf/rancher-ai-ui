@@ -48,4 +48,8 @@ export class ConsolePo extends ComponentPo {
   sendMessage(value: string) {
     this.textarea().type(value).type('{enter}');
   }
+
+  enter() {
+    this.textarea().type('{enter}');
+  }
 }

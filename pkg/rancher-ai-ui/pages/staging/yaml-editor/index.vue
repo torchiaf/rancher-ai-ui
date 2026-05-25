@@ -92,7 +92,10 @@ watch(patched, (val) => {
 </script>
 
 <template>
-  <div class="staging-yaml-editor">
+  <div
+    class="staging-yaml-editor"
+    data-testid="rancher-ai-ui-staging-yaml-editor"
+  >
     <div class="staging-yaml-header">
       <div class="staging-yaml-title">
         <h1>{{ props.value?.title || t('ai.staging.yaml-editor.title', {}, true) }}</h1>
@@ -106,12 +109,14 @@ watch(patched, (val) => {
       >
         <RcButton
           variant="secondary"
+          data-testid="rancher-ai-ui-staging-yaml-editor-cancel-button"
           @click="handleCancel"
         >
           {{ t('ai.staging.yaml-editor.cancel', {}, true) }}
         </RcButton>
         <RcButton
           variant="primary"
+          data-testid="rancher-ai-ui-staging-yaml-editor-apply-button"
           @click="handleApply"
         >
           {{ t('ai.staging.yaml-editor.apply', {}, true) }}
@@ -123,6 +128,7 @@ watch(patched, (val) => {
       >
         <RcButton
           variant="secondary"
+          data-testid="rancher-ai-ui-staging-yaml-editor-close-button"
           @click="emit('close')"
         >
           {{ t('ai.staging.yaml-editor.close', {}, true) }}
@@ -138,8 +144,8 @@ watch(patched, (val) => {
         :initial-yaml-values="original"
         :editor-mode="props.value?.editorMode"
         :scrolling="true"
+        data-testid="rancher-ai-ui-staging-yaml-editor-code-mirror-editor"
         class="yaml-editor"
-        data-testid="staging-yaml-editor"
       />
     </div>
   </div>

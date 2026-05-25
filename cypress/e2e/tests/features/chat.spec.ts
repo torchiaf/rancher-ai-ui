@@ -10,6 +10,7 @@ import { SettingsPagePo } from '@/cypress/e2e/po/settings.po';
 import ChatPo from '@/cypress/e2e/po/chat.po';
 import { HistoryPo } from '@/cypress/e2e/po/history.po';
 import { SlidingBadgePo } from '@/cypress/e2e/po/hook.po';
+import ContextPo from '@/cypress/e2e/po/context.po';
 import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 import { rancherAgentConfig, fleetAgentConfig, provisioningAgentConfig } from '@/cypress/e2e/blueprints/aiAgentConfigs';
 
@@ -433,7 +434,8 @@ describe('Chat', () => {
       responseMessage.isCompleted();
 
       // Wait for the UI tools to be rendered
-      chat.getMessage(3).tool().suggestions(0).should('exist');
+      chat.getMessage(3).tool().suggestions(0).self()
+        .should('exist');
 
       // Verify that the Request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom during the stream
       chat.getMessage(2).self().should('not.be.visible');
@@ -456,6 +458,54 @@ describe('Chat', () => {
       chat.getMessage(3).timestamp().should('be.visible');
 
       chat.scrollButton().checkNotExists();
+    });
+
+    it('it should automatically scroll to bottom when receiving a confirmation message', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+      chat.isReady();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      cy.enqueueLLMResponse({
+        text:      'Pod creation confirmed.',
+        mcpTool: {
+          name: 'createKubernetesResource',
+          args: {
+            kind:      'Pod',
+            name:      'my-pod',
+            resource:  {
+              apiVersion: 'v1',
+              kind:       'Pod',
+              metadata:   {
+                name:      'my-pod',
+                namespace: 'default'
+              },
+            },
+            cluster:   'local',
+            namespace: 'default'
+          }
+        },
+      });
+
+      chat.sendMessage('Create a pod named my-pod in default namespace');
+
+      const userMessage = chat.getMessage(2);
+
+      userMessage.containsText('Create a pod named my-pod in default namespace');
+
+      // Verify the processing label is visible and not covered by the console panel
+      chat.phase('Awaiting confirmation').then(($phase) => {
+        new ContextPo().self().then(($context) => {
+          const phaseRect = $phase[0].getBoundingClientRect();
+          const contextRect = $context[0].getBoundingClientRect();
+
+          expect(contextRect.top + 2).to.be.greaterThan(phaseRect.top);
+        });
+      });
     });
 
     it('it should not scroll to bottom when message stream is in progress and user scrolls up', () => {
@@ -529,6 +579,40 @@ describe('Chat', () => {
       }
 
       // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+    });
+
+    it('it should automatically scroll to bottom when close and reopen the chat panel', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      // Send multiple messages to expand the chat
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
+      chat.getMessage(2).self().should('not.be.visible');
+      chat.getMessage(5).self().should('be.visible');
+
+      chat.scrollButton().checkNotExists();
+
+      chat.close();
+      chat.open();
+
+      // Verify that the chat has scrolled to the bottom after reopening and the last message is visible
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
