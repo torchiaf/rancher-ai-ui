@@ -26,6 +26,7 @@ import Processing from '../components/Processing.vue';
 import Context from '../components/panels/Context.vue';
 import Console from '../components/panels/Console.vue';
 import History from '../components/panels/History.vue';
+import QuickJSServerControl from '../components/edge/QuickJSServerControl.vue';
 import DeleteChat from '../dialog/DeleteChatCard.vue';
 import KeyboardShortcuts from '../components/header/KeyboardShortcuts.vue';
 
@@ -403,17 +404,6 @@ function unmount() {
         @shortcuts:chat="openShortcuts"
         @toggle:history="toggleHistoryPanel"
       />
-      <Messages
-        :active-chat-id="chatMetadata.chatId"
-        :messages="messages"
-        :system-errors="systemErrors"
-        :disabled="hasPermissions && (systemErrors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active)"
-        :message-phase="hasPermissions ? messagePhase : MessagePhase.Idle"
-        v-bind="$attrs"
-        @update:message="updateMessage"
-        @confirm:message="confirmMessage($event, ws)"
-        @send:message="sendMessage($event, ws)"
-      />
       <Processing
         class="connection-processing-label text-label"
         :phase="connectionPhase"
@@ -423,22 +413,7 @@ function unmount() {
           ConnectionPhase.ConnectionClosed,
         ].includes(connectionPhase)"
       />
-      <Context
-        :value="!hasPermissions || systemErrors.length ? [] : context"
-        :disabled="disabled"
-        @select="selectContext"
-      />
-      <Console
-        :active-chat-id="chatMetadata.chatId"
-        :llm-config="llmConfig"
-        :agents="chatAgents"
-        :agent-name="agentName"
-        :disabled="disabled"
-        :messages="messages"
-        :has-permissions="hasPermissions"
-        @input:content="ensureConnectionAndSendMessage($event)"
-        @select:agent="selectAgent"
-      />
+      <QuickJSServerControl />
       <History
         :chats="chatHistory"
         :active-chat-id="chatMetadata.chatId"

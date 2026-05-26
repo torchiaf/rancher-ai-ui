@@ -6,7 +6,8 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@rancher/shell": "3.0.12-rc.2"
+    "@rancher/shell": "3.0.12-rc.2",
+    "quickjs-emscripten": "^0.32.0"
   },
   "resolutions": {
     "@types/node": "25.3.3",
