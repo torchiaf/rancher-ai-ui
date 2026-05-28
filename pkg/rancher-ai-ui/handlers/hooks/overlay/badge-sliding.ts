@@ -2,7 +2,7 @@ import { nextTick } from 'vue';
 import { Store } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { warn } from '../../../utils/log';
-import { Context } from '../../../types';
+import { Context, HookContextTag } from '../../../types';
 import { HooksOverlay } from './index';
 import TemplateMessage from '../template-message';
 import Chat from '../../chat';
@@ -21,6 +21,8 @@ class BadgeSlidingOverlay extends HooksOverlay {
     super();
     this.selector = selector;
   }
+
+  private hookContextTag: HookContextTag | null = null;
 
   /**
    * Compute the theme properties for the badge and overlay.
@@ -70,13 +72,13 @@ class BadgeSlidingOverlay extends HooksOverlay {
   }
 
   /**
-   * Handle changes in the parent container's position (e.g. due to scrolling or table resizing).
+   * Handle changes in the container's position (e.g. due to scrolling or table resizing).
    * @param target The target element.
-   * @param container The parent container element.
+   * @param container The container element.
    * @param overlay The overlay element.
    */
-  private handleParentPositionChange(target: HTMLElement, container: HTMLElement, overlay: HTMLElement) {
-    // destroy overlay if the container/parent moves (position changes)
+  private handleContainerPositionChange(target: HTMLElement, container: HTMLElement, overlay: HTMLElement) {
+    // Destroy overlay if the container moves (position changes)
     let lastContainerRect = container.getBoundingClientRect();
     let rafId: number | null = null;
 
@@ -90,7 +92,7 @@ class BadgeSlidingOverlay extends HooksOverlay {
           const r = container.getBoundingClientRect();
 
           if (r.top !== lastContainerRect.top || r.left !== lastContainerRect.left) {
-            // parent moved -> remove overlays for this target, immediately
+            // The container moved -> remove overlays for this target, immediately
             this.destroy(target, true);
           } else {
             lastContainerRect = r;
@@ -117,7 +119,7 @@ class BadgeSlidingOverlay extends HooksOverlay {
     window.addEventListener('scroll', scrollHandler, true);
 
     // attach cleanup so destroy() can call it (avoid leaks if overlay removed directly)
-    (overlay as any).__parentPositionCleanup = () => {
+    (overlay as any).__containerPositionCleanup = () => {
       try {
         if (rafId !== null) {
           cancelAnimationFrame(rafId);
@@ -144,19 +146,21 @@ class BadgeSlidingOverlay extends HooksOverlay {
   }
 
   /**
-   * Cleanup parent position change handlers
+   * Cleanup container position change handlers
    */
-  private cleanupParentPosition(overlay: any) {
+  private cleanupContainerPosition(overlay: any) {
     try {
-      if (typeof overlay.__parentPositionCleanup === 'function') {
-        overlay.__parentPositionCleanup();
+      if (typeof overlay.__containerPositionCleanup === 'function') {
+        overlay.__containerPositionCleanup();
       }
     } catch (e) {
-      warn('Error during parent position cleanup', e);
+      warn('Error during container position cleanup', e);
     }
   }
 
   create(store: Store<any>, target: HTMLElement, badge: HTMLElement, ctx: Context, globalCtx: Context[] = []) {
+    this.hookContextTag = ctx.tag as HookContextTag;
+
     const { t } = useI18n(store);
     const theme = store.getters['prefs/theme'] as Theme;
 
@@ -170,7 +174,8 @@ class BadgeSlidingOverlay extends HooksOverlay {
     const badgeRect = badge.getBoundingClientRect();
     const badgeStyle = getComputedStyle(badge);
 
-    overlay.setAttribute('data-testid', 'rancher-ai-ui-sliding-badge');
+    overlay.setAttribute('data-testid', 'rancher-ai-ui-hook-overlay');
+
     overlay.classList.add(`${ HooksOverlay.defaultClassPrefix }-${ this.getSelector() }`);
     overlay.style.zIndex = '10';
     overlay.style.backgroundColor = overlayProps.background;
@@ -212,7 +217,7 @@ class BadgeSlidingOverlay extends HooksOverlay {
 
     overlay.appendChild(icon);
 
-    const container = (target.parentElement || target) as HTMLElement;
+    const container = this.getContainer(target);
 
     container.appendChild(overlay);
 
@@ -221,7 +226,7 @@ class BadgeSlidingOverlay extends HooksOverlay {
       overlay.style.width = `${ parseInt(overlay.style.width) + 30 }px`;
     }, 10);
 
-    this.handleParentPositionChange(target, container, overlay);
+    this.handleContainerPositionChange(target, container, overlay);
 
     overlay.addEventListener('click', (e) => {
       this.action(store, e, overlay, ctx, globalCtx);
@@ -257,13 +262,13 @@ class BadgeSlidingOverlay extends HooksOverlay {
   }
 
   destroy(target: HTMLElement, immediate = false) {
-    (target.parentElement as HTMLElement).querySelectorAll(`.${ HooksOverlay.defaultClassPrefix }-${ this.getSelector() }`).forEach((overlay: any) => {
+    this.getContainer(target).querySelectorAll(`.${ HooksOverlay.defaultClassPrefix }-${ this.getSelector() }`).forEach((overlay: any) => {
       if (overlay) {
         if (immediate) {
-          this.cleanupParentPosition(overlay);
+          this.cleanupContainerPosition(overlay);
           overlay.remove();
         } else if (!(overlay.matches(':hover') || (overlay.querySelector(':hover') !== null))) {
-          this.cleanupParentPosition(overlay);
+          this.cleanupContainerPosition(overlay);
 
           // Animate width shrink before removing
           overlay.style.transition = 'width 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.3s';
@@ -276,6 +281,21 @@ class BadgeSlidingOverlay extends HooksOverlay {
         }
       }
     });
+  }
+
+  // Select the appropriate container based on the context tag
+  getContainer(target: HTMLElement): HTMLElement {
+    let container;
+
+    switch (this.hookContextTag) {
+    case HookContextTag.SortableTableRow:
+      container = target.closest('tbody');
+      break;
+    default:
+      container = target.parentElement;
+    }
+
+    return (container || target) as HTMLElement;
   }
 
   setTheme(badge: HTMLElement, theme: Theme) {
