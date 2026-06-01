@@ -129,10 +129,10 @@ describe('Chat', () => {
 
       // Check for the reconnecting phase
       chat.isNotReady();
-      chat.phase('Reconnecting').should('be.visible');
+      chat.processingState('Reconnecting').should('be.visible');
 
       chat.isReady(20000);
-      chat.phase('Reconnecting').should('not.exist');
+      chat.processingState('Reconnecting').should('not.exist');
 
       // Check that the chat is working after reconnection
       chat.sendMessage('User request after reconnection');
@@ -183,17 +183,17 @@ describe('Chat', () => {
 
       // Check for the reconnecting phase
       chat.isNotReady();
-      chat.phase('Reconnecting').should('be.visible');
+      chat.processingState('Reconnecting').should('be.visible');
 
       chat.close();
       chat.open();
 
       // Reconnection should happen and the chat should be ready after that
       chat.isNotReady();
-      chat.phase('Connecting').should('be.visible');
+      chat.processingState('Connecting').should('be.visible');
 
       chat.isReady(20000);
-      chat.phase('Connecting').should('not.exist');
+      chat.processingState('Connecting').should('not.exist');
 
       // Check that the chat is working after reconnection
       chat.sendMessage('User request after reconnection');
@@ -222,16 +222,16 @@ describe('Chat', () => {
 
       // Check for the disconnected phase and error message
       chat.isNotReady();
-      chat.phase('Disconnected').should('be.visible');
+      chat.processingState('Disconnected').should('be.visible');
 
       chat.getSystemErrorMessage(1).containsText('Rancher AI Agent pod not found. Please ensure the Rancher AI assistant services are correctly installed and you have the necessary permissions to access it.');
 
       // Check for the reconnecting phase
       chat.isNotReady();
-      chat.phase('Connecting').should('be.visible');
+      chat.processingState('Connecting').should('be.visible');
 
       chat.isReady(20000);
-      chat.phase('Connecting').should('not.exist');
+      chat.processingState('Connecting').should('not.exist');
 
       // Check that the chat is working after reconnection
       chat.sendMessage('User request after reconnection');
@@ -256,10 +256,10 @@ describe('Chat', () => {
 
       // Check for the reconnecting phase
       chat.isNotReady();
-      chat.phase('Connecting').should('be.visible');
+      chat.processingState('Connecting').should('be.visible');
 
       chat.isReady(20000);
-      chat.phase('Connecting').should('not.exist');
+      chat.processingState('Connecting').should('not.exist');
 
       // Check that the chat is working after reconnection
       chat.sendMessage('User request after reconnection');
@@ -312,10 +312,10 @@ describe('Chat', () => {
       // Re-install the chart, including the mcp, to make the agents available again and allow reconnection
       cy.installRancherAIService({ waitForAIServiceReady: false });
 
-      chat.phase('Connecting').should('be.visible');
+      chat.processingState('Connecting').should('be.visible');
 
       chat.isReady(20000);
-      chat.phase('Connecting').should('not.exist');
+      chat.processingState('Connecting').should('not.exist');
 
       // Check that the chat is working after reconnection
       chat.sendMessage('User request after reconnection');
@@ -342,6 +342,7 @@ describe('Chat', () => {
     before(() => {
       cy.login();
       cy.cleanChatHistory();
+      cy.clearLLMResponses();
       cy.installUIToolsDefinition();
     });
 
@@ -359,6 +360,17 @@ describe('Chat', () => {
       welcomeMessage.isCompleted();
 
       cy.enqueueLLMResponse({
+        agentResponses: [{
+          agent:   'rancher',
+          mcpTool: {
+            name: 'listKubernetesResources',
+            args: {
+              kind:      'Deployment',
+              cluster:   'local',
+              namespace: 'cattle-ai-agent-system'
+            }
+          },
+        }],
         text: [
           ' very very very very very very very very',
           ' very very very very very very very very',
@@ -374,14 +386,6 @@ describe('Chat', () => {
           ' very very very very very very very very',
           ' long response',
         ],
-        mcpTool: {
-          name: 'listKubernetesResources',
-          args: {
-            kind:      'Deployment',
-            cluster:   'local',
-            namespace: 'cattle-ai-agent-system'
-          }
-        },
         uiTools:   [
           {
             name: 'suggestions',
@@ -445,11 +449,11 @@ describe('Chat', () => {
       const deployments = [
         'llm-mock',
         'rancher-ai-agent',
-        'rancher-mcp',
+        'rancher-mcp-server',
       ];
 
       deployments.forEach((name) => {
-        const btn = chat.getMessage(3).resourceButton(name);
+        const btn = chat.getMessage(3).resourceButton({ name });
 
         btn.should('be.visible');
       });
@@ -471,34 +475,35 @@ describe('Chat', () => {
       welcomeMessage.isCompleted();
 
       cy.enqueueLLMResponse({
-        text:      'Pod creation confirmed.',
-        mcpTool: {
-          name: 'createKubernetesResource',
-          args: {
-            kind:      'Pod',
-            name:      'my-pod',
-            resource:  {
-              apiVersion: 'v1',
-              kind:       'Pod',
-              metadata:   {
-                name:      'my-pod',
-                namespace: 'default'
+        agentResponses: [{
+          agent:   'rancher',
+          mcpTool: {
+            name: 'createKubernetesResource',
+            args: {
+              kind:      'Pod',
+              name:      'my-pod',
+              resource:  {
+                apiVersion: 'v1',
+                kind:       'Pod',
+                metadata:   {
+                  name:      'my-pod',
+                  namespace: 'default'
+                },
               },
-            },
-            cluster:   'local',
-            namespace: 'default'
-          }
-        },
+              cluster:   'local',
+              namespace: 'default'
+            }
+          },
+        }],
+        text: 'Pod creation confirmed.'
       });
 
       chat.sendMessage('Create a pod named my-pod in default namespace');
 
-      const userMessage = chat.getMessage(2);
-
-      userMessage.containsText('Create a pod named my-pod in default namespace');
+      const processingState = chat.processingState('Awaiting confirmation');
 
       // Verify the processing label is visible and not covered by the console panel
-      chat.phase('Awaiting confirmation').then(($phase) => {
+      processingState.should('be.visible').then(($phase) => {
         new ContextPo().self().then(($context) => {
           const phaseRect = $phase[0].getBoundingClientRect();
           const contextRect = $context[0].getBoundingClientRect();
@@ -541,14 +546,16 @@ describe('Chat', () => {
 
       userMessage.containsText('Request');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop();
 
       const responseMessage = chat.getMessage(3);
 
       // Verify that the Request and Response messages are not visible
       userMessage.self().should('not.be.visible');
       responseMessage.self().should('not.be.visible');
+
+      // Verify that the processing state is not visible as we scroll up
+      chat.processingState().should('not.be.visible');
 
       // Response is still streaming...
       responseMessage.isCompleted();
@@ -637,10 +644,9 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Fast scroll button should be visible
       chat.scrollButton().self().should('be.visible');
@@ -676,10 +682,9 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
@@ -738,10 +743,9 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
@@ -779,10 +783,9 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
@@ -841,19 +844,22 @@ describe('Chat', () => {
       welcomeMessage.isCompleted();
 
       cy.enqueueLLMResponse({
+        agentResponses: [{
+          agent:   'rancher',
+          mcpTool: {
+            name: 'listKubernetesResources',
+            args: {
+              kind:      'Deployment',
+              cluster:   'local',
+              namespace: 'cattle-ai-agent-system'
+            }
+          },
+        }],
         text: [
           ' very very very very very very very very',
           ' very very very very very very very very',
           ' long response',
         ],
-        mcpTool: {
-          name: 'listKubernetesResources',
-          args: {
-            kind:      'Deployment',
-            cluster:   'local',
-            namespace: 'cattle-ai-agent-system'
-          }
-        },
         uiTools:   [
           {
             name: 'suggestions',
@@ -882,8 +888,7 @@ describe('Chat', () => {
 
       responseMessage.tool().explore('pods').should('exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       chat.scrollButton().self().should('be.visible');
 
@@ -911,10 +916,9 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
@@ -936,11 +940,11 @@ describe('Chat', () => {
       const deployments = [
         'llm-mock',
         'rancher-ai-agent',
-        'rancher-mcp',
+        'rancher-mcp-server',
       ];
 
       deployments.forEach((name) => {
-        const btn = chat.getMessage(2).resourceButton(name);
+        const btn = chat.getMessage(2).resourceButton({ name });
 
         btn.should('be.visible');
       });
@@ -967,7 +971,7 @@ describe('Chat', () => {
         responseMessage.isCompleted();
       }
 
-      chat.phase('Processing UI Tools').should('not.exist');
+      chat.processingState().should('not.exist');
 
       // Verify that the request message is not visible and the last message is visible, meaning that the chat has scrolled to the bottom
       chat.getMessage(2).self().should('not.be.visible');
@@ -975,8 +979,7 @@ describe('Chat', () => {
 
       chat.scrollButton().checkNotExists();
 
-      // Scroll to top
-      chat.getMessage(1).scrollIntoView();
+      chat.scrollTop({ wait: 200 });
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
@@ -994,6 +997,78 @@ describe('Chat', () => {
 
     after(() => {
       cy.login();
+      cy.clearLLMResponses();
+      cy.cleanChatHistory();
+      cy.uninstallUIToolsDefinition();
+    });
+  });
+
+  describe('Processing label', () => {
+    before(() => {
+      cy.login();
+      cy.cleanChatHistory();
+      cy.clearLLMResponses();
+    });
+
+    beforeEach(() => {
+      cy.login();
+    });
+
+    it('it should show Generating response label and NOT UI tools label', () => {
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        chat.processingState('Generating response').should('be.visible');
+
+        chat.processingState('Processing UI tools').should('not.exist');
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.processingState().should('not.exist');
+    });
+
+    it('it should show Generating response label AND UI tools label', () => {
+      cy.installUIToolsDefinition();
+
+      HomePagePo.goTo();
+
+      chat.open();
+
+      const welcomeMessage = chat.getMessage(1);
+
+      welcomeMessage.isCompleted();
+
+      for (let i = 0; i < 2; i++) {
+        chat.sendMessage(`Request ${ i + 1 }`);
+
+        chat.processingState('Generating response').should('be.visible');
+
+        chat.processingState('Processing UI tools').should('be.visible');
+
+        const responseMessage = chat.getMessage(3 + (i * 2));
+
+        responseMessage.isCompleted();
+      }
+
+      chat.processingState().should('not.exist');
+
+      cy.uninstallUIToolsDefinition();
+    });
+
+    after(() => {
+      cy.login();
+      cy.clearLLMResponses();
       cy.cleanChatHistory();
       cy.uninstallUIToolsDefinition();
     });

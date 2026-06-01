@@ -39,12 +39,23 @@ describe('Multi Agent Messages', () => {
     welcomeMessage.isCompleted();
   });
 
-  it('It should correctly parse messages when agent selection is adaptive and default agent is selected', () => {
+  it('It should correctly parse messages when agent selection is adaptive and default agent responds', () => {
     const selectAgent = chat.console().selectAgent();
 
-    selectAgent.self().contains('Adaptive Agent Selection');
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
 
     cy.enqueueLLMResponse({
+      agentResponses: [{
+        agent:   defaultAgent.name,
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+      }],
       text:  [
         '<think>',
         'Thin',
@@ -55,15 +66,7 @@ describe('Multi Agent Messages', () => {
         '<mcp-doclink>https://www.rancher.com/why-rancher</mcp-doclink>',
         '<mcp-doclink>https://www.rancher.com/support/</mcp-doclink>',
         ''
-      ],
-      mcpTool: {
-        name: 'listKubernetesResources',
-        args: {
-          kind:      'Deployment',
-          cluster:   'local',
-          namespace: 'cattle-ai-agent-system'
-        }
-      },
+      ]
     });
 
     chat.sendMessage('Request message.');
@@ -75,27 +78,30 @@ describe('Multi Agent Messages', () => {
     let responseMessage = chat.getMessage(3);
 
     responseMessage.isCompleted();
-    responseMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     cy.enqueueLLMResponse({
-      text:      'Pod created successfully.',
-      mcpTool:  {
-        name: 'createKubernetesResource',
-        args: {
-          kind:      'Pod',
-          name:      'my-pod',
-          resource:  {
-            apiVersion: 'v1',
-            kind:       'Pod',
-            metadata:   {
-              name:      'my-pod',
-              namespace: 'default'
+      agentResponses: [{
+        agent:   defaultAgent.name,
+        mcpTool:  {
+          name: 'createKubernetesResource',
+          args: {
+            kind:      'Pod',
+            name:      'my-pod',
+            resource:  {
+              apiVersion: 'v1',
+              kind:       'Pod',
+              metadata:   {
+                name:      'my-pod',
+                namespace: 'default'
+              },
             },
-          },
-          cluster:   'local',
-          namespace: 'default'
-        }
-      },
+            cluster:   'local',
+            namespace: 'default'
+          }
+        },
+      }],
+      text: 'Pod created successfully.'
     });
 
     chat.sendMessage('Create a pod');
@@ -108,12 +114,12 @@ describe('Multi Agent Messages', () => {
     confirmationRequestMessage.confirmButton().click();
     confirmationRequestMessage.isConfirmed();
     confirmationRequestMessage.containsText('Confirmed');
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    confirmationRequestMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     let resultMessage = chat.getMessage(6);
 
     resultMessage.isCompleted();
-    resultMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    resultMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     // Verify in history
     history.open();
@@ -126,27 +132,47 @@ describe('Multi Agent Messages', () => {
     responseMessage = chat.getMessage(3);
 
     responseMessage.scrollIntoView();
-    responseMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     confirmationRequestMessage = chat.getMessage(5);
 
     confirmationRequestMessage.scrollIntoView();
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    confirmationRequestMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     resultMessage = chat.getMessage(6);
 
     resultMessage.scrollIntoView();
     resultMessage.containsText('Pod created successfully.');
-    resultMessage.selectedAgentLabel(defaultAgent.name).contains(`${ defaultAgent.displayName } (Adaptive Mode)`);
+    resultMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
   });
 
-  it('It should correctly parse messages when agent selection is adaptive and custom agent is selected', () => {
+  it('It should correctly parse messages when agent selection is adaptive and multiple agents respond', () => {
     const selectAgent = chat.console().selectAgent();
 
-    selectAgent.self().contains('Adaptive Agent Selection');
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
 
     cy.enqueueLLMResponse({
-      agent: customAgent.name,
+      agentResponses: [{
+        agent:   defaultAgent.name,
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+      }, {
+        agent:   defaultAgent.name,
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Pod',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+      }],
       text:  [
         '<think>',
         'Thin',
@@ -157,7 +183,92 @@ describe('Multi Agent Messages', () => {
         '<mcp-doclink>https://www.rancher.com/why-rancher</mcp-doclink>',
         '<mcp-doclink>https://www.rancher.com/support/</mcp-doclink>',
         ''
-      ],
+      ]
+    });
+
+    chat.sendMessage('Request message.');
+
+    const userMessage = chat.getMessage(2);
+
+    userMessage.containsText('Request message.');
+
+    const responseMessage = chat.getMessage(3);
+
+    responseMessage.isCompleted();
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
+
+    // Verify first agent response
+    const deployments = [
+      'llm-mock',
+      'rancher-ai-agent',
+      'rancher-mcp-server',
+    ];
+
+    deployments.forEach((name) => {
+      const btn = responseMessage.resourceButton({ name });
+
+      btn.should('exist');
+    });
+
+    // Verify second agent response
+    const podPrefixes = [
+      'llm-mock-',
+      'rancher-ai-agent-',
+      'rancher-mcp-server-',
+    ];
+
+    podPrefixes.forEach((prefix) => {
+      const btn = responseMessage.resourceButton({ prefix });
+
+      btn.should('exist');
+    });
+
+    // Verify in history
+    history.open();
+
+    const chatItem = history.chatItem(0);
+
+    chatItem.select();
+    chat.isReady();
+
+    const historyResponseMessage = chat.getMessage(3);
+
+    historyResponseMessage.scrollIntoView();
+    historyResponseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
+
+    // Verify first agent response in history
+    deployments.forEach((name) => {
+      const btn = historyResponseMessage.resourceButton({ name });
+
+      btn.should('exist');
+    });
+
+    // Verify second agent response in history
+    podPrefixes.forEach((prefix) => {
+      const btn = historyResponseMessage.resourceButton({ prefix });
+
+      btn.should('exist');
+    });
+  });
+
+  it('It should correctly parse messages when agent selection is adaptive and custom agent is selected', () => {
+    const selectAgent = chat.console().selectAgent();
+
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
+
+    cy.enqueueLLMResponse({
+      agentResponses: [{ agent: customAgent.name }],
+      text:           [
+        '<think>',
+        'Thin',
+        'king about the response',
+        '</think>',
+        'This is a **bold** text ',
+        'and this is an _italic_ text.',
+        '<mcp-doclink>https://www.rancher.com/why-rancher</mcp-doclink>',
+        '<mcp-doclink>https://www.rancher.com/support/</mcp-doclink>',
+        ''
+      ]
     });
 
     chat.sendMessage('Request message.');
@@ -169,7 +280,7 @@ describe('Multi Agent Messages', () => {
     let responseMessage = chat.getMessage(3);
 
     responseMessage.isCompleted();
-    responseMessage.selectedAgentLabel(customAgent.name).contains(`${ customAgent.displayName } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     // Verify in history
     history.open();
@@ -182,13 +293,13 @@ describe('Multi Agent Messages', () => {
     responseMessage = chat.getMessage(3);
 
     responseMessage.scrollIntoView();
-    responseMessage.selectedAgentLabel(customAgent.name).contains(`${ customAgent.displayName } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
   });
 
   it('It should correctly parse messages when agent selection is manual and default agent is selected', () => {
     const selectAgent = chat.console().selectAgent();
 
-    selectAgent.self().contains('Adaptive Agent Selection');
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
 
     selectAgent.open();
 
@@ -199,6 +310,16 @@ describe('Multi Agent Messages', () => {
     selectAgent.self().contains(defaultAgent.displayName);
 
     cy.enqueueLLMResponse({
+      agentResponses: [{
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+      }],
       text: [
         '<think>',
         'Thin',
@@ -209,16 +330,7 @@ describe('Multi Agent Messages', () => {
         '<mcp-doclink>https://www.rancher.com/why-rancher</mcp-doclink>',
         '<mcp-doclink>https://www.rancher.com/support/</mcp-doclink>',
         ''
-      ],
-      mcpTool: {
-        name: 'listKubernetesResources',
-        args: {
-          kind:      'Deployment',
-          cluster:   'local',
-          namespace: 'cattle-ai-agent-system'
-        }
-      },
-      agent: null
+      ]
     });
 
     chat.sendMessage('Request message.');
@@ -230,29 +342,29 @@ describe('Multi Agent Messages', () => {
     let responseMessage = chat.getMessage(3);
 
     responseMessage.isCompleted();
-    responseMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    responseMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    responseMessage.agentSelectionLabel().contains(defaultAgent.displayName);
 
     cy.enqueueLLMResponse({
-      text:      'Pod created successfully.',
-      mcpTool: {
-        name: 'createKubernetesResource',
-        args: {
-          kind:      'Pod',
-          name:      'my-pod',
-          resource:  {
-            apiVersion: 'v1',
-            kind:       'Pod',
-            metadata:   {
-              name:      'my-pod',
-              namespace: 'default'
+      agentResponses: [{
+        mcpTool: {
+          name: 'createKubernetesResource',
+          args: {
+            kind:      'Pod',
+            name:      'my-pod',
+            resource:  {
+              apiVersion: 'v1',
+              kind:       'Pod',
+              metadata:   {
+                name:      'my-pod',
+                namespace: 'default'
+              },
             },
-          },
-          cluster:   'local',
-          namespace: 'default'
-        }
-      },
-      agent: null
+            cluster:   'local',
+            namespace: 'default'
+          }
+        },
+      }],
+      text: 'Pod created successfully.'
     });
 
     chat.sendMessage('Create a pod');
@@ -265,14 +377,12 @@ describe('Multi Agent Messages', () => {
     confirmationRequestMessage.confirmButton().click();
     confirmationRequestMessage.isConfirmed();
     confirmationRequestMessage.containsText('Confirmed');
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    confirmationRequestMessage.agentSelectionLabel().contains(defaultAgent.displayName);
 
     let resultMessage = chat.getMessage(6);
 
     resultMessage.isCompleted();
-    resultMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    resultMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    resultMessage.agentSelectionLabel().contains(defaultAgent.displayName);
 
     // Verify in history
     history.open();
@@ -285,27 +395,24 @@ describe('Multi Agent Messages', () => {
     responseMessage = chat.getMessage(3);
 
     responseMessage.scrollIntoView();
-    responseMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    responseMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    responseMessage.agentSelectionLabel().contains(defaultAgent.displayName);
 
     confirmationRequestMessage = chat.getMessage(5);
 
     confirmationRequestMessage.scrollIntoView();
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    confirmationRequestMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    confirmationRequestMessage.agentSelectionLabel().contains(defaultAgent.displayName);
 
     resultMessage = chat.getMessage(6);
 
     resultMessage.scrollIntoView();
     resultMessage.containsText('Pod created successfully.');
-    resultMessage.selectedAgentLabel(defaultAgent.name).contains(defaultAgent.displayName);
-    resultMessage.selectedAgentLabel(defaultAgent.name).should('not.contain', '(Adaptive Mode)');
+    resultMessage.agentSelectionLabel().contains(defaultAgent.displayName);
   });
 
   it('It should correctly parse messages when agent selection is manual and custom agent is selected', () => {
     const selectAgent = chat.console().selectAgent();
 
-    selectAgent.self().contains('Adaptive Agent Selection');
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
 
     selectAgent.open();
 
@@ -316,6 +423,16 @@ describe('Multi Agent Messages', () => {
     selectAgent.self().contains(customAgent.displayName);
 
     cy.enqueueLLMResponse({
+      agentResponses: [{
+        mcpTool: {
+          name: 'listKubernetesResources',
+          args: {
+            kind:      'Deployment',
+            cluster:   'local',
+            namespace: 'cattle-ai-agent-system'
+          }
+        },
+      }],
       text: [
         '<think>',
         'Thin',
@@ -326,15 +443,7 @@ describe('Multi Agent Messages', () => {
         '<mcp-doclink>https://www.rancher.com/why-rancher</mcp-doclink>',
         '<mcp-doclink>https://www.rancher.com/support/</mcp-doclink>',
         ''
-      ],
-      mcpTool: {
-        name: 'listKubernetesResources',
-        args: {
-          kind:      'Deployment',
-          cluster:   'local',
-          namespace: 'cattle-ai-agent-system'
-        }
-      },
+      ]
     });
 
     chat.sendMessage('Request message.');
@@ -346,8 +455,7 @@ describe('Multi Agent Messages', () => {
     let responseMessage = chat.getMessage(3);
 
     responseMessage.isCompleted();
-    responseMessage.selectedAgentLabel(customAgent.name).contains(customAgent.displayName);
-    responseMessage.selectedAgentLabel(customAgent.name).should('not.contain', '(Adaptive Mode)');
+    responseMessage.agentSelectionLabel().contains(customAgent.displayName);
 
     // Verify in history
     history.open();
@@ -360,18 +468,17 @@ describe('Multi Agent Messages', () => {
     responseMessage = chat.getMessage(3);
 
     responseMessage.scrollIntoView();
-    responseMessage.selectedAgentLabel(customAgent.name).contains(customAgent.displayName);
-    responseMessage.selectedAgentLabel(customAgent.name).should('not.contain', '(Adaptive Mode)');
+    responseMessage.agentSelectionLabel().contains(customAgent.displayName);
   });
 
   it('It should correctly parse messages for which the selected agent is no longer available', () => {
     const selectAgent = chat.console().selectAgent();
 
-    selectAgent.self().contains('Adaptive Agent Selection');
+    selectAgent.self().contains('Adaptive Agent(s) Selection');
 
     cy.enqueueLLMResponse({
-      agent: customAgent.name,
-      text:  'Response from agent.'
+      agentResponses: [{ agent: customAgent.name }],
+      text:           'Response from agent.'
     });
 
     chat.sendMessage('Request message.');
@@ -383,7 +490,7 @@ describe('Multi Agent Messages', () => {
     let responseMessage = chat.getMessage(3);
 
     responseMessage.isCompleted();
-    responseMessage.selectedAgentLabel(customAgent.name).contains(`${ customAgent.displayName } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
 
     chat.close();
 
@@ -411,11 +518,7 @@ describe('Multi Agent Messages', () => {
 
     responseMessage.scrollIntoView();
 
-    /**
-     * The agent label should show Custom agent name
-     * - the displayName is not available anymore since the agent config is deleted
-     */
-    responseMessage.selectedAgentLabel(customAgent.name).contains(`${ customAgent.name } (Adaptive Mode)`);
+    responseMessage.agentSelectionLabel().contains('Adaptive Agent(s) Selection');
   });
 
   after(() => {

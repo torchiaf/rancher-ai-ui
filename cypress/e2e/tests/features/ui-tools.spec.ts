@@ -466,31 +466,30 @@ describe('UI Tools', () => {
 
       it('it should confirm changes when clicking on the confirm button in the YAML editor', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod creation confirmed.',
-          mcpTool: {
-            name: 'createKubernetesResource',
-            args: {
-              kind:      'Pod',
-              name:      'my-pod',
-              resource:  {
-                apiVersion: 'v1',
-                kind:       'Pod',
-                metadata:   {
-                  name:      'my-pod',
-                  namespace: 'default'
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'createKubernetesResource',
+              args: {
+                kind:      'Pod',
+                name:      'my-pod',
+                resource:  {
+                  apiVersion: 'v1',
+                  kind:       'Pod',
+                  metadata:   {
+                    name:      'my-pod',
+                    namespace: 'default'
+                  },
                 },
-              },
-              cluster:   'local',
-              namespace: 'default'
-            }
-          },
+                cluster:   'local',
+                namespace: 'default'
+              }
+            },
+          }],
+          text: 'Pod creation confirmed.'
         });
 
         chat.sendMessage('Create a pod named my-pod in default namespace');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Create a pod named my-pod in default namespace');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -531,31 +530,30 @@ describe('UI Tools', () => {
 
       it('it should discard changes when clicking on the cancel button in the YAML editor', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod creation canceled.',
-          mcpTool: {
-            name: 'createKubernetesResource',
-            args: {
-              kind:      'Pod',
-              name:      'my-pod',
-              resource:  {
-                apiVersion: 'v1',
-                kind:       'Pod',
-                metadata:   {
-                  name:      'my-pod',
-                  namespace: 'default'
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'createKubernetesResource',
+              args: {
+                kind:      'Pod',
+                name:      'my-pod',
+                resource:  {
+                  apiVersion: 'v1',
+                  kind:       'Pod',
+                  metadata:   {
+                    name:      'my-pod',
+                    namespace: 'default'
+                  },
                 },
-              },
-              cluster:   'local',
-              namespace: 'default'
-            }
-          },
+                cluster:   'local',
+                namespace: 'default'
+              }
+            },
+          }],
+          text: 'Pod creation canceled.'
         });
 
         chat.sendMessage('Create a pod named my-pod in default namespace');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Create a pod named my-pod in default namespace');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -592,31 +590,30 @@ describe('UI Tools', () => {
 
       it('it should close the editor when confirm a confirmation request in the Chat', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod creation confirmed.',
-          mcpTool: {
-            name: 'createKubernetesResource',
-            args: {
-              kind:      'Pod',
-              name:      'my-pod',
-              resource:  {
-                apiVersion: 'v1',
-                kind:       'Pod',
-                metadata:   {
-                  name:      'my-pod',
-                  namespace: 'default'
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'createKubernetesResource',
+              args: {
+                kind:      'Pod',
+                name:      'my-pod',
+                resource:  {
+                  apiVersion: 'v1',
+                  kind:       'Pod',
+                  metadata:   {
+                    name:      'my-pod',
+                    namespace: 'default'
+                  },
                 },
-              },
-              cluster:   'local',
-              namespace: 'default'
-            }
-          },
+                cluster:   'local',
+                namespace: 'default'
+              }
+            },
+          }],
+          text: 'Pod creation confirmed.'
         });
 
         chat.sendMessage('Create a pod named my-pod in default namespace');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Create a pod named my-pod in default namespace');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -657,31 +654,30 @@ describe('UI Tools', () => {
 
       it('it should close the editor when cancel a confirmation request in the Chat', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod creation canceled.',
-          mcpTool: {
-            name: 'createKubernetesResource',
-            args: {
-              kind:      'Pod',
-              name:      'my-pod',
-              resource:  {
-                apiVersion: 'v1',
-                kind:       'Pod',
-                metadata:   {
-                  name:      'my-pod',
-                  namespace: 'default'
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'createKubernetesResource',
+              args: {
+                kind:      'Pod',
+                name:      'my-pod',
+                resource:  {
+                  apiVersion: 'v1',
+                  kind:       'Pod',
+                  metadata:   {
+                    name:      'my-pod',
+                    namespace: 'default'
+                  },
                 },
-              },
-              cluster:   'local',
-              namespace: 'default'
-            }
-          },
+                cluster:   'local',
+                namespace: 'default'
+              }
+            },
+          }],
+          text: 'Pod creation canceled.'
         });
 
         chat.sendMessage('Create a pod named my-pod in default namespace');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Create a pod named my-pod in default namespace');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -744,10 +740,6 @@ describe('UI Tools', () => {
 
         chat.sendMessage('Show me the YAML diff');
 
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Show me the YAML diff');
-
         const resultMessage = chat.getMessage(3);
 
         resultMessage.isCompleted();
@@ -779,30 +771,29 @@ describe('UI Tools', () => {
 
       it('it should confirm changes when clicking on the confirm button in the YAML editor', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod patch confirmed.',
-          mcpTool: {
-            name: 'patchKubernetesResource',
-            args: {
-              patch: [
-                {
-                  op:    'add',
-                  path:  '/metadata/labels',
-                  value: { test: 'true' }
-                }
-              ],
-              name:      'test-pod',
-              kind:      'Pod',
-              cluster:   'local',
-              namespace: 'cattle-ai-agent-system'
-            }
-          },
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'patchKubernetesResource',
+              args: {
+                patch: [
+                  {
+                    op:    'add',
+                    path:  '/metadata/labels',
+                    value: { test: 'true' }
+                  }
+                ],
+                name:      'test-pod',
+                kind:      'Pod',
+                cluster:   'local',
+                namespace: 'cattle-ai-agent-system'
+              }
+            },
+          }],
+          text: 'Pod patch confirmed.'
         });
 
         chat.sendMessage('Edit test-pod, add the label test=true');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Edit test-pod, add the label test=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -842,30 +833,29 @@ describe('UI Tools', () => {
 
       it('it should discard changes when clicking on the cancel button in the YAML editor', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod patch canceled.',
-          mcpTool: {
-            name: 'patchKubernetesResource',
-            args: {
-              patch: [
-                {
-                  op:    'add',
-                  path:  '/metadata/labels',
-                  value: { test1: 'true' }
-                }
-              ],
-              name:      'test-pod',
-              kind:      'Pod',
-              cluster:   'local',
-              namespace: 'cattle-ai-agent-system'
-            }
-          },
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'patchKubernetesResource',
+              args: {
+                patch: [
+                  {
+                    op:    'add',
+                    path:  '/metadata/labels',
+                    value: { test1: 'true' }
+                  }
+                ],
+                name:      'test-pod',
+                kind:      'Pod',
+                cluster:   'local',
+                namespace: 'cattle-ai-agent-system'
+              }
+            },
+          }],
+          text: 'Pod patch canceled.'
         });
 
         chat.sendMessage('Edit test-pod, add the label test1=true');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Edit test-pod, add the label test1=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -901,30 +891,29 @@ describe('UI Tools', () => {
 
       it('it should close the editor when confirm a confirmation request in the Chat', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod patch confirmed.',
-          mcpTool: {
-            name: 'patchKubernetesResource',
-            args: {
-              patch: [
-                {
-                  op:    'add',
-                  path:  '/metadata/labels',
-                  value: { test2: 'true' }
-                }
-              ],
-              name:      'test-pod',
-              kind:      'Pod',
-              cluster:   'local',
-              namespace: 'cattle-ai-agent-system'
-            }
-          },
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'patchKubernetesResource',
+              args: {
+                patch: [
+                  {
+                    op:    'add',
+                    path:  '/metadata/labels',
+                    value: { test2: 'true' }
+                  }
+                ],
+                name:      'test-pod',
+                kind:      'Pod',
+                cluster:   'local',
+                namespace: 'cattle-ai-agent-system'
+              }
+            },
+          }],
+          text: 'Pod patch confirmed.'
         });
 
         chat.sendMessage('Edit test-pod, add the label test2=true');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Edit test-pod, add the label test2=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
@@ -964,30 +953,29 @@ describe('UI Tools', () => {
 
       it('it should close the editor when cancel a confirmation request in the Chat', () => {
         cy.enqueueLLMResponse({
-          text:      'Pod patch canceled.',
-          mcpTool: {
-            name: 'patchKubernetesResource',
-            args: {
-              patch: [
-                {
-                  op:    'add',
-                  path:  '/metadata/labels',
-                  value: { test3: 'true' }
-                }
-              ],
-              name:      'test-pod',
-              kind:      'Pod',
-              cluster:   'local',
-              namespace: 'cattle-ai-agent-system'
-            }
-          },
+          agentResponses: [{
+            agent:   'rancher',
+            mcpTool: {
+              name: 'patchKubernetesResource',
+              args: {
+                patch: [
+                  {
+                    op:    'add',
+                    path:  '/metadata/labels',
+                    value: { test3: 'true' }
+                  }
+                ],
+                name:      'test-pod',
+                kind:      'Pod',
+                cluster:   'local',
+                namespace: 'cattle-ai-agent-system'
+              }
+            },
+          }],
+          text: 'Pod patch canceled.'
         });
 
         chat.sendMessage('Edit test-pod, add the label test3=true');
-
-        const userMessage = chat.getMessage(2);
-
-        userMessage.containsText('Edit test-pod, add the label test3=true');
 
         const confirmationRequestMessage = chat.getMessage(3);
 
