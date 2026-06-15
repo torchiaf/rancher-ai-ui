@@ -3,7 +3,7 @@ import { MessageAction } from '../../../types';
 import { computed, type PropType, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
-import Action from './Action.vue';
+import ResourceButton from './ResourceButton.vue';
 
 const THRESHOLD = 7; // Maximum number of actions for human readability
 
@@ -56,7 +56,9 @@ const toggleRemaining = () => {
           :key="index"
           class="mt-2 chat-msg-actions"
         >
-          <Action :value="action" />
+          <ResourceButton
+            :value="action"
+          />
         </div>
         <template v-if="showRemaining">
           <div
@@ -64,7 +66,9 @@ const toggleRemaining = () => {
             :key="index"
             class="mt-2 chat-msg-actions"
           >
-            <Action :value="action" />
+            <ResourceButton
+              :value="action"
+            />
           </div>
         </template>
       </div>

@@ -10,7 +10,7 @@ const MANAGEMENT_CLOUD_CREDENTIAL = 'management.cattle.io.cloudcredential';
  * @param type - The Norman type (e.g., 'project', 'globalRole')
  * @returns The Management API type (e.g., 'management.cattle.io.project')
  */
-export function convertTypeToManagement(type: string): string {
+export function convertToManagementType(type: string): string {
   const managementTypeMap: Record<string, string> = {
     [NORMAN.AUTH_CONFIG]:                   MANAGEMENT.AUTH_CONFIG,
     [NORMAN.CLUSTER]:                       MANAGEMENT.CLUSTER,
