@@ -463,7 +463,7 @@ describe('Chat', () => {
       // Verify that the message is entirely visible and not cut, meaning that the chat has scrolled to the bottom and the user can see the full message
       chat.getMessage(3).timestamp().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should automatically scroll to bottom when receiving a confirmation message', () => {
@@ -548,7 +548,7 @@ describe('Chat', () => {
 
       userMessage.containsText('Request');
 
-      chat.scrollTop();
+      chat.messagesPanel().scrollTop();
 
       const responseMessage = chat.getMessage(3);
 
@@ -566,7 +566,7 @@ describe('Chat', () => {
       userMessage.self().should('not.be.visible');
       responseMessage.self().should('not.be.visible');
 
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
     });
 
     it('it should automatically scroll to bottom when new message arrives', () => {
@@ -591,7 +591,7 @@ describe('Chat', () => {
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should automatically scroll to bottom when close and reopen the chat panel', () => {
@@ -616,7 +616,7 @@ describe('Chat', () => {
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
 
       chat.close();
       chat.open();
@@ -625,7 +625,7 @@ describe('Chat', () => {
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should scroll to bottom when clicking the scroll button', () => {
@@ -648,22 +648,22 @@ describe('Chat', () => {
 
       chat.processingState().should('not.exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Fast scroll button should be visible
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
 
-      chat.scrollButton().self().click();
+      chat.messagesPanel().scrollButton().self().click();
 
       // Verify that the chat has scrolled to the bottom and the last message is visible
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
       // Verify that the scroll button is not visible anymore
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should scroll to bottom when the user sends a new message from the console', () => {
@@ -686,11 +686,11 @@ describe('Chat', () => {
 
       chat.processingState().should('not.exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       cy.enqueueLLMResponse({
         text: [
@@ -724,7 +724,7 @@ describe('Chat', () => {
       chat.getMessage(6).self().should('not.be.visible');
       chat.getMessage(7).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should scroll to bottom when the user re-sends a message', () => {
@@ -747,11 +747,11 @@ describe('Chat', () => {
 
       chat.processingState().should('not.exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       // Re-send the first message
       chat.getMessage(2).resendButton().click();
@@ -764,7 +764,7 @@ describe('Chat', () => {
       chat.getMessage(7).isCompleted();
       chat.getMessage(7).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should scroll to bottom when the user sends a message from a sliding badge', () => {
@@ -787,11 +787,11 @@ describe('Chat', () => {
 
       chat.processingState().should('not.exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       cy.enqueueLLMResponse({
         text: [
@@ -833,7 +833,7 @@ describe('Chat', () => {
       chat.getMessage(7).self().should('be.visible');
       chat.getMessage(7).containsText('long response from sliding badge');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
     });
 
     it('it should scroll to bottom when opening an old chat', () => {
@@ -890,9 +890,9 @@ describe('Chat', () => {
 
       responseMessage.tool().explore('pods').should('exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       // Verify that the last message is not visible
       responseMessage.self().should('not.be.visible');
@@ -907,7 +907,7 @@ describe('Chat', () => {
       newChatWelcomeMessage.isCompleted();
 
       // Verify that the scroll button is not visible
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
 
       // Send multiple messages to expand the second chat
       for (let i = 0; i < 2; i++) {
@@ -920,11 +920,11 @@ describe('Chat', () => {
 
       chat.processingState().should('not.exist');
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       history.open();
 
@@ -932,7 +932,7 @@ describe('Chat', () => {
       history.chatItem(1).select();
 
       // Verify that the scroll button is not visible
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
 
       // Verify that the chat has scrolled to the bottom and the last message is visible
       chat.getMessage(1).self().should('not.be.visible');
@@ -979,13 +979,13 @@ describe('Chat', () => {
       chat.getMessage(2).self().should('not.be.visible');
       chat.getMessage(5).self().should('be.visible');
 
-      chat.scrollButton().checkNotExists();
+      chat.messagesPanel().scrollButton().checkNotExists();
 
-      chat.scrollTop({ wait: 200 });
+      chat.messagesPanel().scrollTop();
 
       // Verify that the last message is not visible
       chat.getMessage(5).self().should('not.be.visible');
-      chat.scrollButton().self().should('be.visible');
+      chat.messagesPanel().scrollButton().self().should('be.visible');
 
       cy.uninstallRancherAIService();
 

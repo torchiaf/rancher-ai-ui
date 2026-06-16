@@ -183,6 +183,7 @@ onBeforeUnmount(() => {
   <div
     ref="messagesView"
     class="chat-messages"
+    data-testid="rancher-ai-ui-chat-messages"
   >
     <template
       v-for="(message, i) in formattedMessages"

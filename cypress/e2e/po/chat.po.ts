@@ -1,8 +1,8 @@
 import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import RancherHeaderPo from '@/cypress/e2e/po/components/rancher-header.po';
-import { MessagePo, ErrorMessagePo } from '@/cypress/e2e/po/message.po';
 import { HeaderPo } from '@/cypress/e2e/po/header.po';
 import { ConsolePo } from '@/cypress/e2e/po/console.po';
+import MessagesPo from '@/cypress/e2e/po/messages.po';
 
 export default class ChatPo extends ComponentPo {
   rancherHeader: RancherHeaderPo;
@@ -13,31 +13,19 @@ export default class ChatPo extends ComponentPo {
   }
 
   processingState(label?: string) {
-    if (label) {
-      return this.self().get(`[data-testid="rancher-ai-ui-processing-state-${ label.toLowerCase().replace(/\s/g, '-') }"]`);
-    }
-
-    return this.self().get('[data-testid^="rancher-ai-ui-processing-state-"]');
+    return this.messagesPanel().processingState(label);
   }
 
   header() {
     return new HeaderPo();
   }
 
+  messagesPanel() {
+    return new MessagesPo();
+  }
+
   console() {
     return new ConsolePo();
-  }
-
-  scrollButton() {
-    return new ComponentPo('[data-testid="rancher-ai-ui-scroll-button"]');
-  }
-
-  scrollTop(args?: { wait?: number }) {
-    if (args?.wait) {
-      cy.wait(args.wait);
-    }
-
-    this.getMessage(1).scrollIntoView();
   }
 
   isReady(timeout = 10000) {
@@ -71,15 +59,15 @@ export default class ChatPo extends ComponentPo {
   }
 
   getMessage(id: string | number) {
-    return new MessagePo(id.toString());
+    return this.messagesPanel().getMessage(id);
   }
 
   getErrorMessage(index: number) {
-    return new MessagePo(index.toString());
+    return this.messagesPanel().getErrorMessage(index);
   }
 
   getSystemErrorMessage(index: number) {
-    return new ErrorMessagePo(index.toString());
+    return this.messagesPanel().getSystemErrorMessage(index);
   }
 
   sendMessage(value: string) {
