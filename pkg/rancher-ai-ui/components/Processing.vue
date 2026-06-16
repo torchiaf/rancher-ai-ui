@@ -76,6 +76,8 @@ onBeforeUnmount(() => {
   if (interval) {
     clearInterval(interval);
   }
+
+  applyPhase?.cancel();
 });
 </script>
 
