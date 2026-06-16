@@ -437,6 +437,14 @@ export function useChatMessageComposable(
       break;
     }
     case Tag.MessageEnd:
+
+      const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "default", "kind": "VirtualMachine", "cluster": "c-fj47b", "name": "vm-sa", "type": "kubevirt.io.virtualmachine"}]</mcp-response>');
+
+      if (!currentMsg.value.relatedResourcesActions) {
+        currentMsg.value.relatedResourcesActions = [];
+      }
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions);
+
       setProcessingState({ phase: MessagePhase.Idle });
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
       currentMsg.value.thinking = false;
