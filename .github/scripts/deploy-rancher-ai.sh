@@ -49,7 +49,6 @@ fi
 helm upgrade --install llm-mock ./rancher-ai-llm-mock/chart/llm-mock \
   --namespace cattle-ai-agent-system \
   --create-namespace \
-  --set image.tag=v1.1.10 \
   --wait --timeout 1m
 
 kubectl -n cattle-ai-agent-system rollout status deployment/llm-mock --timeout=1m
@@ -59,7 +58,6 @@ helm upgrade --install ai-agent ./rancher-ai-agent/chart/agent \
   --namespace cattle-ai-agent-system \
   --create-namespace \
   --set global.cattle.systemDefaultRegistry=stgregistry.suse.com \
-  --set aiAgent.image.tag=v1.0.2 \
   --set googleApiKey=empty \
   --set ollamaUrl="http://localhost:11434" \
   --set ollamaLlmModel=ollama \

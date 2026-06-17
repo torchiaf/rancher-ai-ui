@@ -16,27 +16,32 @@ import {
   MessageInternalSource,
   MessageLabelKey,
   MessagePhase,
+  MessageProcessingState,
   MessageTag,
   MessageTemplateComponent,
   Role,
   Tag
 } from '../types';
 import { ToolName } from '../components/tools/types';
+import { warn } from '../utils/log';
 import {
   formatWSInputMessage, formatMessageRelatedResourcesActions, formatConfirmationActions, formatFileMessages,
   formatErrorMessage, formatSourceLinks,
   formatChatMetadata,
-  formatAgentMetadata,
   formatChatErrorMessage,
-  formatTools
+  formatTools,
+  formatSubAgentProcessingMetadata,
+  formatAgentMetadata,
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
 import { useContextComposable } from './useContextComposable';
+import { useAIAgentApiComposable } from './useAIAgentApiComposable';
 import { useToolsComposable } from './useToolsComposable';
-import { DEFAULT_AI_AGENT } from './useAgentComposable';
 
 const EXPAND_THINKING = false;
+
 const DISMISS_RECOMMENDED_AGENT_KEY = 'dismissed-agent-recommendation';
+const MAX_MESSAGES_BEFORE_RECOMMENDATION = 5;
 
 /**
  * Composable for managing chat messages within the AI chat.
@@ -60,6 +65,7 @@ export function useChatMessageComposable(
 
   const { selectContext, selectedContext } = useContextComposable();
   const { toolsSelector } = useToolsComposable();
+  const { fetchUIToolsCalls } = useAIAgentApiComposable();
 
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
@@ -71,13 +77,12 @@ export function useChatMessageComposable(
   const chatMetadata = computed<ChatMetadata>(() => store.getters['rancher-ai-ui/chat/metadata'] || {});
   const isChatInitialized = computed(() => !!chatMetadata.value.chatId);
 
-  const phase = computed(() => store.getters['rancher-ai-ui/chat/phase'](chatId) || MessagePhase.Initializing);
+  const processingState = computed(() => store.getters['rancher-ai-ui/chat/processingState'](chatId) || { phase: MessagePhase.Initializing });
 
-  // Set phase in store
-  const setPhase = (phase: MessagePhase) => {
-    store.commit('rancher-ai-ui/chat/setPhase', {
+  const setProcessingState = (processingState: MessageProcessingState) => {
+    store.commit('rancher-ai-ui/chat/setProcessingState', {
       chatId,
-      phase
+      processingState
     });
   };
 
@@ -135,7 +140,7 @@ export function useChatMessageComposable(
       clearMessageBox();
     }
 
-    setPhase(MessagePhase.Processing);
+    setProcessingState({ phase: MessagePhase.Processing });
   }
 
   async function addMessage(message: Message) {
@@ -178,14 +183,20 @@ export function useChatMessageComposable(
     });
   }
 
-  function buildMessage(): Message {
+  function buildMessage(agentName?: string): Message {
+    const agent = agentName ? agents.value.find((a) => a.name === agentName) : null;
+
     return {
       role:                     Role.Assistant,
       thinkingContent: '',
       messageContent:  '',
       showThinking:             EXPAND_THINKING,
       thinking:                 false,
-      completed:                false
+      agentMetadata:   {
+        agent:         agent || null,
+        selectionMode: agentName ? AgentSelectionMode.Manual : AgentSelectionMode.Auto,
+      },
+      completed: false
     };
   }
 
@@ -241,7 +252,7 @@ export function useChatMessageComposable(
       agentName &&
       !store.getters['rancher-ai-ui/chat/session']?.[DISMISS_RECOMMENDED_AGENT_KEY] &&
       currentMsg.value.agentMetadata?.selectionMode === AgentSelectionMode.Auto &&
-      Number(currentMsg.value.id) > 10
+      Number(currentMsg.value.id) >= MAX_MESSAGES_BEFORE_RECOMMENDATION
     ) {
       const agent = agents.value.find((a) => a.name === agentName);
 
@@ -292,41 +303,10 @@ export function useChatMessageComposable(
       return;
     }
 
-    // A message is in the message box, the welcome message is not required.
+    // A message is in the message box, send it immediately when WS connection is established
     if (messageBox.value) {
       sendMessage(messageBox.value, ws);
-
-      return;
     }
-
-    // Conversation is already started, the welcome message is not required.
-    if (messages.value.length > 0) {
-      return;
-    }
-
-    // The chat is empty, we want to trigger the suggestions tool to build the welcome message
-    const initPrompt = `This is an initialization prompt to start the conversation:
-      - DO NOT provide a response to this message, this ONLY is to call the ui-tools.
-      - USE the 'suggestions' ui-tool and provides ${ selectedContext.value?.length ? 'suggestions based on the context.' : 'generic suggestions.' }.
-        - The first two suggestions must be directly relevant to the current context. If none fallback to the next rule.
-        - The third suggestion should be a 'discovery' action. It introduces a related but broader Rancher or Kubernetes topic, helping the user learn.
-        Examples: 1: How do I scale a deployment? 2: Check the resource usage for this cluster 3: Show me the logs for the failing pod
-      - DO NOT use any other ui-tool except 'suggestions'.
-      - DO NOT ask for any confirmation or additional information.
-    `;
-
-    wsSend(ws, formatWSInputMessage({
-      prompt:  initPrompt,
-      context: selectedContext.value,
-      agent:   DEFAULT_AI_AGENT,
-      tags:    [MessageTag.Ephemeral, MessageTag.Welcome],
-      tools:   {
-        name:  toolsSelector.value?.name || '',
-        tools: [ToolName.Suggestions]
-      }
-    }));
-
-    setPhase(MessagePhase.Processing);
   }
 
   async function onmessage(event: MessageEvent) {
@@ -336,6 +316,8 @@ export function useChatMessageComposable(
       try {
         processChatErrors(data);
         processChatMetadata(data);
+
+        await ensureWelcomeMessage();
       } catch (err) {
         setErrors({
           message: (err as Error)?.message || t('ai.error.chat.generic'),
@@ -351,22 +333,7 @@ export function useChatMessageComposable(
       }
     } else {
       try {
-        /**
-         * No messages in the chat, next message should be welcome message.
-         */
-        const isEmptyChat = messages.value.length === 0;
-
-        /**
-         * Welcome message is in progress, continue processing it.
-         */
-        const welcomeMessageInProgress = messages.value.find((msg) => msg.source === MessageInternalSource.Welcome && !msg.completed);
-
-        if (isEmptyChat || welcomeMessageInProgress) {
-          setPhase(MessagePhase.Initializing);
-          await processWelcomeData(data);
-        } else {
-          await processMessageData(data);
-        }
+        await processMessageData(data);
       } catch (err) {
         processMessageErrorData(err as Error);
       }
@@ -380,7 +347,7 @@ export function useChatMessageComposable(
 
     clearMessageBox();
 
-    setPhase(MessagePhase.Idle);
+    setProcessingState({ phase: MessagePhase.Idle });
   }
 
   function processChatErrors(data: string) {
@@ -399,63 +366,78 @@ export function useChatMessageComposable(
     }
   }
 
-  async function processWelcomeData(data: string) {
-    switch (data) {
-    case Tag.MessageStart:
-      const msgId = await addMessage(buildWelcomeMessage());
+  async function ensureWelcomeMessage() {
+    // Conversation already started, no need to add welcome message
+    if (messages.value?.length > 0) {
+      return;
+    }
 
-      currentMsg.value = getMessage(msgId);
-      break;
-    case Tag.MessageEnd:
-      setPhase(MessagePhase.Idle);
-      currentMsg.value.messageContent = '';
-      currentMsg.value.completed = true;
+    // Add Welcome message first
+    setProcessingState({ phase: MessagePhase.Initializing });
 
-      break;
-    default:
-      if (currentMsg.value.completed === false) {
-        if (data.startsWith(Tag.ErrorStart) && data.endsWith(Tag.ErrorEnd)) {
-          const errorMessage = formatErrorMessage(data);
+    const msgId = await addMessage(buildWelcomeMessage());
 
-          throw errorMessage;
+    const welcomeMessage = getMessage(msgId);
+
+    // Complete the welcome message with suggestions from tools call
+    if (!toolsSelector.value?.name) {
+      welcomeMessage.completed = true;
+
+      setProcessingState({ phase: MessagePhase.Idle });
+
+      return;
+    }
+
+    let prompt = `Provides 3 generic suggestions.
+      - The suggestions should be a 'discovery' action. It introduces a related but broader Rancher or Kubernetes topic, helping the user learn.
+      Examples: 1: How do I scale a deployment? 2: Check the resource usage for the local cluster 3: Show me the logs for the failing pod`;
+
+    if (selectedContext.value?.length) {
+      prompt = `Provides suggestions based on the CONTEXT.
+        - The first 2 suggestions must be directly relevant to the current CONTEXT.
+        - The third suggestion should be a 'discovery' action. It introduces a related but broader Rancher or Kubernetes topic, helping the user learn.
+        Examples: 1: How do I scale the deployment? 2: Check the resource usage for the cluster 3: Show me the logs for the failing pod`;
+    }
+
+    try {
+      welcomeMessage.tools = await fetchUIToolsCalls({
+        prompt,
+        context: selectedContext.value,
+        tools:   {
+          name:  toolsSelector.value.name,
+          tools: [ToolName.Suggestions]
         }
+      });
+    } catch (err) {
+      warn('Failed to fetch UI tools calls for the Welcome message:', err);
+    } finally {
+      welcomeMessage.completed = true;
 
-        currentMsg.value.messageContent += data;
-
-        if (currentMsg.value.messageContent?.includes(Tag.ToolsStart) && currentMsg.value.messageContent?.includes(Tag.ToolsEnd)) {
-          const { tools, remaining } = formatTools(currentMsg.value.tools || [], currentMsg.value.messageContent);
-
-          currentMsg.value.tools = tools;
-          currentMsg.value.messageContent = remaining;
-
-          break;
-        }
-      }
-      break;
+      setProcessingState({ phase: MessagePhase.Idle });
     }
   }
 
   async function processMessageData(data: string) {
     switch (data) {
     case Tag.MessageStart:
-      setPhase(MessagePhase.Working);
+      setProcessingState({ phase: MessagePhase.Working });
 
-      const msgId = await addMessage(buildMessage());
+      const msgId = await addMessage(buildMessage(agentName.value));
 
       currentMsg.value = getMessage(msgId);
       break;
     case Tag.ThinkingStart: {
-      setPhase(MessagePhase.Thinking);
+      setProcessingState({ phase: MessagePhase.Thinking });
       currentMsg.value.thinking = true;
       break;
     }
     case Tag.ThinkingEnd: {
-      setPhase(MessagePhase.GeneratingResponse);
+      setProcessingState({ phase: MessagePhase.GeneratingResponse });
       currentMsg.value.thinking = false;
       break;
     }
     case Tag.MessageEnd:
-      setPhase(MessagePhase.Idle);
+      setProcessingState({ phase: MessagePhase.Idle });
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
       currentMsg.value.thinking = false;
       currentMsg.value.completed = true;
@@ -464,13 +446,29 @@ export function useChatMessageComposable(
 
       break;
     default:
-      setPhase(MessagePhase.GeneratingResponse);
+      setProcessingState({ phase: MessagePhase.GeneratingResponse });
 
-      if (data.startsWith(Tag.AgentMetadataStart) && data.endsWith(Tag.AgentMetadataEnd)) {
-        const metadata = formatAgentMetadata(data, agents.value);
+      if (data.startsWith(Tag.ProcessingSubagentInitStart) && data.endsWith(Tag.ProcessingSubagentInitEnd)) {
+        const metadata = formatSubAgentProcessingMetadata(data, agents.value);
 
         if (metadata) {
-          currentMsg.value.agentMetadata = metadata;
+          setProcessingState({
+            phase: MessagePhase.ProcessingSubagent,
+            label: `${ metadata.agent }: ${ metadata.query?.slice(0, 100) || t('ai.processing.label.default') }`
+          });
+        }
+        break;
+      }
+
+      if (data.startsWith(Tag.ProcessingSubagentCompleteStart) && data.endsWith(Tag.ProcessingSubagentCompleteEnd)) {
+        break;
+      }
+
+      if (data.startsWith(Tag.AgentMetadataStart) && data.endsWith(Tag.AgentMetadataEnd)) {
+        const metadata = formatAgentMetadata(data);
+
+        if (metadata && currentMsg.value.agentMetadata) {
+          currentMsg.value.agentMetadata.recommended = metadata.recommended;
         }
         break;
       }
@@ -489,7 +487,7 @@ export function useChatMessageComposable(
         }
 
         if (data.startsWith(Tag.McpResultStart) && data.endsWith(Tag.McpResultEnd)) {
-          setPhase(MessagePhase.Finalizing);
+          setProcessingState({ phase: MessagePhase.Finalizing });
 
           const relatedResourcesActions = formatMessageRelatedResourcesActions(data);
 
@@ -528,7 +526,7 @@ export function useChatMessageComposable(
         }
 
         if (data === Tag.ProcessingTools) {
-          setPhase(MessagePhase.ProcessingTools);
+          setProcessingState({ phase: MessagePhase.ProcessingTools });
 
           break;
         }
@@ -551,7 +549,7 @@ export function useChatMessageComposable(
   }
 
   function processMessageErrorData(error: Error) {
-    setPhase(MessagePhase.Idle);
+    setProcessingState({ phase: MessagePhase.Idle });
 
     addMessage({
       role:           Role.System,
@@ -624,7 +622,7 @@ export function useChatMessageComposable(
     chatMetadata,
     isChatInitialized,
     resetChatMetadata,
-    phase,
+    processingState,
     error,
     resetErrors: () => setErrors(null),
   };
