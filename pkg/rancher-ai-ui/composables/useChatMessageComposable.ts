@@ -438,12 +438,12 @@ export function useChatMessageComposable(
     }
     case Tag.MessageEnd:
 
-      const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "fleet-default", "kind": "MachineInventory", "cluster": "local", "name": "e-v8fhl", "type": "elemental.cattle.io.machineinventory"}]</mcp-response>');
+      // const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "fleet-default", "kind": "MachineInventory", "cluster": "local", "name": "e-v8fhl", "type": "elemental.cattle.io.machineinventory"}]</mcp-response>');
 
-      if (!currentMsg.value.relatedResourcesActions) {
-        currentMsg.value.relatedResourcesActions = [];
-      }
-      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions);
+      // if (!currentMsg.value.relatedResourcesActions) {
+      //   currentMsg.value.relatedResourcesActions = [];
+      // }
+      // currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions);
 
       setProcessingState({ phase: MessagePhase.Idle });
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
