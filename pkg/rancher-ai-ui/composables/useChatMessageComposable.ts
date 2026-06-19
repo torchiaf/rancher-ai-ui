@@ -438,7 +438,7 @@ export function useChatMessageComposable(
     }
     case Tag.MessageEnd:
 
-      const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "default", "kind": "VirtualMachine", "cluster": "c-fj47b", "name": "vm-sa", "type": "kubevirt.io.virtualmachine"}]</mcp-response>');
+      const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "fleet-default", "kind": "MachineInventory", "cluster": "local", "name": "e-v8fhl", "type": "elemental.cattle.io.machineinventory"}]</mcp-response>');
 
       if (!currentMsg.value.relatedResourcesActions) {
         currentMsg.value.relatedResourcesActions = [];
