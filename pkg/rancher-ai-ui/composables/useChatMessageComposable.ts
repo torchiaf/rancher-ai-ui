@@ -11,6 +11,9 @@ import {
   ChatMetadata,
   ConfirmationResponse,
   ConfirmationStatus,
+  McpAuthenticationRequest,
+  McpAuthenticationResponse,
+  McpTokenRefreshResponse,
   Message,
   MessageAction,
   MessageInternalSource,
@@ -32,8 +35,11 @@ import {
   formatTools,
   formatSubAgentProcessingMetadata,
   formatAgentMetadata,
+  formatMcpAuthenticationRequest,
+  formatMcpRefreshTokenRequest
 } from '../utils/format';
 import { downloadFile } from '@shell/utils/download';
+import { waitForCondition } from '../utils/promise';
 import { useContextComposable } from './useContextComposable';
 import { useAIAgentApiComposable } from './useAIAgentApiComposable';
 import { useToolsComposable } from './useToolsComposable';
@@ -65,7 +71,7 @@ export function useChatMessageComposable(
 
   const { selectContext, selectedContext } = useContextComposable();
   const { toolsSelector } = useToolsComposable();
-  const { fetchUIToolsCalls } = useAIAgentApiComposable();
+  const { refreshMcpAuthenticationToken, fetchUIToolsCalls } = useAIAgentApiComposable();
 
   const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']) || {};
 
@@ -296,6 +302,66 @@ export function useChatMessageComposable(
     }
   }
 
+  async function ensureAgentMcpAuthenticationRequest(ws: WebSocket, agents: Agent[], metadata?: McpAuthenticationRequest | null) {
+    const agent = agents.find((a) => a.name === metadata?.agent);
+
+    if (agent) {
+      const content = {
+        agent,
+        message: t('ai.message.system.agentTokenRefresh.info', {}, true)
+      };
+      const actions = [
+        {
+          label:  t('ai.message.system.agentTokenRefresh.actions.confirm'),
+          type:   ActionType.Button,
+          action: () => {
+            if (metadata?.url) {
+              const name = `${ metadata.type }_auth`;
+              const authWindow = window.open(metadata.url, name, 'width=600,height=700,left=200,top=200');
+
+              if (authWindow) {
+                waitForCondition(() => authWindow.closed).then(() => {
+                  wsSend(ws, McpAuthenticationResponse.Confirm);
+
+                  setProcessingState({ phase: MessagePhase.ResumingAgent });
+                });
+              }
+            }
+
+            return {
+              label:  t('ai.message.system.agentTokenRefresh.results.confirm', {}, true),
+              status: ConfirmationStatus.Confirmed,
+              icon:   'icon-checkmark'
+            };
+          },
+        },
+        {
+          label:  t('ai.message.system.agentTokenRefresh.actions.dismiss'),
+          type:   ActionType.Button,
+          action: () => {
+            wsSend(ws, McpAuthenticationResponse.Cancel);
+
+            setProcessingState({ phase: MessagePhase.Idle });
+
+            return {
+              label:   t('ai.message.system.agentTokenRefresh.results.dismiss', {}, true),
+              status:  ConfirmationStatus.Canceled,
+              icon:    'icon-close'
+            };
+          },
+        }
+      ];
+
+      const message = buildSystemRequestMessage({
+        component: MessageTemplateComponent.McpAuthenticationRequest,
+        content,
+        actions
+      });
+
+      await addMessage(message);
+    }
+  }
+
   function onopen(event: { target: WebSocket }) {
     const ws = event.target;
 
@@ -310,6 +376,7 @@ export function useChatMessageComposable(
   }
 
   async function onmessage(event: MessageEvent) {
+    const ws = event.target as WebSocket;
     const data = event.data;
 
     if (!isChatInitialized.value) {
@@ -333,7 +400,7 @@ export function useChatMessageComposable(
       }
     } else {
       try {
-        await processMessageData(data);
+        await processMessageData(ws, data);
       } catch (err) {
         processMessageErrorData(err as Error);
       }
@@ -417,7 +484,7 @@ export function useChatMessageComposable(
     }
   }
 
-  async function processMessageData(data: string) {
+  async function processMessageData(ws: WebSocket, data: string) {
     switch (data) {
     case Tag.MessageStart:
       setProcessingState({ phase: MessagePhase.Working });
@@ -449,12 +516,16 @@ export function useChatMessageComposable(
       setProcessingState({ phase: MessagePhase.GeneratingResponse });
 
       if (data.startsWith(Tag.ProcessingSubagentInitStart) && data.endsWith(Tag.ProcessingSubagentInitEnd)) {
-        const metadata = formatSubAgentProcessingMetadata(data, agents.value);
+        const metadata = formatSubAgentProcessingMetadata(data);
 
-        if (metadata) {
+        const agent = agents.value.find((a) => a.name === metadata?.name);
+
+        const agentName = agent?.displayName || metadata?.name;
+
+        if (metadata && agentName) {
           setProcessingState({
             phase: MessagePhase.ProcessingSubagent,
-            label: `${ metadata.agent }: ${ metadata.query?.slice(0, 100) || t('ai.processing.label.default') }`
+            label: `${ agentName }: ${ metadata.query?.slice(0, 100) || t('ai.processing.label.default') }`
           });
         }
         break;
@@ -470,6 +541,33 @@ export function useChatMessageComposable(
         if (metadata && currentMsg.value.agentMetadata) {
           currentMsg.value.agentMetadata.recommended = metadata.recommended;
         }
+        break;
+      }
+
+      if (data.startsWith(Tag.AuthenticationRequestStart) && data.endsWith(Tag.AuthenticationRequestEnd)) {
+        const metadata = formatMcpAuthenticationRequest(data);
+
+        await ensureAgentMcpAuthenticationRequest(ws, agents.value, metadata);
+
+        setProcessingState({
+          phase: MessagePhase.AwaitingConfirmation,
+          label: t('ai.processing.label.authenticationRequired')
+        });
+
+        break;
+      }
+
+      if (data.startsWith(Tag.TokenRefreshRequestStart) && data.endsWith(Tag.TokenRefreshRequestEnd)) {
+        const agentName = formatMcpRefreshTokenRequest(data);
+
+        if (agentName) {
+          await refreshMcpAuthenticationToken(agentName);
+
+          wsSend(ws, McpTokenRefreshResponse.Confirm);
+
+          setProcessingState({ phase: MessagePhase.RefreshingMcpToken });
+        }
+
         break;
       }
 
