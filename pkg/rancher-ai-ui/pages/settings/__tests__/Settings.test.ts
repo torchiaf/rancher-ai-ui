@@ -14,6 +14,7 @@ jest.mock('../../../composables/useAIAgentApiComposable', () => ({
   }))
 }));
 jest.mock('../sections/AIAgentSettings.vue', () => ({}));
+jest.mock('../sections/ai-agent-configs/index.vue', () => ({}));
 jest.mock('../../../dialog/ApplySettingsCard.vue', () => ({}));
 jest.mock('@components/RcButton/RcButton.vue', () => ({
   default: {

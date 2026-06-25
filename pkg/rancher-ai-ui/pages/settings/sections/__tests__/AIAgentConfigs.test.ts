@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
-import AIAgentConfigs from '../AIAgentConfigs.vue';
+import AIAgentConfigs from '../ai-agent-configs/index.vue';
 import { AIAgentConfigCRD } from '../../../../types';
 import { AIAgentConfigAuthType } from '../../types';
 
@@ -15,6 +15,15 @@ jest.mock('vuex', () => {
 
 // Mock i18n
 jest.mock('@shell/composables/useI18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+
+// Mock Password component to avoid clipboard-polyfill dependency
+jest.mock('@shell/components/form/Password.vue', () => ({
+  default: {
+    name:     'Password',
+    props:    ['value', 'label', 'mode', 'disabled'],
+    template: '<div />'
+  }
+}));
 
 const DEFAULT_AI_AGENT = 'rancher';
 
@@ -953,7 +962,7 @@ describe('AIAgentConfigs.vue', () => {
       const vm = wrapper.vm as any;
 
       // Valid agent should not have errors
-      expect(vm.validationErrors['test-agent']).toBeUndefined();
+      expect(vm.validationErrors['test-agent']).toBe(false);
 
       // Create a new agent without mcpURL
       const invalidAgent = mockAgent({
@@ -993,7 +1002,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      expect(vm.validationErrors['test-agent']).toBeUndefined();
+      expect(vm.validationErrors['test-agent']).toBe(false);
     });
 
     it('should compute validation errors for empty description', () => {
@@ -1076,7 +1085,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const vm = wrapper.vm as any;
 
-      expect(vm.validationErrors['test-agent']).toBeUndefined();
+      expect(vm.validationErrors['test-agent']).toBe(false);
     });
   });
 
