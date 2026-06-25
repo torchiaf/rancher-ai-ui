@@ -3,13 +3,9 @@ import { ref, computed, PropType, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import { randomStr } from '@shell/utils/string';
-import { base64Decode } from '@shell/utils/crypto';
-import { SECRET } from '@shell/config/types';
-import { _EDIT, _VIEW } from '@shell/config/query-params';
 import Tabbed from '@shell/components/Tabbed/index.vue';
 import Tab from '@shell/components/Tabbed/Tab.vue';
 import ArrayList from '@shell/components/form/ArrayList.vue';
-import Password from '@shell/components/form/Password.vue';
 import LabeledSelect from '@shell/components/form/LabeledSelect.vue';
 import LabeledInput from '@components/Form/LabeledInput/LabeledInput.vue';
 import Checkbox from '@components/Form/Checkbox/Checkbox.vue';
@@ -19,18 +15,12 @@ import SelectOrCreateAuthSecret from '@shell/components/form/SelectOrCreateAuthS
 import SecretSelector from '@shell/components/form/SecretSelector.vue';
 import FileSelector from '@shell/components/form/FileSelector.vue';
 import formRulesGenerator from '@shell/utils/validators/formRules';
-import { warn } from '../../../utils/log';
-import { AGENT_NAMESPACE } from '../../../product';
-import { AiAgentAPIEvent, AIAgentConfigCRD } from '../../../types';
-import { AIAgentConfigAuthType, AiAgentConfigBasicSecretPayload, AiAgentConfigOAuth2SecretPayload } from '../types';
-import { DEFAULT_AI_AGENT } from '../../../composables/useAgentComposable';
-import DiscoveryBanner from '../../../components/DiscoveryBanner/DiscoveryBanner.vue';
-import { useAIAgentApiComposable } from '../../../composables/useAIAgentApiComposable';
-
-interface DiscoveryStatus {
-  result: 'success' | 'warning' | 'info' | null;
-  message?: string;
-}
+import { AGENT_NAMESPACE } from '../../../../product';
+import { AIAgentConfigCRD } from '../../../../types';
+import { AIAgentConfigAuthType, AiAgentConfigBasicSecretPayload, AiAgentConfigOAuth2SecretPayload } from '../../types';
+import { DEFAULT_AI_AGENT } from '../../../../composables/useAgentComposable';
+import Oauth2SecretForm from './Oauth2SecretForm.vue';
+import { useAIAgentApiComposable } from '../../../../composables/useAIAgentApiComposable';
 
 interface ValidationStatus {
   touched: boolean;
@@ -39,15 +29,10 @@ interface ValidationStatus {
 
 const CA_BUNDLE_TLS_KEY = 'tls.crt';
 
-const {
-  fetchMcpAuthenticationMetadata,
-  cancelFetchMcpAuthenticationMetadata: cancelOauth2MetadataDiscovery,
-  fetchMcpAuthenticationClientInfo,
-  cancelFetchMcpAuthenticationClientInfo: cancelOauth2ClientInfoDiscovery
-} = useAIAgentApiComposable();
-
 const store = useStore();
 const { t } = useI18n(store);
+
+const apiComposable = useAIAgentApiComposable();
 
 const validators = (key: string) => formRulesGenerator(t, { key });
 
@@ -131,19 +116,7 @@ const isAgentUnavailable = computed(() => {
   return !!errorMessage;
 });
 
-const oauth2SecretData = computed(() => {
-  if (selectedAgent.value?.spec.authenticationType !== AIAgentConfigAuthType.OAUTH2) {
-    return {} as AiAgentConfigOAuth2SecretPayload;
-  }
-
-  return (agentSecrets.value[selectedAgentName.value] || {}) as AiAgentConfigOAuth2SecretPayload;
-});
-
-const mcpScopes = ref<string[] | null>(null);
 const agentSecrets = ref<Record<string, AiAgentConfigBasicSecretPayload | AiAgentConfigOAuth2SecretPayload | null>>({});
-
-const oauth2MetadataDiscoveryStatus = ref<Record<string, DiscoveryStatus>>({});
-const oauth2ClientInfoDiscoveryStatus = ref<Record<string, DiscoveryStatus>>({});
 
 const descriptionValidationStatus = ref<ValidationStatus>({
   touched: false,
@@ -276,17 +249,7 @@ function updateBasicAuthSecret(value: AiAgentConfigBasicSecretPayload) {
 }
 
 function updateOauth2AuthSecret(value: Partial<AiAgentConfigOAuth2SecretPayload>) {
-  for (const entry in value) {
-    const key = entry as keyof AiAgentConfigOAuth2SecretPayload;
-
-    if (value[key] !== undefined) {
-      if (!agentSecrets.value[selectedAgentName.value]) {
-        agentSecrets.value[selectedAgentName.value] = {} as AiAgentConfigOAuth2SecretPayload;
-      }
-
-      (agentSecrets.value[selectedAgentName.value] as AiAgentConfigOAuth2SecretPayload)[key] = value[key] as any;
-    }
-  }
+  agentSecrets.value[selectedAgentName.value] = value as AiAgentConfigOAuth2SecretPayload;
 
   emit('update:authentication-secrets', agentSecrets.value);
 }
@@ -365,121 +328,6 @@ function removeAgent() {
   emit('update:authentication-secrets', agentSecrets.value);
 }
 
-/**
- * Fetches the authenticationSecret for the given agent if authentication type is OAUTH2.
- */
-async function fetchOauth2Secret(agentName: string) {
-  const agent = agents.value.find((a) => a.metadata?.name === agentName);
-
-  if (agent?.spec.authenticationType !== AIAgentConfigAuthType.OAUTH2 || !agent?.spec.authenticationSecret) {
-    return;
-  }
-
-  if (!!agentSecrets.value[agentName]) {
-    return;
-  }
-
-  try {
-    const secret = await store.dispatch(`management/find`, {
-      type: SECRET,
-      id:   `${ AGENT_NAMESPACE }/${ agent?.spec.authenticationSecret }`,
-      opt:  { watch: true }
-    });
-
-    if (secret?.data) {
-      agentSecrets.value[agentName] = {
-        metadataEndpoint: base64Decode(secret.data['metadataEndpoint'] || ''),
-        clientID:         base64Decode(secret.data['clientID'] || ''),
-        clientSecret:     base64Decode(secret.data['clientSecret'] || ''),
-        scopes:           base64Decode(secret.data['scope'] || '')?.split(' ').filter((f: string) => !!f) || []
-      };
-    }
-  } catch (err) {
-    warn(`Unable to fetch the ${ agent?.spec.authenticationSecret } secret: `, { err });
-  }
-};
-
-async function fetchMcpScopes(agentName: string) {
-  const agent = agents.value.find((a) => a.metadata?.name === agentName);
-
-  if (agent?.spec.authenticationType !== AIAgentConfigAuthType.OAUTH2 || !agent?.spec.mcpURL || mcpScopes.value !== null) {
-    return;
-  }
-
-  oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = { result: null };
-
-  const data = await fetchMcpAuthenticationMetadata(agent.spec.mcpURL);
-
-  if (data && !!data.scopesSupported) {
-    mcpScopes.value = data.scopesSupported;
-  }
-
-  oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = { result: 'info' };
-}
-
-async function confirmOauth2MetadataDiscovery() {
-  if (!selectedAgent.value.spec.mcpURL) {
-    return;
-  }
-
-  oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = { result: null };
-
-  const data = await fetchMcpAuthenticationMetadata(selectedAgent.value.spec.mcpURL || '');
-
-  if (!data || data.code === AiAgentAPIEvent.Error) {
-    oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = {
-      result:  'warning',
-      message: data?.message || ''
-    };
-
-    return;
-  }
-
-  if (data.code === AiAgentAPIEvent.Abort) {
-    oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = { result: 'info' };
-
-    return;
-  }
-
-  mcpScopes.value = data.scopesSupported || [];
-
-  updateOauth2AuthSecret({ metadataEndpoint: data.metadataEndpoint });
-
-  oauth2MetadataDiscoveryStatus.value[selectedAgentName.value] = { result: 'success' };
-}
-
-async function confirmOauth2ClientInfoDiscovery() {
-  if (!oauth2SecretData.value.metadataEndpoint) {
-    return;
-  }
-
-  oauth2ClientInfoDiscoveryStatus.value[selectedAgentName.value] = { result: null };
-
-  const data = await fetchMcpAuthenticationClientInfo(oauth2SecretData.value.metadataEndpoint || '');
-
-  if (!data || data.code === AiAgentAPIEvent.Error) {
-    oauth2ClientInfoDiscoveryStatus.value[selectedAgentName.value] = {
-      result:  'warning',
-      message: data?.message || ''
-    };
-
-    return;
-  }
-
-  if (data.code === AiAgentAPIEvent.Abort) {
-    oauth2ClientInfoDiscoveryStatus.value[selectedAgentName.value] = { result: 'info' };
-
-    return;
-  }
-
-  updateOauth2AuthSecret({
-    clientID:     data.clientId,
-    clientSecret: data.clientSecret
-  });
-
-  oauth2ClientInfoDiscoveryStatus.value[selectedAgentName.value] = { result: 'success' };
-}
-
 function onFileSelected(fileContent: string) {
   updateAgent({
     spec: {
@@ -489,12 +337,8 @@ function onFileSelected(fileContent: string) {
   });
 }
 
-async function tabChanged(newTab: { selectedName: string }) {
+function tabChanged(newTab: { selectedName: string }) {
   selectedAgentName.value = newTab.selectedName;
-
-  await fetchOauth2Secret(selectedAgentName.value);
-
-  await fetchMcpScopes(selectedAgentName.value);
 }
 
 watch(validationErrors, (errors) => {
@@ -689,95 +533,14 @@ watch(validationErrors, (errors) => {
                   />
                 </div>
               </div>
-              <template v-else-if="selectedAgent.spec.authenticationType === AIAgentConfigAuthType.OAUTH2">
-                <div class="row">
-                  <DiscoveryBanner
-                    :status="oauth2MetadataDiscoveryStatus[selectedAgentName]"
-                    translation-key="aiConfig.form.section.aiAgent.fields.oauth2.metadata.discoverInfo"
-                    @confirm="confirmOauth2MetadataDiscovery"
-                    @cancel="cancelOauth2MetadataDiscovery"
-                  />
-                </div>
-                <div class="row">
-                  <div class="col span-12 in-progress-badge">
-                    <LabeledInput
-                      :value="oauth2SecretData.metadataEndpoint"
-                      :label="t('aiConfig.form.section.aiAgent.fields.oauth2.metadata.label')"
-                      :placeholder="t('aiConfig.form.section.aiAgent.fields.oauth2.metadata.placeholder')"
-                      :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.oauth2.metadata.label')"
-                      :required="true"
-                      :disabled="oauth2MetadataDiscoveryStatus[selectedAgentName]?.result === null"
-                      @update:value="(val: string) => updateOauth2AuthSecret({ metadataEndpoint: val })"
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col span-12 in-progress-badge">
-                    <LabeledSelect
-                      v-if="mcpScopes?.length"
-                      :value="oauth2SecretData.scopes"
-                      :label="t('aiConfig.form.section.aiAgent.fields.oauth2.scopes.label')"
-                      :options="mcpScopes || []"
-                      :taggable="true"
-                      :multiple="true"
-                      :placeholder="t('aiConfig.form.section.aiAgent.fields.oauth2.scopes.placeholder.select', { count: mcpScopes?.length || 0 }, true)"
-                      :disabled="oauth2MetadataDiscoveryStatus[selectedAgentName]?.result === null"
-                      @update:value="(val: string[]) => updateOauth2AuthSecret({ scopes: val })"
-                    />
-                    <LabeledInput
-                      v-else
-                      :value="oauth2SecretData.scopes?.join(' ') || ''"
-                      :label="t('aiConfig.form.section.aiAgent.fields.oauth2.scopes.label')"
-                      :placeholder="t('aiConfig.form.section.aiAgent.fields.oauth2.scopes.placeholder.input')"
-                      :disabled="oauth2MetadataDiscoveryStatus[selectedAgentName]?.result === null"
-                      @update:value="(val: string) => updateOauth2AuthSecret({ scopes: val?.split(' ').filter((f: string) => !!f) })"
-                    />
-                    <i
-                      v-if="oauth2MetadataDiscoveryStatus[selectedAgentName]?.result === null"
-                      class="icon icon-spinner icon-spin icon-lg"
-                    />
-                  </div>
-                </div>
-
-                <div class="row">
-                  <DiscoveryBanner
-                    :status="oauth2ClientInfoDiscoveryStatus[selectedAgentName]"
-                    translation-key="aiConfig.form.section.aiAgent.fields.oauth2.client.discoverInfo"
-                    @confirm="confirmOauth2ClientInfoDiscovery"
-                    @cancel="cancelOauth2ClientInfoDiscovery"
-                  />
-                </div>
-                <div class="row">
-                  <div class="col span-6">
-                    <LabeledInput
-                      :value="oauth2SecretData.clientID"
-                      :label="t('aiConfig.form.section.aiAgent.fields.oauth2.clientId.label')"
-                      :placeholder="t('aiConfig.form.section.aiAgent.fields.oauth2.clientId.placeholder')"
-                      :required="true"
-                      :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.oauth2.clientId.label')"
-                      :disabled="oauth2ClientInfoDiscoveryStatus[selectedAgentName]?.result === null"
-                      @update:value="(val: string) => updateOauth2AuthSecret({ clientID: val })"
-                    />
-                  </div>
-                  <div class="col span-6 in-progress-badge">
-                    <Password
-                      :class="{
-                        'in-progress-discovery': oauth2ClientInfoDiscoveryStatus[selectedAgentName]?.result === null,
-                      }"
-                      :value="oauth2SecretData.clientSecret"
-                      :label="t('aiConfig.form.section.aiAgent.fields.oauth2.clientSecret.label')"
-                      :required="true"
-                      :rules="isRequiredRule('aiConfig.form.section.aiAgent.fields.oauth2.clientSecret.label')"
-                      :mode="oauth2ClientInfoDiscoveryStatus[selectedAgentName]?.result === null ? _VIEW : _EDIT"
-                      @update:value="(val: string) => updateOauth2AuthSecret({ clientSecret: val })"
-                    />
-                    <i
-                      v-if="oauth2ClientInfoDiscoveryStatus[selectedAgentName]?.result === null"
-                      class="icon icon-spinner icon-spin icon-lg"
-                    />
-                  </div>
-                </div>
-              </template>
+              <Oauth2SecretForm
+                v-else-if="agent.spec.authenticationType === AIAgentConfigAuthType.OAUTH2"
+                :value="agentSecrets[agent.metadata.name] as AiAgentConfigOAuth2SecretPayload"
+                :secret-name="agent.spec.authenticationSecret"
+                :mcp-url="agent.spec.mcpURL"
+                :api-composable="apiComposable"
+                @update="updateOauth2AuthSecret"
+              />
             </div>
           </div>
 
@@ -1006,26 +769,6 @@ watch(validationErrors, (errors) => {
 
 :deep(.conditions-alert-icon) {
   margin-left: auto;
-}
-
-.in-progress-badge {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  div {
-    width: 100%;
-  }
-}
-
-.in-progress-discovery {
-  :deep() .labeled-input {
-    color: var(--input-disabled-text);
-    background-color: var(--input-disabled-bg);
-    outline-width: 0;
-    border-color: var(--input-disabled-border);
-    cursor: not-allowed;
-  }
 }
 
 .required {

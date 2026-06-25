@@ -4,7 +4,7 @@ import Banner from '@components/Banner/Banner.vue';
 import RichTranslation from '@shell/components/RichTranslation.vue';
 
 interface DiscoveryStatus {
-  result: 'success' | 'warning' | 'info' | null;
+  result?: 'success' | 'warning' | 'info' | null;
   message?: string;
 }
 

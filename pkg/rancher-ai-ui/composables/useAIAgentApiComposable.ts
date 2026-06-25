@@ -62,6 +62,8 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
   let mcpAuthenticationMetadataAbortController: AbortController | null = null;
   let mcpAuthenticationClientInfoAbortController: AbortController | null = null;
 
+  const mcpScopesCache: Record<string, string[]> = {};
+
   async function fetchLLMModels(llmConfig: LLMConfig): Promise<string[]> {
     cancelFetchLLMModels();
 
@@ -133,7 +135,16 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function fetchMcpAuthenticationMetadata(mcpUrl: string): Promise<McpAuthenticationMetadata & McpAuthenticationEvent | null> {
+  async function fetchMcpAuthenticationMetadata(args: { mcpUrl: string, forceRefresh?: boolean } = {
+    mcpUrl:       '',
+    forceRefresh: false
+  }): Promise<McpAuthenticationMetadata & McpAuthenticationEvent | null> {
+    const { mcpUrl, forceRefresh } = args;
+
+    if (!forceRefresh && mcpScopesCache[mcpUrl]) {
+      return { scopesSupported: mcpScopesCache[mcpUrl] };
+    }
+
     cancelFetchMcpAuthenticationMetadata();
 
     mcpAuthenticationMetadataAbortController = new AbortController();
@@ -151,7 +162,13 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
         throw new Error(errorMessage);
       }
 
-      return await data.json() as McpAuthenticationMetadata;
+      const metadata = await data.json() as McpAuthenticationMetadata;
+
+      if (metadata?.scopesSupported) {
+        mcpScopesCache[mcpUrl] = metadata.scopesSupported;
+      }
+
+      return metadata;
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         return { code: AiAgentAPIEvent.Abort };
