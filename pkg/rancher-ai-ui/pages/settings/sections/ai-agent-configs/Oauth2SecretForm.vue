@@ -52,7 +52,7 @@ const {
   cancelFetchMcpAuthenticationClientInfo
 } = props.apiComposable;
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update:value']);
 
 const mcpScopes = ref<string[] | null>(null);
 
@@ -96,6 +96,11 @@ async function fetchSecret() {
   }
 };
 
+/**
+ * Fetches the scopes supported by the MCP (Multi-Cluster Platform) for OAuth2 authentication.
+ * It uses the mcpScopesCache to avoid unnecessary API calls if the scopes have already been fetched
+ * to populate the scopes dropdown.
+ */
 async function fetchMcpScopesOptions() {
   if (!props.mcpUrl || mcpScopes.value !== null || !props.value) {
     return;
@@ -103,7 +108,10 @@ async function fetchMcpScopesOptions() {
 
   metadataDiscoveryStatus.value = { result: null };
 
-  const data = await fetchMcpAuthenticationMetadata({ mcpUrl: props.mcpUrl });
+  const data = await fetchMcpAuthenticationMetadata({
+    mcpUrl:      props.mcpUrl,
+    enableAbort: false
+  });
 
   if (data && !!data.scopesSupported) {
     mcpScopes.value = data.scopesSupported;
@@ -157,7 +165,7 @@ async function confirmClientInfoDiscovery() {
 
   clientInfoDiscoveryStatus.value = { result: null };
 
-  const data = await fetchMcpAuthenticationClientInfo(props.value.metadataEndpoint || '');
+  const data = await fetchMcpAuthenticationClientInfo({ metadataEndpoint: props.value.metadataEndpoint || '' });
 
   if (!data || data.code === AiAgentAPIEvent.Error) {
     clientInfoDiscoveryStatus.value = {
@@ -187,7 +195,7 @@ function updateSecretValues(payload: Partial<AiAgentConfigOAuth2SecretPayload>) 
     Object.entries(payload).filter(([, value]) => value !== undefined)
   );
 
-  emit('update', {
+  emit('update:value', {
     ...(props.value || {}),
     ...newValues
   });

@@ -757,21 +757,22 @@ describe('AIAgentConfigs.vue', () => {
         }
       });
 
-      vm.updateOauth2AuthSecret({
+      const oauth2Payload = {
         metadataEnpoint: 'http://metadata',
         scopes:          ['test-scope'],
         clientId:        'client-id',
         clientSecret:    'client-secret'
-      });
+      };
 
-      const emittedSecrets = wrapper.emitted('update:authentication-secrets')?.[0][0] as Record<string, any>;
+      vm.updateOauth2AuthSecret(vm.selectedAgent, oauth2Payload);
 
-      expect(emittedSecrets['test-agent']).toEqual({
-        metadataEnpoint: 'http://metadata',
-        scopes:          ['test-scope'],
-        clientId:        'client-id',
-        clientSecret:    'client-secret'
-      });
+      // Verify the secret is stored in agentSecrets
+      expect(vm.agentSecrets['test-agent']).toEqual(oauth2Payload);
+
+      // Verify the emission happened with the secrets
+      const emittedSecrets = wrapper.emitted('update:authentication-secrets');
+
+      expect((emittedSecrets as any)?.[(emittedSecrets?.length || 0) - 1]?.[0]['test-agent']).toEqual(oauth2Payload);
     });
 
     it('should use selected secret directly when existing secret selected', () => {
@@ -2362,7 +2363,7 @@ describe('AIAgentConfigs.vue', () => {
           scopes:           ['openid', 'profile', 'email']
         };
 
-        vm.updateOauth2AuthSecret(oauth2Payload);
+        vm.updateOauth2AuthSecret(vm.selectedAgent, oauth2Payload);
 
         expect(vm.agentSecrets['test-agent']).toEqual(oauth2Payload);
       });
@@ -2452,8 +2453,7 @@ describe('AIAgentConfigs.vue', () => {
         const vm = wrapper.vm as any;
 
         // Set OAUTH2 secret for agent-1
-        vm.selectedAgentName = 'agent-1';
-        vm.updateOauth2AuthSecret({
+        vm.updateOauth2AuthSecret(agent1, {
           metadataEndpoint: 'https://oauth1.example.com/.well-known/openid-configuration',
           clientID:         'client-1',
           clientSecret:     'secret-1',
@@ -2461,18 +2461,17 @@ describe('AIAgentConfigs.vue', () => {
         });
 
         // Set OAUTH2 secret for agent-2
-        vm.selectedAgentName = 'agent-2';
-        vm.updateOauth2AuthSecret({
+        vm.updateOauth2AuthSecret(agent2, {
           metadataEndpoint: 'https://oauth2.example.com/.well-known/openid-configuration',
           clientID:         'client-2',
           clientSecret:     'secret-2',
           scopes:           ['openid', 'profile']
         });
 
-        expect(vm.agentSecrets['agent-1'].clientID).toBe('client-1');
-        expect(vm.agentSecrets['agent-2'].clientID).toBe('client-2');
-        expect(vm.agentSecrets['agent-1'].scopes.length).toBe(1);
-        expect(vm.agentSecrets['agent-2'].scopes.length).toBe(2);
+        expect(vm.agentSecrets['agent-1'].clientID).toEqual('client-1');
+        expect(vm.agentSecrets['agent-2'].clientID).toEqual('client-2');
+        expect(vm.agentSecrets['agent-1'].scopes).toEqual(['openid']);
+        expect(vm.agentSecrets['agent-2'].scopes).toEqual(['openid', 'profile']);
       });
 
       it('should not affect other agent properties when updating OAUTH2 secret', () => {

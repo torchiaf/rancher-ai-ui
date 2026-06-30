@@ -135,9 +135,10 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function fetchMcpAuthenticationMetadata(args: { mcpUrl: string, forceRefresh?: boolean } = {
+  async function fetchMcpAuthenticationMetadata(args: { mcpUrl: string, forceRefresh?: boolean, enableAbort?: boolean } = {
     mcpUrl:       '',
-    forceRefresh: false
+    forceRefresh: false,
+    enableAbort:  true
   }): Promise<McpAuthenticationMetadata & McpAuthenticationEvent | null> {
     const { mcpUrl, forceRefresh } = args;
 
@@ -145,7 +146,9 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
       return { scopesSupported: mcpScopesCache[mcpUrl] };
     }
 
-    cancelFetchMcpAuthenticationMetadata();
+    if (args.enableAbort) {
+      cancelFetchMcpAuthenticationMetadata();
+    }
 
     mcpAuthenticationMetadataAbortController = new AbortController();
 
@@ -189,8 +192,15 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function fetchMcpAuthenticationClientInfo(metadataEndpoint: string): Promise<McpAuthenticationClientInfo & McpAuthenticationEvent | null> {
-    cancelFetchMcpAuthenticationClientInfo();
+  async function fetchMcpAuthenticationClientInfo(args: { metadataEndpoint: string, enableAbort?: boolean } = {
+    metadataEndpoint: '',
+    enableAbort:      true
+  }): Promise<McpAuthenticationClientInfo & McpAuthenticationEvent | null> {
+    const { metadataEndpoint, enableAbort } = args;
+
+    if (enableAbort) {
+      cancelFetchMcpAuthenticationClientInfo();
+    }
 
     mcpAuthenticationClientInfoAbortController = new AbortController();
 
