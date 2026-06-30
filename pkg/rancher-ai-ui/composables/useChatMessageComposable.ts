@@ -98,7 +98,7 @@ export function useChatMessageComposable(
   };
 
   function wsSend(ws: WebSocket, value: string) {
-    if (!ws) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
@@ -415,6 +415,8 @@ export function useChatMessageComposable(
     }
 
     clearMessageBox();
+
+    AuthenticationHandler.abortPendingRequests();
 
     setProcessingState({ phase: MessagePhase.Idle });
   }
