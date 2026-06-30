@@ -309,6 +309,78 @@ describe('Multi Agent OAuth2 Authentication', () => {
     cy.get('@wsSend').should('be.calledWithMatch', McpAuthenticationResponse.Cancel);
   });
 
+  it('It should abort pending authentication requests when closing the chat panel', () => {
+    stubOauth2Popup('success');
+
+    const selectAgent = chat.console().selectAgent();
+
+    selectAgent.open();
+
+    const item = selectAgent.agentItem(customAgent.name);
+
+    item.select();
+
+    selectAgent.self().contains(customAgent.displayName);
+
+    cy.enqueueLLMResponse({ text: oauth2Response });
+
+    chat.sendMessage('Request message.');
+
+    const authRequestMessage = chat.getMessage(4);
+
+    authRequestMessage.agentSelectionLabel().contains(`Agent: ${ defaultAgent.displayName }`);
+    authRequestMessage.containsText('The tool you have selected requires authentication');
+
+    authRequestMessage.confirmButton().click();
+
+    authRequestMessage.isConfirmed();
+
+    chat.close();
+
+    // Verify that the popup was opened
+    cy.get('@popupStub').should('be.calledOnce');
+    cy.get('@popupStub').should('be.calledWithMatch', popupUrl);
+
+    // Verify that the WebSocket send method was called with the expected message after the popup is closed without sending the OAuth2 success message
+    cy.get('@wsSend').should('be.calledWithMatch', McpAuthenticationResponse.Cancel);
+  });
+
+  it('It should abort pending authentication requests when connection is lost', () => {
+    stubOauth2Popup('success');
+
+    const selectAgent = chat.console().selectAgent();
+
+    selectAgent.open();
+
+    const item = selectAgent.agentItem(customAgent.name);
+
+    item.select();
+
+    selectAgent.self().contains(customAgent.displayName);
+
+    cy.enqueueLLMResponse({ text: oauth2Response });
+
+    chat.sendMessage('Request message.');
+
+    const authRequestMessage = chat.getMessage(4);
+
+    authRequestMessage.agentSelectionLabel().contains(`Agent: ${ defaultAgent.displayName }`);
+    authRequestMessage.containsText('The tool you have selected requires authentication');
+
+    authRequestMessage.confirmButton().click();
+
+    authRequestMessage.isConfirmed();
+
+    // Simulate connection loss re-installing the Rancher AI service
+    cy.installRancherAIService();
+
+    // Verify that the popup was opened
+    cy.get('@popupStub').should('be.calledOnce');
+    cy.get('@popupStub').should('be.calledWithMatch', popupUrl);
+
+    cy.get('@wsSend').should('not.be.called');
+  });
+
   after(() => {
     cy.deleteAgentConfig(harvesterAgentConfig);
     cy.cleanChatHistory();
