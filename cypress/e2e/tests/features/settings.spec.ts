@@ -5,6 +5,7 @@ import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 
 describe('AI Assistant Configuration', () => {
   const settingsPage = new SettingsPagePo();
+  const apiPath = `/api/v1/namespaces/cattle-ai-agent-system/services/http:rancher-ai-agent:80/proxy/v1/api`;
 
   const initValues = {
     llm:          'ollama',
@@ -90,7 +91,7 @@ describe('AI Assistant Configuration', () => {
       settingsPage.waitForPage();
     });
 
-    it('It should correctly handle the AI Agent configs', () => {
+    it('It should correctly show the AI Agents', () => {
       const aiAgentConfigs = settingsPage.settings().aiAgentConfigs();
 
       aiAgentConfigs.checkExists();
@@ -104,6 +105,10 @@ describe('AI Assistant Configuration', () => {
       // Check that Rancher Agent is enabled and locked (it is a built-in agent)
       aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ initValues.rancherAgent }"]`);
       aiAgentConfigs.self().should('contain', 'This AI agent is locked');
+    });
+
+    it('It should correctly add new AI Agent', () => {
+      const aiAgentConfigs = settingsPage.settings().aiAgentConfigs();
 
       // Add a custom AI Agent
       aiAgentConfigs.tabs().addTab();
@@ -141,6 +146,10 @@ describe('AI Assistant Configuration', () => {
 
       // Check that the new agent tab is showing error status due to invalid MCP URL
       aiAgentConfigs.tabs().assertTabHasLabelIcon(`[data-testid^="${ updatedValues.customAgentPrefix }"]`, 'icon-error');
+    });
+
+    it('It should correctly remove an existing AI Agent', () => {
+      const aiAgentConfigs = settingsPage.settings().aiAgentConfigs();
 
       // Remove the custom AI Agent
       aiAgentConfigs.tabs().removeTab();
@@ -160,5 +169,102 @@ describe('AI Assistant Configuration', () => {
       aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkNotExists();
       aiAgentConfigs.tabs().assertTabIsActive(`[data-testid="${ initValues.rancherAgent }"]`);
     });
+
+    it('It should correctly handle OAuth2 authentication', () => {
+      const aiAgentConfigs = settingsPage.settings().aiAgentConfigs();
+
+      // Add a custom AI Agent
+      aiAgentConfigs.tabs().addTab();
+
+      aiAgentConfigs.tabs().getTabByPrefix(updatedValues.customAgentPrefix).checkExists();
+
+      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid^="${ updatedValues.customAgentPrefix }"]`);
+
+      settingsPage.settings().saveButton().should('be.disabled');
+
+      aiAgentConfigs.mcpUrlInput().set('http://my-mcp-url:8080');
+
+      // Fill the required fields for OAuth2 authentication
+      aiAgentConfigs.authenticationTypeSelector().toggle();
+      aiAgentConfigs.authenticationTypeSelector().clickOptionWithLabel('OAuth2 authentication');
+
+      settingsPage.settings().saveButton().should('be.disabled');
+
+      cy.intercept('GET', `${ apiPath }/oauth2/metadata?*`, {
+        statusCode: 200,
+        body:       {
+          metadataEndpoint: 'http://my-metadata-endpoint:8080',
+          scopesSupported:  ['scope1', 'scope2']
+        }
+      }).as('metadataDiscovery');
+
+      aiAgentConfigs.metadataDiscoveryButton().click();
+
+      cy.wait('@metadataDiscovery');
+
+      aiAgentConfigs.metadataEndpointInput().value().should('eq', 'http://my-metadata-endpoint:8080');
+
+      settingsPage.settings().saveButton().should('be.disabled');
+
+      aiAgentConfigs.scopesSelector().toggle();
+      aiAgentConfigs.scopesSelector().clickOptionWithLabel('scope1');
+
+      cy.intercept('POST', `${ apiPath }/oauth2/dynamic-registration`, {
+        statusCode: 200,
+        body:       {
+          clientId:     'my-client-id',
+          clientSecret: 'my-client-secret',
+        }
+      }).as('clientInfoDiscovery');
+
+      aiAgentConfigs.clientInfoDiscoveryButton().click();
+
+      aiAgentConfigs.clientIdInput().value().should('eq', 'my-client-id');
+      aiAgentConfigs.clientSecretInput().value().should('eq', 'my-client-secret');
+
+      settingsPage.settings().saveButton().should('be.disabled');
+
+      cy.wait('@clientInfoDiscovery');
+
+      aiAgentConfigs.descriptionInput().type('Custom agent description');
+      aiAgentConfigs.guidelinesInput().type('Custom agent guidelines');
+
+      settingsPage.settings().saveButton().should('be.enabled');
+
+      settingsPage.settings().saveButton().click();
+
+      new ApplySettingsPromptPo().confirm();
+
+      settingsPage.settings().saveButton().should('contain.text', 'Saved');
+
+      cy.intercept('GET', `${ apiPath }/oauth2/metadata?*`, {
+        statusCode: 200,
+        body:       {
+          metadataEndpoint: 'http://my-metadata-endpoint:8080',
+          scopesSupported:  ['scope1', 'scope2']
+        }
+      }).as('metadataDiscovery');
+
+      // Revisit the page to check if the settings were saved correctly
+      settingsPage.goTo();
+      settingsPage.waitForPage();
+
+      aiAgentConfigs.tabs().assertTabIsActive(`[data-testid^="${ updatedValues.customAgentPrefix }"]`);
+      aiAgentConfigs.mcpUrlInput().value().should('eq', 'http://my-mcp-url:8080');
+      aiAgentConfigs.authenticationTypeSelector().self().should('contain.text', 'OAuth2 authentication');
+
+      // Wait for the metadata init fetch to populate the scopes
+      cy.wait('@metadataDiscovery');
+
+      aiAgentConfigs.metadataEndpointInput().self().scrollIntoView();
+      aiAgentConfigs.metadataEndpointInput().value().should('eq', 'http://my-metadata-endpoint:8080');
+      aiAgentConfigs.self().should('contain.text', 'scope1');
+      aiAgentConfigs.clientIdInput().value().should('eq', 'my-client-id');
+      aiAgentConfigs.clientSecretInput().value().should('eq', 'my-client-secret');
+    });
+  });
+
+  after(() => {
+    cy.installRancherAIService();
   });
 });

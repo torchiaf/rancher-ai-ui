@@ -11,7 +11,6 @@ import ChatPo from '@/cypress/e2e/po/chat.po';
 import { HistoryPo } from '@/cypress/e2e/po/history.po';
 import RancherHeaderPo from '@/cypress/e2e/po/components/rancher-header.po';
 import { SlidingBadgePo } from '@/cypress/e2e/po/hook.po';
-import ContextPo from '@/cypress/e2e/po/context.po';
 import RancherSettingsBannersPo from '@/cypress/e2e/po/components/rancher-settings-banners.po';
 import ApplySettingsPromptPo from '@/cypress/e2e/po/dialog/apply-settings.po';
 import { rancherAgentConfig, fleetAgentConfig, provisioningAgentConfig } from '@/cypress/e2e/blueprints/aiAgentConfigs';
@@ -88,6 +87,27 @@ describe('Chat', () => {
 
       chat.open();
       chat.close();
+    });
+  });
+
+  describe('Status', () => {
+    it('It should be disabled when chat is not initialized', () => {
+      // Navigate to the local cluster dashboard, which exposes some context tags
+      const localClusterDashboard = new ClusterDashboardPagePo('local');
+
+      localClusterDashboard.goTo();
+
+      chat.open();
+
+      chat.isNotReady();
+      chat.console().isDisabled();
+      chat.context().isDisabled();
+      chat.processingState('Preparing chat').should('be.visible');
+
+      chat.isReady();
+      chat.console().isNotDisabled();
+      chat.context().isNotDisabled();
+      chat.processingState().should('not.exist');
     });
   });
 
@@ -506,7 +526,7 @@ describe('Chat', () => {
 
       // Verify the processing label is visible and not covered by the console panel
       processingState.should('be.visible').then(($phase) => {
-        new ContextPo().self().then(($context) => {
+        chat.context().panel().then(($context) => {
           const phaseRect = $phase[0].getBoundingClientRect();
           const contextRect = $context[0].getBoundingClientRect();
 
