@@ -87,6 +87,17 @@ class OAuth2AuthenticationRequest {
 class AuthenticationHandler {
   private activeOauth2Request: OAuth2AuthenticationRequest | null = null;
 
+  /**
+   *
+   * @param metadata the metdata payload for the popup window
+   * @param resolveFn the method to call to proceed with authentication
+   * @param cancelFn  the method to call to cancel the authentication
+   *
+   * @returns an instance of OAuth2AuthenticationRequest
+   *
+   * This method creates a new OAuth2 authentication request.
+   * If there's an existing active request, it aborts it before creating a new one.
+   */
   createOauth2AuthenticationRequest(
     metadata: McpAuthenticationRequest,
     resolveFn: () => void,
@@ -101,6 +112,14 @@ class AuthenticationHandler {
     return this.activeOauth2Request;
   }
 
+  /**
+   * Other authentication methods can be added here in the future, following a similar pattern to the OAuth2 method above.
+   */
+
+  /**
+   * Aborts any pending authentication requests.
+   * As of now, it only handles OAuth2 requests, but this can be extended in the future to handle other authentication methods.
+   */
   abortPendingRequests(): void {
     if (this.activeOauth2Request) {
       this.activeOauth2Request.abort();
