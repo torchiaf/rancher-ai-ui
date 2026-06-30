@@ -185,7 +185,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ metadataEndpoint: 'https://new-oauth.example.com' });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![0][0]).toEqual({
@@ -211,7 +211,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ clientID: 'new-client-id' });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![0][0]).toEqual({
@@ -237,7 +237,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ clientSecret: 'new-secret' });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![0][0]).toEqual({
@@ -263,7 +263,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ scopes: ['openid', 'offline_access'] });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![0][0]).toEqual({
@@ -292,7 +292,7 @@ describe('Oauth2SecretForm', () => {
         clientSecret: undefined
       });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted![0][0]).toEqual({
         ...payload,
@@ -353,7 +353,7 @@ describe('Oauth2SecretForm', () => {
 
       await wrapper.vm.$nextTick();
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![0][0]).toEqual(expect.objectContaining({
@@ -402,7 +402,10 @@ describe('Oauth2SecretForm', () => {
 
       await wrapper.vm.$nextTick();
 
-      expect(mockApiComposable.fetchMcpAuthenticationMetadata).toHaveBeenCalledWith({ mcpUrl: 'http://mcp-server.local' });
+      expect(mockApiComposable.fetchMcpAuthenticationMetadata).toHaveBeenCalledWith({
+        mcpUrl:      'http://mcp-server.local',
+        enableAbort: false
+      });
     });
 
     it('should set mcpScopes from discovery response', async() => {
@@ -584,9 +587,7 @@ describe('Oauth2SecretForm', () => {
 
       await vm.confirmClientInfoDiscovery();
 
-      expect(mockApiComposable.fetchMcpAuthenticationClientInfo).toHaveBeenCalledWith(
-        payload.metadataEndpoint
-      );
+      expect(mockApiComposable.fetchMcpAuthenticationClientInfo).toHaveBeenCalledWith({ metadataEndpoint: payload.metadataEndpoint });
       expect(vm.clientInfoDiscoveryStatus.result).toBe('success');
     });
 
@@ -612,7 +613,7 @@ describe('Oauth2SecretForm', () => {
 
       await vm.confirmClientInfoDiscovery();
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect(emitted).toBeTruthy();
       expect(emitted![emitted!.length - 1][0]).toEqual(expect.objectContaining({
@@ -778,7 +779,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ scopes: scopeString?.split(' ').filter((f: string) => !!f) });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect((emitted![0][0] as any).scopes).toEqual(['openid', 'profile', 'email']);
     });
@@ -802,7 +803,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ scopes: scopeString?.split(' ').filter((f: string) => !!f) });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
 
       expect((emitted![0][0] as any).scopes).toEqual(['openid', 'profile']);
     });
@@ -1035,7 +1036,7 @@ describe('Oauth2SecretForm', () => {
 
       vm.updateSecretValues({ clientID: 'new-id' });
 
-      const emitted = wrapper.emitted('update');
+      const emitted = wrapper.emitted('update:value');
       const emittedData = emitted![0][0] as any;
 
       expect(emittedData.metadataEndpoint).toBe(payload.metadataEndpoint);

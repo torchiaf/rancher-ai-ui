@@ -248,8 +248,8 @@ function updateBasicAuthSecret(value: AiAgentConfigBasicSecretPayload) {
   emit('update:authentication-secrets', agentSecrets.value);
 }
 
-function updateOauth2AuthSecret(value: Partial<AiAgentConfigOAuth2SecretPayload>) {
-  agentSecrets.value[selectedAgentName.value] = value as AiAgentConfigOAuth2SecretPayload;
+function updateOauth2AuthSecret(agent: AIAgentConfigCRD, value: Partial<AiAgentConfigOAuth2SecretPayload>) {
+  agentSecrets.value[agent.metadata?.name || ''] = value as AiAgentConfigOAuth2SecretPayload;
 
   emit('update:authentication-secrets', agentSecrets.value);
 }
@@ -539,7 +539,7 @@ watch(validationErrors, (errors) => {
                 :secret-name="agent.spec.authenticationSecret"
                 :mcp-url="agent.spec.mcpURL"
                 :api-composable="apiComposable"
-                @update="updateOauth2AuthSecret"
+                @update:value="(value: Partial<AiAgentConfigOAuth2SecretPayload>) => updateOauth2AuthSecret(agent, value)"
               />
             </div>
           </div>
