@@ -23,8 +23,14 @@ export const enum Tag {
   ConfirmationEnd = '</confirmation-response>',
   DocLinkStart = '<mcp-doclink>',
   DocLinkEnd = '</mcp-doclink>',
+  AuthenticationRequestStart = '<authentication>',
+  AuthenticationRequestEnd = '</authentication>',
+  TokenRefreshRequestStart = '<token-refresh>',
+  TokenRefreshRequestEnd = '</token-refresh>',
   ChatErrorStart = '<chat-error>',
   ChatErrorEnd = '</chat-error>',
+  AuthenticationErrorStart = '<auth-error>',
+  AuthenticationErrorEnd = '</auth-error>',
   ErrorStart = '<error>',
   ErrorEnd = '</error>',
   // Processing tags
@@ -92,6 +98,7 @@ export const enum HookContextTag {
 
 export const enum MessagePhase {
   Idle = 'idle',
+  Setup = 'setup',
   Initializing = 'initializing',
   Thinking = 'thinking',
   Working = 'working',
@@ -99,6 +106,8 @@ export const enum MessagePhase {
   AwaitingConfirmation = 'awaitingConfirmation',
   GeneratingResponse = 'generatingResponse',
   ProcessingSubagent = 'processingSubagent',
+  ResumingAgent = 'resumingAgent',
+  RefreshingMcpToken = 'refreshingMcpToken',
   ProcessingTools = 'processingTools',
   Confirming = 'confirming',
   Finalizing = 'finalizing',
@@ -196,15 +205,12 @@ export const enum MessageTemplateComponent {
   Welcome = 'welcome',
   NoPermission = 'no-permission',
   SystemRequest = 'system-request',
+  McpAuthenticationRequest = 'mcp-authentication-request',
 }
 
 export interface MessageTemplate {
   component: MessageTemplateComponent;
-  content: {
-    message?: string;
-    principal?: any;
-    [key: string]: unknown;
-  };
+  content: { [key: string]: any; };
 }
 
 export const enum MessageLabelKey {
@@ -270,8 +276,28 @@ export const enum StorageType {
   Postgres = 'postgres',
 }
 
-export interface SubAgentProcessingMetadata {
+export const enum AiAgentAPIEvent {
+  Error = '__error__',
+  Abort = '__abort__',
+}
+
+export interface McpAuthenticationRequest {
   agent: string;
+  type: string;
+  url?: string;
+}
+
+export const enum McpAuthenticationResponse {
+  Continue = 'authentication_confirmed',
+  Cancel = 'authentication_canceled',
+}
+
+export const enum McpTokenRefreshResponse {
+  Confirm = 'token_refresh_confirmed',
+}
+
+export interface SubAgentProcessingMetadata {
+  name: string;
   query?: string;
 }
 
