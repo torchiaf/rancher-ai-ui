@@ -22,6 +22,16 @@ jest.mock('@shell/components/form/Password.vue', () => ({
     name:     'Password',
     props:    ['value', 'label', 'mode', 'disabled'],
     template: '<div />'
+  },
+}));
+
+// Mock FileSelector component - it fixes ButtonVariantProps compiler error
+jest.mock('@shell/components/form/FileSelector.vue', () => ({
+  default: {
+    name:     'FileSelector',
+    template: '<div />',
+    props:    ['value', 'label', 'required'],
+    emits:    ['update:value']
   }
 }));
 
