@@ -425,7 +425,7 @@ function unmount() {
       />
       <Context
         :value="!hasPermissions || systemErrors.length ? [] : context"
-        :disabled="disabled"
+        :disabled="!isChatInitialized || disabled"
         @select="selectContext"
       />
       <Console
@@ -433,7 +433,7 @@ function unmount() {
         :llm-config="llmConfig"
         :agents="chatAgents"
         :agent-name="agentName"
-        :disabled="disabled"
+        :disabled="!isChatInitialized || disabled"
         :messages="messages"
         :has-permissions="hasPermissions"
         @input:content="ensureConnectionAndSendMessage($event)"

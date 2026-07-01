@@ -229,11 +229,11 @@ onBeforeUnmount(() => {
       :disabled="false"
     />
     <Processing
-      v-if="!props.disabled"
+      v-if="!props.activeChatId || !props.disabled"
       class="chat-message-processing-label text-label"
       :class="{
         /* It avoids pushing the System messages up (Welcome template) */
-        'sticky-bottom': formattedMessages.filter((m: Message) => m.role === Role.User).length > 0
+        'sticky-bottom': !props.activeChatId || formattedMessages.filter((m: Message) => m.role === Role.User).length > 0
       }"
       :phase="props.processingState?.phase"
       :label="props.processingState?.label"
