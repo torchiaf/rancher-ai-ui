@@ -135,18 +135,13 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function fetchMcpAuthenticationMetadata(args: { mcpUrl: string, forceRefresh?: boolean, enableAbort?: boolean } = {
-    mcpUrl:       '',
-    forceRefresh: false,
-    enableAbort:  true
+  async function fetchMcpAuthenticationMetadata(args: { mcpUrl: string, abort?: boolean } = {
+    mcpUrl: '',
+    abort:  true
   }): Promise<McpAuthenticationMetadata & McpAuthenticationEvent | null> {
-    const { mcpUrl, forceRefresh } = args;
+    const { mcpUrl, abort } = args;
 
-    if (!forceRefresh && mcpScopesCache[mcpUrl]) {
-      return { scopesSupported: mcpScopesCache[mcpUrl] };
-    }
-
-    if (args.enableAbort) {
+    if (abort) {
       cancelFetchMcpAuthenticationMetadata();
     }
 
@@ -192,13 +187,32 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
-  async function fetchMcpAuthenticationClientInfo(args: { metadataEndpoint: string, enableAbort?: boolean } = {
-    metadataEndpoint: '',
-    enableAbort:      true
-  }): Promise<McpAuthenticationClientInfo & McpAuthenticationEvent | null> {
-    const { metadataEndpoint, enableAbort } = args;
+  async function fetchMcpAuthenticationScopes(args: { mcpUrl: string }): Promise<string[]> {
+    const { mcpUrl } = args;
 
-    if (enableAbort) {
+    if (mcpScopesCache[mcpUrl]) {
+      return mcpScopesCache[mcpUrl];
+    }
+
+    const metadata = await fetchMcpAuthenticationMetadata({
+      mcpUrl,
+      abort: false
+    });
+
+    if (!!metadata?.scopesSupported) {
+      return metadata.scopesSupported;
+    }
+
+    return [];
+  }
+
+  async function fetchMcpAuthenticationClientInfo(args: { metadataEndpoint: string, abort?: boolean } = {
+    metadataEndpoint: '',
+    abort:            true
+  }): Promise<McpAuthenticationClientInfo & McpAuthenticationEvent | null> {
+    const { metadataEndpoint, abort } = args;
+
+    if (abort) {
       cancelFetchMcpAuthenticationClientInfo();
     }
 
@@ -390,6 +404,7 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     cancelFetchMcpAuthenticationMetadata,
     fetchMcpAuthenticationClientInfo,
     cancelFetchMcpAuthenticationClientInfo,
+    fetchMcpAuthenticationScopes,
     fetchLLMModels,
     fetchSettings,
     saveSettings,

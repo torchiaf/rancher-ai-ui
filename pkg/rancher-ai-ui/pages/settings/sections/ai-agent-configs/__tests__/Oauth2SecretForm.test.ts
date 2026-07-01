@@ -62,6 +62,7 @@ const mockApiComposable = {
     clientSecret: 'discovered-client-secret'
   }),
   cancelFetchMcpAuthenticationClientInfo: jest.fn(),
+  fetchMcpAuthenticationScopes:           jest.fn().mockResolvedValue(['openid', 'profile', 'email'])
 } as any;
 
 const mockOauth2Payload = (): AiAgentConfigOAuth2SecretPayload => ({
@@ -402,10 +403,7 @@ describe('Oauth2SecretForm', () => {
 
       await wrapper.vm.$nextTick();
 
-      expect(mockApiComposable.fetchMcpAuthenticationMetadata).toHaveBeenCalledWith({
-        mcpUrl:      'http://mcp-server.local',
-        enableAbort: false
-      });
+      expect(mockApiComposable.fetchMcpAuthenticationScopes).toHaveBeenCalledWith({ mcpUrl: 'http://mcp-server.local' });
     });
 
     it('should set mcpScopes from discovery response', async() => {
@@ -436,6 +434,7 @@ describe('Oauth2SecretForm', () => {
     it('should handle metadata discovery error', async() => {
       const payload = mockOauth2Payload();
 
+      mockApiComposable.fetchMcpAuthenticationScopes.mockResolvedValueOnce([]);
       mockApiComposable.fetchMcpAuthenticationMetadata.mockResolvedValueOnce({ code: AiAgentAPIEvent.Error });
 
       const wrapper = shallowMount(Oauth2SecretForm, {
@@ -461,7 +460,6 @@ describe('Oauth2SecretForm', () => {
 
       // First call during mount, second call in confirmMetadataDiscovery
       mockApiComposable.fetchMcpAuthenticationMetadata
-        .mockResolvedValueOnce({ scopesSupported: ['openid', 'profile', 'email'] })
         .mockResolvedValueOnce({
           scopesSupported:  ['openid', 'profile'],
           metadataEndpoint: newEndpoint
@@ -482,23 +480,18 @@ describe('Oauth2SecretForm', () => {
       await wrapper.vm.$nextTick();
       await vm.confirmMetadataDiscovery();
 
-      expect(mockApiComposable.fetchMcpAuthenticationMetadata).toHaveBeenCalledWith({
-        mcpUrl:       'http://mcp-server.local',
-        forceRefresh: true
-      });
+      expect(mockApiComposable.fetchMcpAuthenticationMetadata).toHaveBeenCalledWith({ mcpUrl: 'http://mcp-server.local' });
       expect(vm.metadataDiscoveryStatus.result).toBe('success');
     });
 
     it('should set error status when metadata discovery fails', async() => {
       const payload = mockOauth2Payload();
 
-      // First call during mount (successful), second call in confirmMetadataDiscovery (error)
-      mockApiComposable.fetchMcpAuthenticationMetadata
-        .mockResolvedValueOnce({ scopesSupported: ['openid', 'profile', 'email'] })
-        .mockResolvedValueOnce({
-          code:    AiAgentAPIEvent.Error,
-          message: 'Metadata endpoint unreachable'
-        });
+      // fetchMcpAuthenticationScopes is mocked -> doesn't call fetchMcpAuthenticationMetadata
+      mockApiComposable.fetchMcpAuthenticationMetadata = jest.fn().mockResolvedValueOnce({
+        code:    AiAgentAPIEvent.Error,
+        message: 'Metadata endpoint unreachable'
+      });
 
       const wrapper = shallowMount(Oauth2SecretForm, {
         ...requiredSetup(),
