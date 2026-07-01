@@ -49,7 +49,8 @@ const {
   fetchMcpAuthenticationMetadata,
   cancelFetchMcpAuthenticationMetadata,
   fetchMcpAuthenticationClientInfo,
-  cancelFetchMcpAuthenticationClientInfo
+  cancelFetchMcpAuthenticationClientInfo,
+  fetchMcpAuthenticationScopes,
 } = props.apiComposable;
 
 const emit = defineEmits(['update:value']);
@@ -108,16 +109,7 @@ async function fetchMcpScopesOptions() {
 
   metadataDiscoveryStatus.value = { result: null };
 
-  const data = await fetchMcpAuthenticationMetadata({
-    mcpUrl:      props.mcpUrl,
-    enableAbort: false
-  });
-
-  if (data && !!data.scopesSupported) {
-    mcpScopes.value = data.scopesSupported;
-  } else if (data?.code === AiAgentAPIEvent.Error) {
-    mcpScopes.value = [];
-  }
+  mcpScopes.value = await fetchMcpAuthenticationScopes({ mcpUrl: props.mcpUrl });
 
   metadataDiscoveryStatus.value = { result: 'info' };
 }
@@ -129,10 +121,7 @@ async function confirmMetadataDiscovery() {
 
   metadataDiscoveryStatus.value = { result: null };
 
-  const data = await fetchMcpAuthenticationMetadata({
-    mcpUrl:       props.mcpUrl,
-    forceRefresh: true
-  });
+  const data = await fetchMcpAuthenticationMetadata({ mcpUrl: props.mcpUrl });
 
   if (!data || data.code === AiAgentAPIEvent.Error) {
     mcpScopes.value = [];
