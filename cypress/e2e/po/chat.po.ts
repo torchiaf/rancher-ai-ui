@@ -2,6 +2,7 @@ import ComponentPo from '@rancher/cypress/e2e/po/components/component.po';
 import RancherHeaderPo from '@/cypress/e2e/po/components/rancher-header.po';
 import { HeaderPo } from '@/cypress/e2e/po/header.po';
 import { ConsolePo } from '@/cypress/e2e/po/console.po';
+import ContextPo from '@/cypress/e2e/po/context.po';
 import MessagesPo from '@/cypress/e2e/po/messages.po';
 
 export default class ChatPo extends ComponentPo {
@@ -22,6 +23,10 @@ export default class ChatPo extends ComponentPo {
 
   messagesPanel() {
     return new MessagesPo();
+  }
+
+  context() {
+    return new ContextPo();
   }
 
   console() {
