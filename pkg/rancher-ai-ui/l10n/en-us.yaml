@@ -119,6 +119,7 @@ ai:
       openai: ChatGPT
       gemini: Gemini
       bedrock: Bedrock
+      generic-openai: Custom LLM
       unknown: Unknown Model
   installation:
     goToInstall: View Charts
