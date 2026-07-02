@@ -230,6 +230,7 @@ onBeforeUnmount(() => {
     />
     <Processing
       v-if="!props.activeChatId || !props.disabled"
+      data-test-prefix="message"
       class="chat-message-processing-label text-label"
       :class="{
         /* It avoids pushing the System messages up (Welcome template) */

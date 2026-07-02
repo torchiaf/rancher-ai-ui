@@ -14,7 +14,11 @@ export default class ChatPo extends ComponentPo {
   }
 
   processingState(label?: string) {
-    return this.messagesPanel().processingState(label);
+    if (label) {
+      return this.self().get(`[data-testid="rancher-ai-ui-processing-connection-state-${ label.toLowerCase().replace(/\s/g, '-') }"]`);
+    }
+
+    return this.self().get('[data-testid^="rancher-ai-ui-processing-connection-state-"]');
   }
 
   header() {
