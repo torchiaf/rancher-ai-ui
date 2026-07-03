@@ -2,6 +2,7 @@ import type { Store as VuexStore } from 'vuex';
 import { STORE } from '@shell/store/store-types';
 import { NORMAN, MANAGEMENT, METRIC } from '@shell/config/types';
 import { ActionResource } from '../../../types';
+import { warn } from '../../../utils/log';
 
 type Store = VuexStore<any> & { rootGetters?: Record<string, string> };
 
@@ -239,13 +240,6 @@ export function getDetailLocation(
     cluster, type, namespace, name
   } = resource;
 
-  console.log('--- Building detail location from model:', {
-    cluster,
-    type,
-    namespace,
-    name,
-  });
-
   const normalizedType = normalizeType(inStore, type);
   const normalizedId = normalizeId(schema, cluster, namespace, name);
   const normalizedNamespace = normalizeNamespace(schema, cluster, namespace);
@@ -316,15 +310,11 @@ export function getDetailLocation(
 
     const modelInstance = new ModelClass(data, context, null, false);
 
-    console.log('--- Instantiated model instance:', modelInstance);
-
     // Get the detail location from the model's getter
-    const detailLocation = modelInstance.detailLocation;
-
-    return detailLocation || null;
+    return modelInstance.detailLocation || null;
   } catch (e) {
-    console.warn('Failed to build detail location from model:', e);
-
-    return null;
+    warn('Failed to build detail location from model:', e);
   }
+
+  return null;
 }

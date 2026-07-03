@@ -76,12 +76,10 @@ async function loadSchema() {
     const schema = await store.dispatch('cluster/request', { url });
 
     if (schema) {
-      console.log(`Schema loaded for ${ type }:`, schema);
-
       return schema;
     }
   } catch (e) {
-    console.warn(`Failed to load schema for ${ type } via cluster API:`, e);
+    warn(`Failed to load schema for ${ type } via cluster API:`, e);
   }
 
   return null;
@@ -105,13 +103,11 @@ async function fetchResource() {
     const id = normalizeId(schema.value, cluster, namespace, name);
 
     if (isManagementGroup(schema.value)) {
-      const ff = await store.dispatch(`${ inStore.value }/find`, {
+      await store.dispatch(`${ inStore.value }/find`, {
         cluster,
         type: normalizedType,
         id,
       });
-
-      console.log('--- ff:', ff, schema.value);
     } else if (cluster === 'local') {
       await store.dispatch(`${ inStore.value }/find`, {
         cluster,
@@ -172,11 +168,9 @@ function observeButtonAndWhenIsVisible(callback: () => void) {
   visibilityObserver.value = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        console.log('✅ ---- button is VISIBLE on the screen now!');
         isVisible.value = true;
         callback();
       } else {
-        console.log('❌ ---- button is NO LONGER visible!');
         isVisible.value = false;
       }
     });
