@@ -45,7 +45,7 @@ const MANAGEMENT_CLOUD_CREDENTIAL = 'management.cattle.io.cloudcredential';
  * @param schema - The schema object to check
  * @returns True if the schema represents a Custom Resource Definition (CRD), false otherwise
  */
-function isCRD(schema: Schema): boolean {
+export function isCRD(schema: Schema): boolean {
   return schema?.attributes?.crd === true || schema?.attributes?.crd === 'true';
 }
 
@@ -56,7 +56,7 @@ function isCRD(schema: Schema): boolean {
  * @param productName - The name of the product to retrieve
  * @returns The product object if found, otherwise undefined
  */
-function getProductByName(store: Store, productName: string): Product {
+export function getProductByName(store: Store, productName: string): Product {
   const activeProducts = store.getters['type-map/activeProducts'];
 
   return activeProducts.find((p: Product) => p.name === productName);
@@ -67,7 +67,7 @@ function getProductByName(store: Store, productName: string): Product {
  * @param type - The Norman type (e.g., 'project', 'globalRole')
  * @returns The Management API type (e.g., 'management.cattle.io.project')
  */
-function convertToManagementType(type: string): string {
+export function convertToManagementType(type: string): string {
   const managementTypeMap: Record<string, string> = {
     [NORMAN.AUTH_CONFIG]:                   MANAGEMENT.AUTH_CONFIG,
     [NORMAN.CLUSTER]:                       MANAGEMENT.CLUSTER,

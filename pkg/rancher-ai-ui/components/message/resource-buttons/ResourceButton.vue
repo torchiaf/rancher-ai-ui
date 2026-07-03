@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  computed, nextTick, onMounted, ref, watch, type PropType
+  computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type PropType
 } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
@@ -130,6 +130,9 @@ async function fetchResource() {
   }
 }
 
+/**
+ * Load the schema and resource.
+ */
 async function loadSchemaAndResource() {
   if (!!resource.value) {
     return;
@@ -164,6 +167,12 @@ function goTo() {
   }
 }
 
+/**
+ * Observe the button and call the callback when it becomes visible in the viewport.
+ *
+ * We want to load the schema and resource only when the button is visible,
+ * to avoid unnecessary API calls for buttons that are not in view.
+ */
 function observeButtonAndWhenIsVisible(callback: () => void) {
   visibilityObserver.value = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -183,13 +192,24 @@ function observeButtonAndWhenIsVisible(callback: () => void) {
   });
 }
 
+/**
+ * When moving from one cluster to another, we reset the store.
+ * This watcher ensures that the schema and resource are reloaded if the button is visible.
+ */
+watch(() => store.getters.clusterReady, async(isReady) => {
+  if (isReady && isVisible.value) {
+    await loadSchemaAndResource();
+  }
+});
+
 onMounted(() => {
   observeButtonAndWhenIsVisible(() => loadSchemaAndResource());
 });
 
-watch(() => store.getters.clusterReady, async(isReady) => {
-  if (isReady && isVisible.value) {
-    await loadSchemaAndResource();
+onBeforeUnmount(() => {
+  if (visibilityObserver.value) {
+    visibilityObserver.value.disconnect();
+    visibilityObserver.value = null;
   }
 });
 </script>
