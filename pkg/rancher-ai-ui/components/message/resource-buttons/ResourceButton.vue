@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  computed, onMounted, ref, watch, type PropType
+  computed, nextTick, onMounted, ref, watch, type PropType
 } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
@@ -24,6 +24,10 @@ const props = defineProps({
     default: () => ({} as MessageAction),
   }
 });
+
+const resourceButtonRef = ref<HTMLDivElement | null>(null);
+const visibilityObserver = ref<IntersectionObserver | null>(null);
+const isVisible = ref(false);
 
 const schema = ref(null);
 
@@ -131,13 +135,13 @@ async function fetchResource() {
 }
 
 async function loadSchemaAndResource() {
-  schema.value = await loadSchema();
-
-  if (!schema.value) {
+  if (!!resource.value) {
     return;
   }
 
-  if (!!resource.value) {
+  schema.value = await loadSchema();
+
+  if (!schema.value) {
     return;
   }
 
@@ -164,21 +168,42 @@ function goTo() {
   }
 }
 
-onMounted(async() => {
-  await loadSchemaAndResource();
+function observeButtonAndWhenIsVisible(callback: () => void) {
+  visibilityObserver.value = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        console.log('✅ ---- button is VISIBLE on the screen now!');
+        isVisible.value = true;
+        callback();
+      } else {
+        console.log('❌ ---- button is NO LONGER visible!');
+        isVisible.value = false;
+      }
+    });
+  }, { threshold: 0.1 });
+
+  nextTick(() => {
+    if (resourceButtonRef.value) {
+      visibilityObserver.value?.observe(resourceButtonRef.value);
+    }
+  });
+}
+
+onMounted(() => {
+  observeButtonAndWhenIsVisible(() => loadSchemaAndResource());
 });
 
 watch(() => store.getters.clusterReady, async(isReady) => {
-  if (isReady) {
+  if (isReady && isVisible.value) {
     await loadSchemaAndResource();
   }
 });
-
 </script>
 
 <template>
   <div
     v-if="props.value.type === ActionType.Button"
+    ref="resourceButtonRef"
     :data-testid="`rancher-ai-ui-chat-message-action-button-${ props.value?.resource?.name }`"
   >
     <RcButton
