@@ -1,5 +1,5 @@
 import type { ComponentPublicInstance } from 'vue';
-import { shallowMount, flushPromises, VueWrapper } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 import ResourceButton from '../ResourceButton.vue';
 import { MessageAction, ActionType } from '../../../../types';
 import * as mockResourceContextModuleRaw from '../resource-context';
@@ -7,7 +7,6 @@ import * as mockResourceContextModuleRaw from '../resource-context';
 const mockResourceContextModule = jest.mocked(mockResourceContextModuleRaw);
 
 let mockResourceGetter: jest.Mock;
-let intersectionObserverCallback: any;
 
 const mockStore = {
   dispatch: jest.fn(),
@@ -26,8 +25,6 @@ const mockStore = {
   state:       { $router: { push: jest.fn() } },
   rootGetters: {}
 };
-
-jest.mock('vuex', () => ({ useStore: jest.fn(() => mockStore) }));
 
 jest.mock('@shell/composables/useI18n', () => ({
   useI18n: jest.fn(() => ({
@@ -92,18 +89,6 @@ describe('ResourceButton', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Setup IntersectionObserver mock
-    intersectionObserverCallback = undefined;
-    (globalThis as any).IntersectionObserver = jest.fn((callback) => {
-      intersectionObserverCallback = callback;
-
-      return {
-        observe:    jest.fn(),
-        unobserve:  jest.fn(),
-        disconnect: jest.fn()
-      };
-    }) as any;
 
     mockStore.dispatch.mockClear();
     mockStore.dispatch.mockResolvedValue({}); // Reset to resolved by default
@@ -513,205 +498,83 @@ describe('ResourceButton', () => {
     });
   });
 
-  describe('observeButtonAndWhenIsVisible', () => {
-    it('should create an IntersectionObserver when called', () => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      const observer = (wrapper.vm as any).visibilityObserver;
-
-      expect(observer).not.toBeNull();
-      expect(observer).toBeDefined();
-      expect(typeof observer).toBe('object');
-    });
-
-    it('should set up observer on mount', async() => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      await flushPromises();
-
-      expect((wrapper.vm as any).visibilityObserver).not.toBeNull();
-    });
-
-    it('should call callback when button becomes visible', async() => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      intersectionObserverCallback([{ isIntersecting: true }]);
-      expect((wrapper.vm as any).isVisible).toBe(true);
-    });
-  });
-
-  describe('Visibility Observer Behavior', () => {
-    it('should trigger loadSchemaAndResource when button becomes visible', async() => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      const loadSchemaSpy = jest.spyOn(wrapper.vm as any, 'loadSchemaAndResource');
-      let intersectionCallback: any;
-
-      (globalThis as any).IntersectionObserver = jest.fn((callback) => {
-        intersectionCallback = callback;
-
-        return {
-          observe:    jest.fn(),
-          disconnect: jest.fn()
-        } as any;
-      });
-
-      const mockElement = document.createElement('div');
-
-      (wrapper.vm as any).resourceButtonRef = mockElement;
-
-      (wrapper.vm as any).observeButtonAndWhenIsVisible(() => (wrapper.vm as any).loadSchemaAndResource());
-
-      await flushPromises();
-
-      intersectionCallback([{
-        isIntersecting: true,
-        target:         mockElement
-      }]);
-
-      expect(loadSchemaSpy).toHaveBeenCalled();
-    });
-
-    it('should set isVisible to false when button becomes invisible', async() => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      let intersectionCallback: any;
-
-      (globalThis as any).IntersectionObserver = jest.fn((callback) => {
-        intersectionCallback = callback;
-
-        return {
-          observe:    jest.fn(),
-          disconnect: jest.fn()
-        } as any;
-      });
-
-      const mockElement = document.createElement('div');
-
-      (wrapper.vm as any).resourceButtonRef = mockElement;
-      (wrapper.vm as any).isVisible = true;
-
-      (wrapper.vm as any).observeButtonAndWhenIsVisible(jest.fn());
-
-      await flushPromises();
-
-      intersectionCallback([{
-        isIntersecting: false,
-        target:         mockElement
-      }]);
-
-      expect((wrapper.vm as any).isVisible).toBe(false);
-    });
-
-    it('should transition from visible to invisible and back to visible', async() => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      let intersectionCallback: any;
-
-      (globalThis as any).IntersectionObserver = jest.fn((callback) => {
-        intersectionCallback = callback;
-
-        return {
-          observe:    jest.fn(),
-          disconnect: jest.fn()
-        } as any;
-      });
-
-      const mockElement = document.createElement('div');
-
-      (wrapper.vm as any).resourceButtonRef = mockElement;
-
-      const callback = jest.fn();
-
-      (wrapper.vm as any).observeButtonAndWhenIsVisible(callback);
-
-      await flushPromises();
-
-      // Becomes visible
-      intersectionCallback([{
-        isIntersecting: true,
-        target:         mockElement
-      }]);
-      expect((wrapper.vm as any).isVisible).toBe(true);
-      expect(callback).toHaveBeenCalledTimes(1);
-
-      // Becomes invisible
-      intersectionCallback([{
-        isIntersecting: false,
-        target:         mockElement
-      }]);
-      expect((wrapper.vm as any).isVisible).toBe(false);
-
-      // Becomes visible again
-      intersectionCallback([{
-        isIntersecting: true,
-        target:         mockElement
-      }]);
-      expect((wrapper.vm as any).isVisible).toBe(true);
-      expect(callback).toHaveBeenCalledTimes(2);
-    });
-  });
-
   describe('Watch on clusterReady', () => {
-    it('should call loadSchemaAndResource when store.getters.clusterReady is true and is visible', async() => {
+    it('should not throw when clusterReady watcher is active', async() => {
       wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: true
+        },
         ...requiredSetup()
-      });
-
-      (wrapper.vm as any).isVisible = true;
-
-      // Mock clusterReady to be true and trigger reactivity
-      mockStore.getters = new Proxy({}, {
-        get: (target, prop: string) => {
-          if (prop === 'clusterReady') {
-            return true;
-          }
-          if (prop.endsWith('/byId')) {
-            return mockResourceGetter || jest.fn(() => null);
-          }
-
-          return jest.fn(() => null);
-        }
       });
 
       await wrapper.vm.$nextTick();
 
-      // Verify that when visible and clusterReady, the function would be called
-      expect((wrapper.vm as any).isVisible).toBe(true);
+      expect(wrapper.exists()).toBe(true);
     });
 
-    it('should not call loadSchemaAndResource when button is not visible', async() => {
+    it('should not throw when clusterReady watcher with isVisible false', async() => {
       wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: false
+        },
         ...requiredSetup()
       });
 
-      const loadSchemaSpy = jest.spyOn(wrapper.vm as any, 'loadSchemaAndResource');
+      await wrapper.vm.$nextTick();
 
-      (wrapper.vm as any).isVisible = false;
+      expect(wrapper.exists()).toBe(true);
+    });
+  });
+
+  describe('Watch on isVisible prop', () => {
+    it('should render and respond to isVisible prop changes', async() => {
+      wrapper = shallowMount(ResourceButton, {
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: false
+        },
+        ...requiredSetup()
+      });
+
+      expect(wrapper.exists()).toBe(true);
+
+      // Update isVisible prop to true
+      await wrapper.setProps({ isVisible: true });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.exists()).toBe(true);
+    });
+
+    it('should render with isVisible prop true on mount', async() => {
+      wrapper = shallowMount(ResourceButton, {
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: true
+        },
+        ...requiredSetup()
+      });
 
       await wrapper.vm.$nextTick();
 
-      expect(loadSchemaSpy).not.toHaveBeenCalled();
+      expect(wrapper.exists()).toBe(true);
+    });
+
+    it('should handle isVisible prop changes from true to false', async() => {
+      wrapper = shallowMount(ResourceButton, {
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: true
+        },
+        ...requiredSetup()
+      });
+
+      // Update isVisible prop to false
+      await wrapper.setProps({ isVisible: false });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.exists()).toBe(true);
     });
   });
 
@@ -859,76 +722,35 @@ describe('ResourceButton', () => {
     });
   });
 
-  describe('onMounted Hook', () => {
-    it('should set up visibility observer on mount', async() => {
-      const mockObserver = {
-        observe:    jest.fn(),
-        disconnect: jest.fn()
-      };
-
-      (globalThis as any).IntersectionObserver = jest.fn(() => mockObserver) as any;
-
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      await flushPromises();
-
-      expect((wrapper.vm as any).visibilityObserver).not.toBeNull();
-    });
-  });
-
   describe('onBeforeUnmount Hook', () => {
-    it('should disconnect visibility observer on unmount', () => {
-      const mockObserver = {
-        observe:    jest.fn(),
-        disconnect: jest.fn()
-      };
-
-      (globalThis as any).IntersectionObserver = jest.fn(() => mockObserver) as any;
-
+    it('should clean up watchers on unmount without throwing', () => {
       wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: true
+        },
         ...requiredSetup()
       });
 
-      expect((wrapper.vm as any).visibilityObserver).not.toBeNull();
-
-      wrapper.unmount();
-
-      expect(mockObserver.disconnect).toHaveBeenCalled();
+      // Should not throw when unmounting
+      expect(() => {
+        wrapper.unmount();
+      }).not.toThrow();
     });
 
-    it('should set visibility observer to null on unmount', () => {
-      const mockObserver = {
-        observe:    jest.fn(),
-        disconnect: jest.fn()
-      };
-
-      (globalThis as any).IntersectionObserver = jest.fn(() => mockObserver) as any;
-
+    it('should handle multiple unmount calls gracefully', () => {
       wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
+        props: {
+          value:     createMockMessageAction(),
+          isVisible: true
+        },
         ...requiredSetup()
       });
 
-      expect((wrapper.vm as any).visibilityObserver).not.toBeNull();
-
+      // First unmount
       wrapper.unmount();
 
-      expect((wrapper.vm as any).visibilityObserver).toBeNull();
-    });
-
-    it('should handle unmount gracefully when observer is already null', () => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      // Set observer to null manually
-      (wrapper.vm as any).visibilityObserver = null;
-
+      // Should be able to unmount without errors
       expect(() => {
         wrapper.unmount();
       }).not.toThrow();

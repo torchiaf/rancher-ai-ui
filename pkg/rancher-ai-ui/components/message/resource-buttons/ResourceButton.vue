@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type PropType
+  computed, onBeforeUnmount, ref, watch, type PropType
 } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
@@ -22,12 +22,12 @@ const props = defineProps({
   value: {
     type:    Object as PropType<MessageAction>,
     default: () => ({} as MessageAction),
+  },
+  isVisible: {
+    type:    Boolean,
+    default: false,
   }
 });
-
-const resourceButtonRef = ref<HTMLDivElement | null>(null);
-const visibilityObserver = ref<IntersectionObserver | null>(null);
-const isVisible = ref(false);
 
 const schema = ref(null);
 
@@ -168,49 +168,27 @@ function goTo() {
 }
 
 /**
- * Observe the button and call the callback when it becomes visible in the viewport.
- *
- * We want to load the schema and resource only when the button is visible,
- * to avoid unnecessary API calls for buttons that are not in view.
- */
-function observeButtonAndWhenIsVisible(callback: () => void) {
-  visibilityObserver.value = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        isVisible.value = true;
-        callback();
-      } else {
-        isVisible.value = false;
-      }
-    });
-  }, { threshold: 0.1 });
-
-  nextTick(() => {
-    if (resourceButtonRef.value) {
-      visibilityObserver.value?.observe(resourceButtonRef.value);
-    }
-  });
-}
-
-/**
  * When moving from one cluster to another, we reset the store.
  * This watcher ensures that the schema and resource are reloaded if the button is visible.
  */
-watch(() => store.getters.clusterReady, async(isReady) => {
-  if (isReady && isVisible.value) {
-    await loadSchemaAndResource();
+const clusterReadyWatcher = watch(() => store.getters.clusterReady, (isReady) => {
+  if (isReady && props.isVisible) {
+    loadSchemaAndResource();
   }
 });
 
-onMounted(() => {
-  observeButtonAndWhenIsVisible(() => loadSchemaAndResource());
-});
+/**
+ * Load the schema and resource when the button becomes visible.
+ */
+const isVisibleWatcher = watch(() => props.isVisible, async(isVisible) => {
+  if (isVisible) {
+    loadSchemaAndResource();
+  }
+}, { immediate: true });
 
 onBeforeUnmount(() => {
-  if (visibilityObserver.value) {
-    visibilityObserver.value.disconnect();
-    visibilityObserver.value = null;
-  }
+  clusterReadyWatcher();
+  isVisibleWatcher();
 });
 </script>
 
