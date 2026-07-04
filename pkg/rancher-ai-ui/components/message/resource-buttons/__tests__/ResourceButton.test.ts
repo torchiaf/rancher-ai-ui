@@ -129,20 +129,6 @@ describe('ResourceButton', () => {
       expect(wrapper.find('[data-testid="rancher-ai-ui-chat-message-action-button-test-pod"]').exists()).toBe(true);
     });
 
-    it('should not render the component when ActionType is not Button', () => {
-      wrapper = shallowMount(ResourceButton, {
-        props: {
-          value: {
-            label: 'Test Action',
-            type:  'something-else'
-          }
-        },
-        ...requiredSetup()
-      });
-
-      expect(wrapper.find('[data-testid^="rancher-ai-ui-chat-message-action-button"]').exists()).toBe(false);
-    });
-
     it('should initialize with isVisible as false', () => {
       wrapper = shallowMount(ResourceButton, {
         props: { value: createMockMessageAction() },
@@ -687,33 +673,6 @@ describe('ResourceButton', () => {
   });
 
   describe('Template Rendering', () => {
-    it('should render RcButton component when value has ActionType.Button', () => {
-      wrapper = shallowMount(ResourceButton, {
-        props: { value: createMockMessageAction() },
-        ...requiredSetup()
-      });
-
-      const button = wrapper.findComponent({ name: 'RcButton' });
-
-      expect(button.exists()).toBe(true);
-    });
-
-    it('should not render when ActionType is not Button', () => {
-      wrapper = shallowMount(ResourceButton, {
-        props: {
-          value: {
-            label: 'Test Button',
-            type:  'some-other-type'
-          }
-        },
-        ...requiredSetup()
-      });
-
-      const button = wrapper.findComponent({ name: 'RcButton' });
-
-      expect(button.exists()).toBe(false);
-    });
-
     it('should disable button when resource is not available', () => {
       // mockResourceGetter returns null by default
       wrapper = shallowMount(ResourceButton, {

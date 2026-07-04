@@ -7,7 +7,6 @@ import { useI18n } from '@shell/composables/useI18n';
 import RcButton from '@components/RcButton/RcButton.vue';
 import { warn } from '../../../utils/log';
 import { MessageAction } from '../../../types';
-import { ActionType } from '../../../types';
 import {
   getProduct, getDetailLocation, getInStore, isManagementStore, normalizeType,
   getManagementSchema,
@@ -196,7 +195,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    v-if="props.value.type === ActionType.Button"
     ref="resourceButtonRef"
     :data-testid="`rancher-ai-ui-chat-message-action-button-${ props.value?.resource?.name }`"
   >
