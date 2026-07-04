@@ -45,8 +45,8 @@ const MANAGEMENT_CLOUD_CREDENTIAL = 'management.cattle.io.cloudcredential';
  * @param schema - The schema object to check
  * @returns True if the schema represents a Custom Resource Definition (CRD), false otherwise
  */
-export function isCRD(schema: Schema): boolean {
-  return schema?.attributes?.crd === true || schema?.attributes?.crd === 'true';
+export function isCRD(schema: Schema | null): boolean {
+  return schema?.attributes.crd === true || schema?.attributes.crd === 'true';
 }
 
 /**

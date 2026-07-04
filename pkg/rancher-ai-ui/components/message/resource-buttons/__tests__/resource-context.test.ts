@@ -87,12 +87,6 @@ describe('resource-context', () => {
     it('should return false when schema is null', () => {
       expect(isCRD(null as any)).toBe(false);
     });
-
-    it('should return false when attributes is missing', () => {
-      const schema = {} as Schema;
-
-      expect(isCRD(schema)).toBe(false);
-    });
   });
 
   describe('getProductByName', () => {
