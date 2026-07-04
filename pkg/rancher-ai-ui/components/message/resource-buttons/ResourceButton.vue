@@ -138,7 +138,9 @@ async function loadSchemaAndResource() {
     return;
   }
 
-  schema.value = await loadSchema();
+  if (!schema.value) {
+    schema.value = await loadSchema();
+  }
 
   if (!schema.value) {
     return;
