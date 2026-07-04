@@ -32,10 +32,10 @@ class RawMessagePo extends ComponentPo {
 
   resourceButton(args: { name?: string, prefix?: string }) {
     if (args.prefix) {
-      return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ args.prefix }"]`);
+      return this.self().get(`[data-testid^="rancher-ai-ui-chat-message-action-button-${ args.prefix }"] > .rc-button`);
     }
 
-    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-action-button-${ args.name }"]`);
+    return this.self().get(`[data-testid="rancher-ai-ui-chat-message-action-button-${ args.name }"] > .rc-button`);
   }
 
   tool() {

@@ -431,6 +431,68 @@ describe('ResourceButton', () => {
 
       expect(hasFindOrRequest).toBe(true);
     });
+
+    it('should load and set schema.value when schema is null and resource is unavailable', async() => {
+      mockResourceGetter = jest.fn(() => null); // resource is not available
+      mockResourceContextModule.getManagementSchema.mockReturnValue(null); // no management schema
+
+      // Mock store.dispatch to return a schema for cluster/request
+      const mockLoadedSchema = {
+        attributes: { namespaced: true },
+        kind:       'Pod'
+      };
+
+      mockStore.dispatch.mockImplementation((action: string) => {
+        if (action === 'cluster/request') {
+          return Promise.resolve(mockLoadedSchema);
+        }
+
+        return Promise.resolve({});
+      });
+
+      wrapper = shallowMount(ResourceButton, {
+        props: { value: createMockMessageAction() },
+        ...requiredSetup()
+      });
+
+      // Verify schema.value is initially null
+      expect((wrapper.vm as any).schema).toBeNull();
+
+      // Call loadSchemaAndResource
+      await (wrapper.vm as any).loadSchemaAndResource();
+
+      // Verify schema.value is now set (from loadSchema which calls store.dispatch)
+      expect((wrapper.vm as any).schema).not.toBeNull();
+      expect((wrapper.vm as any).schema).toEqual(mockLoadedSchema);
+    });
+
+    it('should not load schema when schema.value is not null', async() => {
+      mockResourceGetter = jest.fn(() => null); // resource is not available
+      const existingSchema = {
+        attributes: { namespaced: true },
+        kind:       'Pod',
+        id:         'existing-schema'
+      };
+
+      wrapper = shallowMount(ResourceButton, {
+        props: { value: createMockMessageAction() },
+        ...requiredSetup()
+      });
+
+      // Set schema.value before calling loadSchemaAndResource
+      (wrapper.vm as any).schema = existingSchema;
+
+      const loadSchemaSpy = jest.spyOn(wrapper.vm as any, 'loadSchema');
+
+      // Call loadSchemaAndResource
+      await (wrapper.vm as any).loadSchemaAndResource();
+
+      // Verify loadSchema was NOT called because schema.value is already set
+      expect(loadSchemaSpy).not.toHaveBeenCalled();
+
+      // Verify schema.value remains unchanged
+      expect((wrapper.vm as any).schema).toEqual(existingSchema);
+    });
   });
 
   describe('goTo', () => {
