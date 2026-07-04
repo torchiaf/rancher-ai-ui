@@ -1,6 +1,5 @@
 import HomePagePo from '@rancher/cypress/e2e/po/pages/home.po';
 import ChatPo from '@/cypress/e2e/po/chat.po';
-import { HistoryPo } from '@/cypress/e2e/po/history.po';
 import { machineInventorySchema } from '@/cypress/e2e/blueprints/schema';
 
 describe('Resource buttons', () => {
