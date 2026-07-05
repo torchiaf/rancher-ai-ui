@@ -427,6 +427,38 @@ export function useChatMessageComposable(
       const msgId = await addMessage(buildMessage(agentName.value));
 
       currentMsg.value = getMessage(msgId);
+
+      // local cluster
+      const relatedResourcesActions3 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "fleet-default", "kind": "GitRepo", "cluster": "local", "name": "test", "type": "fleet.cattle.io.gitrepo"}]</mcp-response>');
+      const relatedResourcesActions4 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "local", "kind": "Project", "cluster": "local", "name": "p-8hlqc", "type": "project"}]</mcp-response>');
+      const relatedResourcesActions9 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "", "kind": "Node", "cluster": "local", "name": "local-node", "type": "node"}]</mcp-response>');
+      const relatedResourcesActions11 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "", "kind": "Namespace", "cluster": "local", "name": "cattle-capi-system", "type": "namespace"}]</mcp-response>');
+      const relatedResourcesActions = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "fleet-default", "kind": "MachineInventory", "cluster": "local", "name": "e-v8fhl", "type": "elemental.cattle.io.machineinventory"}]</mcp-response>');
+      const relatedResourcesActions2 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "cattle-ai-agent-system", "kind": "Deployment", "cluster": "local", "name": "llm-mock", "type": "apps.deployment"}]</mcp-response>');
+      const relatedResourcesActions5 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "local", "kind": "Project", "cluster": "local", "name": "p-nqdx6", "type": "project"}]</mcp-response>');
+      const relatedResourcesActions8 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "", "kind": "Node", "cluster": "local", "name": "k3d-rancher-server-server-0", "type": "node"}]</mcp-response>');
+
+      // downstream cluster
+      const relatedResourcesActions6 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "default", "kind": "Deployment", "cluster": "c-rjtf5", "name": "longhorn-test-nfs", "type": "apps.deployment"}]</mcp-response>');
+      const relatedResourcesActions7 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "local", "kind": "Project", "cluster": "c-rjtf5", "name": "p-mg55g", "type": "project"}]</mcp-response>');
+      const relatedResourcesActions10 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "", "kind": "Node", "cluster": "c-rjtf5", "name": ".ap-southeast-1.compute.internal", "type": "node"}]</mcp-response>');
+      const relatedResourcesActions12 = formatMessageRelatedResourcesActions('<mcp-response>[{"namespace": "", "kind": "Namespace", "cluster": "c-rjtf5", "name": "test-liz", "type": "namespace"}]</mcp-response>');
+
+      if (!currentMsg.value.relatedResourcesActions) {
+        currentMsg.value.relatedResourcesActions = [];
+      }
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions2);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions3);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions4);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions5);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions6);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions7);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions8);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions9);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions10);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions11);
+      currentMsg.value.relatedResourcesActions.push(...relatedResourcesActions12);
       break;
     case Tag.ThinkingStart: {
       setProcessingState({ phase: MessagePhase.Thinking });
