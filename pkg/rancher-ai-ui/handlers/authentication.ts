@@ -5,6 +5,51 @@ const OAUTH2_CHANNEL_NAME = 'oauth_channel';
 const OAUTH2_SUCCESS_MESSAGE = 'oauth_success';
 
 /**
+ * Validates the auth URL for security
+ * - Only allows HTTPS protocol
+ * - Validates URL structure
+ * - Prevents javascript: and data: URLs
+ */
+function validateAuthUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') {
+    console.warn('Auth URL must be a non-empty string');
+
+    return false;
+  }
+
+  try {
+    const authUrl = new URL(url);
+
+    // Only allow HTTPS for security
+    if (authUrl.protocol !== 'https:') {
+      console.warn('Auth URL must use HTTPS protocol');
+
+      return false;
+    }
+
+    // Ensure hostname exists and is valid
+    if (!authUrl.hostname || authUrl.hostname.length === 0) {
+      console.warn('Auth URL must have a valid hostname');
+
+      return false;
+    }
+
+    // Block potentially malicious patterns
+    if (url.includes('javascript:') || url.includes('data:')) {
+      console.warn('Auth URL contains invalid protocol');
+
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('Invalid auth URL format:', error);
+
+    return false;
+  }
+}
+
+/**
  * Handles OAuth2 authentication requests.
  */
 class OAuth2AuthenticationRequest {
