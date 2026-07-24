@@ -460,7 +460,7 @@ watch(() => [
 ], (newValues) => {
   const [activeChatbot, models] = newValues;
 
-  const availableModels = (models as Record<ChatBotEnum, string[]>)[activeChatbot as ChatBotEnum] || [];
+  const availableModels = cloneDeep(models as Record<ChatBotEnum, string[]>)[activeChatbot as ChatBotEnum] || [];
 
   const selectedModel = formData.value[getModelKey(activeChatbot as ChatBotEnum)];
 

@@ -2449,107 +2449,6 @@ describe('Settings.vue', () => {
       expect(vm.isAiAgentSettingsTouched).toBe(true);
     });
 
-    it('should transition from true to null when growl is shown due to model reset', async() => {
-      const agentWithModel = mockAiAgentConfigCRD({
-        metadata: {
-          name:      'agent-1',
-          namespace: AGENT_NAMESPACE
-        },
-        spec:     {
-          ...mockAiAgentConfigCRD().spec,
-          llmModel:        'gpt-4',
-          llmModelEnabled: true
-        }
-      });
-
-      const dispatchMock = jest.fn((action: string) => {
-        if (action === `management/find`) {
-          return Promise.resolve(mockSecret());
-        }
-        if (action === `management/findAll`) {
-          return Promise.resolve([agentWithModel]);
-        }
-
-        return Promise.resolve(null);
-      });
-
-      const wrapper = shallowMount(Settings, initSettings({ dispatch: dispatchMock }));
-
-      await flushPromises();
-
-      const vm = wrapper.vm as any;
-
-      // Set touched state to true
-      vm.isAiAgentSettingsTouched = true;
-
-      // Call updateModelOptions with models that don't include the custom model
-      vm.updateModelOptions(mockModelOptions(['gpt-3.5', 'claude-3']));
-
-      // Should transition to null (because growl was shown)
-      expect(vm.isAiAgentSettingsTouched).toBe(null);
-
-      // Verify the growl dispatch was called
-      expect(dispatchMock).toHaveBeenCalledWith(
-        'growl/warning',
-        expect.objectContaining({
-          title:   'aiConfig.growl.modelsChanged.title',
-          message: expect.any(String),
-          timeout: 0
-        }),
-        expect.objectContaining({ root: true })
-      );
-    });
-
-    it('should reset to false when applySettings is called after save', async() => {
-      const mockSaveSettings = jest.fn().mockResolvedValue({});
-
-      (useAIAgentApiComposable as jest.Mock).mockReturnValue({
-        fetchSettings: jest.fn().mockResolvedValue({}),
-        saveSettings:  mockSaveSettings
-      });
-
-      const dispatch = jest.fn((action: string) => {
-        if (action === `management/find`) {
-          return Promise.resolve(mockSecret());
-        }
-        if (action === `management/findAll`) {
-          return Promise.resolve([]);
-        }
-
-        return Promise.resolve(null);
-      });
-
-      const wrapper = shallowMount(Settings, initSettings({ dispatch }));
-
-      await flushPromises();
-
-      const vm = wrapper.vm as any;
-
-      // Set touched state to true and set the callback
-      vm.isAiAgentSettingsTouched = true;
-      expect(vm.isAiAgentSettingsTouched).toBe(true);
-
-      // Mock the applySettingsCb to simulate successful save
-      const mockCallback = jest.fn();
-
-      vm.applySettingsCb = mockCallback;
-
-      // Call save with the callback - this simulates the AsyncButton success handler
-      const saveCallback = jest.fn((success) => {
-        if (success) {
-          // The success handler calls applySettings
-          vm.applySettings();
-        }
-      });
-
-      await vm.save(saveCallback);
-
-      await flushPromises();
-
-      // After applySettings is called via the success callback, touched should be reset to false
-      expect(vm.isAiAgentSettingsTouched).toBe(false);
-    });
-
     it('should not show growl notification if isAiAgentSettingsTouched is false when models are reset', async() => {
       const agentWithModel = mockAiAgentConfigCRD({
         metadata: {
@@ -2680,7 +2579,7 @@ describe('Settings.vue', () => {
       expect(vm.aiAgentConfigCRDs[0].spec.llmModelEnabled).toBe(false);
     });
 
-    it('should restore initial model when it becomes available again', async() => {
+    it('should not restore initial model when it becomes available again', async() => {
       const agentWithModel = mockAiAgentConfigCRD({
         metadata: {
           name:      'agent-1',
@@ -2724,9 +2623,9 @@ describe('Settings.vue', () => {
       // Restore: add the original model back to available list
       vm.updateModelOptions(mockModelOptions(['gpt-4', 'gpt-3.5', 'claude-3']));
 
-      // Verify model was restored
-      expect(vm.aiAgentConfigCRDs[0].spec.llmModel).toBe('gpt-4');
-      expect(vm.aiAgentConfigCRDs[0].spec.llmModelEnabled).toBe(true);
+      // Verify model was not restored
+      expect(vm.aiAgentConfigCRDs[0].spec.llmModel).toBeUndefined();
+      expect(vm.aiAgentConfigCRDs[0].spec.llmModelEnabled).toBe(false);
     });
 
     it('should handle multiple agents with different models being reset', async() => {
@@ -2860,6 +2759,68 @@ describe('Settings.vue', () => {
       );
     });
 
+    it('should not show growl if no models were reset', async() => {
+      const agent1 = mockAiAgentConfigCRD({
+        metadata: {
+          name:      'agent-1',
+          namespace: AGENT_NAMESPACE
+        },
+        spec:     {
+          ...mockAiAgentConfigCRD().spec,
+          llmModel:        'gpt-4',
+          llmModelEnabled: true
+        }
+      });
+
+      const agent2 = mockAiAgentConfigCRD({
+        metadata: {
+          name:      'agent-2',
+          namespace: AGENT_NAMESPACE
+        },
+        spec:     {
+          ...mockAiAgentConfigCRD().spec,
+          llmModel:        'claude-3',
+          llmModelEnabled: true
+        }
+      });
+
+      const dispatchMock = jest.fn((action: string) => {
+        if (action === `management/find`) {
+          return Promise.resolve(mockSecret());
+        }
+        if (action === `management/findAll`) {
+          return Promise.resolve([agent1, agent2]);
+        }
+
+        return Promise.resolve(null);
+      });
+
+      const wrapper = shallowMount(Settings, initSettings({ dispatch: dispatchMock }));
+
+      await flushPromises();
+
+      const vm = wrapper.vm as any;
+
+      // Initialize modelOptions first with the same models to ensure hasChangedModels is false
+      vm.updateModelOptions(mockModelOptions(['gpt-4', 'claude-3', 'gpt-3.5']));
+
+      vm.isAiAgentSettingsTouched = true;
+
+      // Update with same models - no actual models were reset
+      vm.updateModelOptions(mockModelOptions(['gpt-4', 'claude-3', 'gpt-3.5']));
+
+      // Growl should NOT be dispatched because no models were reset
+      expect(dispatchMock).not.toHaveBeenCalledWith(
+        'growl/warning',
+        expect.anything(),
+        expect.anything()
+      );
+
+      // Models should remain unchanged
+      expect(vm.aiAgentConfigCRDs[0].spec.llmModel).toBe('gpt-4');
+      expect(vm.aiAgentConfigCRDs[1].spec.llmModel).toBe('claude-3');
+    });
+
     it('should not reset models that are still available', async() => {
       const agent1 = mockAiAgentConfigCRD({
         metadata: {
@@ -2952,65 +2913,6 @@ describe('Settings.vue', () => {
 
       // modelOptions should be updated to the new list
       expect(vm.modelOptions).toEqual(newModels);
-    });
-
-    it('should not show growl if no models were reset', async() => {
-      const agent1 = mockAiAgentConfigCRD({
-        metadata: {
-          name:      'agent-1',
-          namespace: AGENT_NAMESPACE
-        },
-        spec:     {
-          ...mockAiAgentConfigCRD().spec,
-          llmModel:        'gpt-4',
-          llmModelEnabled: true
-        }
-      });
-
-      const agent2 = mockAiAgentConfigCRD({
-        metadata: {
-          name:      'agent-2',
-          namespace: AGENT_NAMESPACE
-        },
-        spec:     {
-          ...mockAiAgentConfigCRD().spec,
-          llmModel:        'claude-3',
-          llmModelEnabled: true
-        }
-      });
-
-      const dispatchMock = jest.fn((action: string) => {
-        if (action === `management/find`) {
-          return Promise.resolve(mockSecret());
-        }
-        if (action === `management/findAll`) {
-          return Promise.resolve([agent1, agent2]);
-        }
-
-        return Promise.resolve(null);
-      });
-
-      const wrapper = shallowMount(Settings, initSettings({ dispatch: dispatchMock }));
-
-      await flushPromises();
-
-      const vm = wrapper.vm as any;
-
-      vm.isAiAgentSettingsTouched = true;
-
-      // Update with models that include both existing models
-      vm.updateModelOptions(mockModelOptions(['gpt-4', 'claude-3', 'gpt-3.5']));
-
-      // Growl should NOT be dispatched because no models were reset
-      expect(dispatchMock).not.toHaveBeenCalledWith(
-        'growl/warning',
-        expect.anything(),
-        expect.anything()
-      );
-
-      // Models should remain unchanged
-      expect(vm.aiAgentConfigCRDs[0].spec.llmModel).toBe('gpt-4');
-      expect(vm.aiAgentConfigCRDs[1].spec.llmModel).toBe('claude-3');
     });
   });
 });;

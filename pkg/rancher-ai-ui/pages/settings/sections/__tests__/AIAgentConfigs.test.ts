@@ -927,7 +927,7 @@ describe('AIAgentConfigs.vue', () => {
         props: {
           value:  [agent],
           models: [
-            mockModelOption('gpt-4'),
+            mockModelOption('gpt-4', true),
             mockModelOption('gpt-3.5-turbo')
           ]
         }
@@ -968,7 +968,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
 
-      expect(emitted[0].spec.llmModel).toBeUndefined();
+      expect(emitted[0].spec.llmModel).toBeNull();
     });
 
     it('should handle undefined llmModel gracefully', () => {
@@ -997,7 +997,7 @@ describe('AIAgentConfigs.vue', () => {
 
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
 
-      expect(emitted[0].spec.llmModel).toBeUndefined();
+      expect(emitted[0].spec.llmModel).toBeNull();
     });
 
     it('should handle empty models array', () => {
@@ -1024,7 +1024,7 @@ describe('AIAgentConfigs.vue', () => {
       const emitted = wrapper.emitted('update:value')?.[0][0] as AIAgentConfigCRD[];
 
       // When models array is empty, llmModel should be cleared since gpt-4 is not in empty array
-      expect(emitted[0].spec.llmModel).toBeUndefined();
+      expect(emitted[0].spec.llmModel).toBeNull();
     });
   });
 

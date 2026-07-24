@@ -281,8 +281,11 @@ function updateOauth2AuthSecret(agent: AIAgentConfigCRD, value: Partial<AiAgentC
 function updateLlmModelEnabled() {
   const llmModelEnabled = !selectedAgent.value.spec.llmModelEnabled;
 
-  // When llmModelEnabled is reset, we clear the llmModel field to avoid having a model which is not in the available models list.
-  const llmModel = modelOptions.value.includes(selectedAgent.value.spec.llmModel || '') ? selectedAgent.value.spec.llmModel : undefined;
+  let llmModel = null;
+
+  if (llmModelEnabled) {
+    llmModel = props.models.find((model) => model.isSelected)?.value || null;
+  }
 
   updateAgent({
     spec: {

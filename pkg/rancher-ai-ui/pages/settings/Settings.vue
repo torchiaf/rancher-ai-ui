@@ -222,9 +222,7 @@ function updateAiAgentSettings(value: SettingsFormData) {
   aiAgentSettings.value = value;
   apiError.value = '';
 
-  if (isAiAgentSettingsTouched.value === false) {
-    isAiAgentSettingsTouched.value = true;
-  }
+  isAiAgentSettingsTouched.value = true;
 }
 
 /**
@@ -256,22 +254,24 @@ function updateModelOptions(models: ModelOption[]) {
   for (const crd of aiAgentConfigCRDs.value || []) {
     const initCrd = initAiAgentConfigCRDs.value.find((c) => c.metadata.name === crd.metadata.name);
 
+    const hasChangedModels = !models.find((m) => m.value === crd.spec.llmModel);
+
+    if (isAiAgentSettingsTouched.value && crd.spec.llmModelEnabled && hasChangedModels) {
+      modelAgentsReset.push(crd.spec.displayName || crd.metadata.name);
+    }
+
     if (crd.spec.llmModel && !models.find((m) => m.value === crd.spec.llmModel)) {
       crd.spec.llmModelEnabled = false;
       crd.spec.llmModel = undefined;
     }
 
-    if (initCrd && initCrd.spec.llmModel && !!models.find((m) => m.value === initCrd.spec.llmModel)) {
+    if (!isAiAgentSettingsTouched.value && initCrd && initCrd.spec.llmModel && !!models.find((m) => m.value === initCrd.spec.llmModel)) {
       crd.spec.llmModelEnabled = initCrd.spec.llmModelEnabled;
       crd.spec.llmModel = initCrd.spec.llmModel;
     }
-
-    if (initCrd && initCrd.spec.llmModelEnabled && !crd.spec.llmModelEnabled) {
-      modelAgentsReset.push(crd.spec.displayName || crd.metadata.name);
-    }
   }
 
-  if (isAiAgentSettingsTouched.value && modelAgentsReset.length > 0) {
+  if (modelAgentsReset.length > 0) {
     store.dispatch('growl/warning', {
       title:   t('aiConfig.growl.modelsChanged.title', { count: modelAgentsReset.length }, true),
       message: t('aiConfig.growl.modelsChanged.message', {
@@ -280,9 +280,6 @@ function updateModelOptions(models: ModelOption[]) {
       }, true),
       timeout: 0
     }, { root: true });
-
-    // Set to null to avoid showing the growl notification again.
-    isAiAgentSettingsTouched.value = null;
   }
 
   modelOptions.value = models;
@@ -609,9 +606,6 @@ function applySettings() {
 
   if (!!applySettingsCb.value) {
     save(applySettingsCb.value);
-
-    // Reset the touched state after saving to show the growl notification again
-    isAiAgentSettingsTouched.value = false;
 
     isSaving.value = false;
   }
