@@ -19,23 +19,23 @@ export default function(extension: IExtension, { store }: any): void {
   const isDev = (extension as any).builtin; // Running in development mode
   const isPrime = extension.environment.isPrime;
 
-  if (!isDev && !isPrime) {
-    warn('Rancher Prime subscription required');
+  // if (!isDev && !isPrime) {
+  //   warn('Rancher Prime subscription required');
 
-    extension.addNavHooks({
-      onLogin: async(store: any) => {
-        store.dispatch('notifications/add', {
-          id:      'rancher-ai-requires-prime',
-          level:   NotificationLevel.Error,
-          // Note: Hard-coded strings due to issue where onLogin called before i18n loaded from extension
-          title:   'Rancher AI Assistant requires Rancher Prime',
-          message: 'The Rancher AI Assistant requires a Rancher Prime subscription. Please upgrade to Prime or uninstall this extension.'
-        });
-      }
-    });
+  //   extension.addNavHooks({
+  //     onLogin: async(store: any) => {
+  //       store.dispatch('notifications/add', {
+  //         id:      'rancher-ai-requires-prime',
+  //         level:   NotificationLevel.Error,
+  //         // Note: Hard-coded strings due to issue where onLogin called before i18n loaded from extension
+  //         title:   'Rancher AI Assistant requires Rancher Prime',
+  //         message: 'The Rancher AI Assistant requires a Rancher Prime subscription. Please upgrade to Prime or uninstall this extension.'
+  //       });
+  //     }
+  //   });
 
-    return;
-  }
+  //   return;
+  // }
 
   // Auto-import model, detail, edit from the folders
   importTypes(extension);
