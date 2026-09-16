@@ -55,23 +55,38 @@ const props = defineProps({
   }
 });
 
+const ENABLE_AUTO_SCROLL = true;
+
 const emit = defineEmits(['update:message', 'confirm:message', 'send:message']);
 
 const messagesView = ref<HTMLDivElement | null>(null);
 
 const lastMessageContainer = ref<HTMLDivElement | null>(null);
+const lastUserMessageContainer = ref<HTMLDivElement | null>(null);
 const lastMessageObserver = ref<MutationObserver | null>(null);
 
 // Ref callback to assign the last message container for auto-scrolling for each message/error list
 const containerRef = (count: number, index: number) => {
   return (elem: Element | ComponentPublicInstance | null) => {
+    // Assign the last message container for auto-scrolling
     if (index === count - 1) {
       lastMessageContainer.value = (elem as ComponentPublicInstance)?.$el || elem;
+    }
+    // Assign the second-to-last user message container for auto-scrolling
+    // If this is a user message, the last one will be system or assistant message
+    if (index === count - 2) {
+      if (props.messages[index]?.role === Role.User) {
+        lastUserMessageContainer.value = (elem as ComponentPublicInstance)?.$el || elem;
+      } else {
+        lastUserMessageContainer.value = null;
+      }
     }
   };
 };
 
-// Observes changes to the last message container to trigger auto-scrolling when content changes
+/**
+ * Observes changes to the last message container to trigger auto-scrolling when content changes.
+ */
 function setupObserver(newContainer: HTMLDivElement | null) {
   // Clean up old observer
   if (lastMessageObserver.value) {
@@ -82,10 +97,7 @@ function setupObserver(newContainer: HTMLDivElement | null) {
   // Setup new observer on the last message container
   if (newContainer) {
     lastMessageObserver.value = new MutationObserver(() => {
-      const isUserMessage = props.messages && props.messages[props.messages.length - 1]?.role === Role.User;
-      const isErrorMessage = props.systemErrors?.length > 0;
-
-      scrollToBottom({ force: isUserMessage || isErrorMessage });
+      scrollToBottomWithOptions(({ isUserMessage, isErrorMessage }) => isUserMessage || isErrorMessage);
     });
 
     lastMessageObserver.value.observe(newContainer, {
@@ -96,8 +108,53 @@ function setupObserver(newContainer: HTMLDivElement | null) {
   }
 }
 
+/**
+ * Handles changes in the message phase by triggering a scroll to the bottom.
+ */
 function onPhaseChange() {
-  requestAnimationFrame(() => scrollToBottom());
+  requestAnimationFrame(() => scrollToBottomWithOptions());
+}
+
+/**
+ * Scrolls to the bottom of the message list with optional conditions.
+ * It takes in consideration the enabled auto-scroll setting and optional force function to determine scrolling behavior.
+ *
+ * @param forceFn A function that determines whether to force scrolling based on the message type and error state.
+ */
+function scrollToBottomWithOptions(forceFn?: (args: { isUserMessage: boolean, isErrorMessage: boolean }) => boolean) {  // eslint-disable-line no-unused-vars
+  const lastMessage = props.messages[props.messages.length - 1];
+
+  const isUserMessage = lastMessage?.role === Role.User;
+  const isErrorMessage = props.systemErrors?.length > 0;
+
+  const args = !forceFn ? undefined : {
+    force: forceFn({
+      isUserMessage,
+      isErrorMessage
+    })
+  };
+
+  // If the auto-scroll is enabled, no additional checks are needed and we can scroll to the bottom immediately.
+  if (ENABLE_AUTO_SCROLL) {
+    scrollToBottom(args);
+
+    return;
+  }
+
+  const viewportHeight = (messagesView.value?.clientHeight || 600) - 50;
+  const lastRequestHeight = (lastUserMessageContainer.value?.clientHeight || 0) + (lastMessageContainer.value?.clientHeight || 0);
+
+  // The auto-scroll setting is disabled here.
+  if (isUserMessage || lastRequestHeight < viewportHeight) {
+    // Last message is from user -> we want to scroll in any case.
+    // Last message is system or assistant -> we want to scroll to the bottom
+    // until the (last user request + the first part of the assistant's response) is visible.
+    scrollToBottom(args);
+  } else if (!isUserMessage) {
+    // We reached the point where the message view is full but response is still incoming,
+    // so we update the scroll state in order to show the fast scroll button - see ScrollButton component below.
+    updateScrollState();
+  }
 }
 
 const {
