@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from '@shell/composables/useI18n';
 import {
@@ -7,6 +7,8 @@ import {
   RcDropdownTrigger,
   RcDropdownItem,
 } from '@components/RcDropdown';
+import { StorageKey } from '../../types';
+import { useLocalStorageComposable } from '../../composables/useLocalStorageComposable';
 
 const store = useStore();
 const { t } = useI18n(store);
@@ -23,15 +25,32 @@ const emit = defineEmits([
   'show:help',
   'config:chat',
   'shortcuts:chat',
+  'toggle:autoscroll',
 ]);
 
-const options = ref([
+const storage = useLocalStorageComposable();
+
+const isAutoscrollEnabled = computed(() => {
+  const value = storage.get(StorageKey.ENABLE_AUTO_SCROLL);
+
+  return value === 'true' || value === true;
+});
+
+const options = computed(() => [
   {
     label:       t('ai.menu.options.chat.download.label'),
     description: t('ai.menu.options.chat.download.description'),
     icon:        'icon-download',
     action:      () => {
       emit('download:chat');
+    },
+  },
+  {
+    label:       t(`ai.menu.options.chat.autoscroll.label.${ isAutoscrollEnabled.value ? 'disable' : 'enable' }`),
+    description: t(`ai.menu.options.chat.autoscroll.description.${ isAutoscrollEnabled.value ? 'disable' : 'enable' }`),
+    icon:        isAutoscrollEnabled.value ? 'icon-pause' : 'icon-play',
+    action:      () => {
+      storage.set(StorageKey.ENABLE_AUTO_SCROLL, !isAutoscrollEnabled.value);
     },
   },
   {
@@ -50,14 +69,6 @@ const options = ref([
       emit('config:chat');
     },
   },
-  // {
-  //   label: t('ai.menu.options.chat.help.label'),
-  //   description: t('ai.menu.options.chat.help.description'),
-  //   icon:  'icon-question-mark',
-  //   action: () => {
-  //     emit('show:help');
-  //   },
-  // }
 ]);
 
 const isOpen = ref(false);

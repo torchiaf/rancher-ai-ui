@@ -134,6 +134,10 @@ export const enum ActionType {
   Button = 'button',
 }
 
+export const enum StorageKey {
+  ENABLE_AUTO_SCROLL = 'enable_auto_scroll'
+}
+
 export interface ActionResource {
   kind?: string;
   type?: string;

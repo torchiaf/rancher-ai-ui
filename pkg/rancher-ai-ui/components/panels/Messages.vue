@@ -7,7 +7,8 @@ import { useI18n } from '@shell/composables/useI18n';
 import {
   Message, FormattedMessage, Role, ChatError, MessageTemplateComponent, MessagePhase,
   MessageInternalSource,
-  MessageProcessingState
+  MessageProcessingState,
+  StorageKey
 } from '../../types';
 import { formatMessageContent } from '../../utils/format';
 import MessageComponent from '../message/index.vue';
@@ -18,6 +19,7 @@ import McpAuthenticationRequest from '../message/template/McpAuthenticationReque
 import ScrollButton from '../ScrollButton.vue';
 import Processing from '../Processing.vue';
 import { useScrollComposable } from '../../composables/useScrollComposable';
+import { useLocalStorageComposable } from '../../composables/useLocalStorageComposable';
 
 /**
  * Messages panel displaying the chat messages.
@@ -55,9 +57,9 @@ const props = defineProps({
   }
 });
 
-const ENABLE_AUTO_SCROLL = true;
-
 const emit = defineEmits(['update:message', 'confirm:message', 'send:message']);
+
+const storage = useLocalStorageComposable();
 
 const messagesView = ref<HTMLDivElement | null>(null);
 
@@ -135,7 +137,7 @@ function scrollToBottomWithOptions(forceFn?: (args: { isUserMessage: boolean, is
   };
 
   // If the auto-scroll is enabled, no additional checks are needed and we can scroll to the bottom immediately.
-  if (ENABLE_AUTO_SCROLL) {
+  if (storage.get(StorageKey.ENABLE_AUTO_SCROLL)) {
     scrollToBottom(args);
 
     return;

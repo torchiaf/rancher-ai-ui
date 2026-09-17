@@ -256,6 +256,13 @@ ai:
         shortcuts:
           label: View Keyboard Shortcuts
           description: View Keyboard Shortcuts for your assistant
+        autoscroll:
+          label:
+            enable: Enable Auto-Scroll
+            disable: Disable Auto-Scroll
+          description:
+            enable: Automatically scroll to the bottom of the chat when new messages arrive
+            disable: Stop automatically scrolling to the bottom of the chat when new messages arrive
   history:
     chat:
       create: Start a New Chat
