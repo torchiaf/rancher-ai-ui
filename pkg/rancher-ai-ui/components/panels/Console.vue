@@ -330,7 +330,7 @@ onMounted(() => {
             @click="stopContent"
             @keydown.space="stopContent"
           >
-            <i class="icon icon-lg icon-pause" />
+            <i class="icon icon-stop" />
           </RcButton>
           <RcButton
             v-else
@@ -460,6 +460,22 @@ onMounted(() => {
     color: var(--active-nav);
     border-radius: 4px;
     border: none;
+
+    &:disabled {
+      background-color: transparent;
+      color: var(--primary);
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #c6dcff;
+      color: var(--primary);
+    }
+  }
+
+  .rc-button.stop-button {
+    color: var(--primary);
+    background: var(--tertiary, var(--accent-btn));
+    padding: var(--rc-button-padding, 0 10px);
 
     &:disabled {
       background-color: transparent;
