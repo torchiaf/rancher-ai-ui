@@ -62,6 +62,7 @@ const {
   stopMessage,
   confirmMessage,
   confirmPlanning,
+  stopPlanning,
   downloadMessages,
   loadMessages,
   selectContext,
@@ -461,8 +462,9 @@ function unmount() {
         v-bind="$attrs"
         @update:message="updateMessage"
         @confirm:message="confirmMessage($event, ws)"
-        @confirm:planning="confirmPlanning($event, ws)"
         @send:message="sendMessage($event, ws)"
+        @confirm:planning="confirmPlanning($event, ws)"
+        @stop:planning="stopPlanning(ws)"
       />
       <Processing
         class="connection-processing-label text-label"

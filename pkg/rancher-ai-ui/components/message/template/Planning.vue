@@ -24,7 +24,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:message', 'confirm:message', 'send:message', 'confirm:planning']);
+const emit = defineEmits(['update:message', 'confirm:message', 'send:message', 'confirm:planning', 'stop:planning']);
 </script>
 
 <template>
@@ -38,13 +38,13 @@ const emit = defineEmits(['update:message', 'confirm:message', 'send:message', '
       :agents="props.agents"
       :disabled="props.disabled"
       @confirm="emit('confirm:planning', { result: $event })"
+      @stop="emit('stop:planning')"
     />
     <ApprovalInfo
       v-if="props.message.planningContent.approval"
       :principal="props.message?.templateContent?.content.principal"
       :disabled="props.disabled"
       :timestamp="props.message.timestamp"
-      @confirm="emit('confirm:planning', { result: $event })"
     />
     <MessageComponent
       v-else

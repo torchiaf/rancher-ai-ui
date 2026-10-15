@@ -38,7 +38,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['confirm']);
+const emit = defineEmits(['confirm', 'stop']);
 
 const stickyWithDelay = ref(false);
 let timeout: NodeJS.Timeout | null = null; // eslint-disable-line no-undef
@@ -207,7 +207,7 @@ onBeforeUnmount(() => {
           small
           variant="tertiary"
           class="cancel-button"
-          @click="emit('confirm', false)"
+          @click="emit('stop')"
         >
           <span class="rc-button-label">
             {{ t('ai.planning.actions.cancelRunning') }}
