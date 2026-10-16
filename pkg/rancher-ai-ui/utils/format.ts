@@ -20,6 +20,7 @@ import {
   McpAuthenticationRequest,
   MessageStopType,
   MessagePlanning,
+  PlanningStopType,
 } from '../types';
 import { error } from '../utils/log';
 import { validateActionResource } from './validator';
@@ -342,7 +343,7 @@ export function formatAuthenticationErrorMessage(value: string): ChatError {
   return { message: 'An error occurred.' };
 }
 
-export function formatStopMessage(value: string): { type: MessageStopType | null } | null {
+export function formatStopMessage(value: string): { type: MessageStopType | PlanningStopType | null } | null {
   value = value.replaceAll(Tag.StopStart, '').replaceAll(Tag.StopEnd, '').trim();
 
   if (value) {
@@ -467,6 +468,11 @@ export function buildMessageFromHistoryMessage(msg: HistoryChatMessage, agents: 
   if (msg.stopped === MessageStopType.Manual) {
     role = Role.System;
     messageContent = 'You stopped the previous response';
+  }
+
+  if (msg.stopped === PlanningStopType.Manual) {
+    role = Role.System;
+    messageContent = 'You stopped the previous plan';
   }
 
   return {

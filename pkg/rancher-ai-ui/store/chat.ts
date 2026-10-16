@@ -228,6 +228,27 @@ const mutations = {
       return;
     }
 
+    // Clear pending confirmations in the interval {planning message, the most recent message}
+    if (planningState?.status === MessagePlanningStatus.Canceled || planningState?.status === MessagePlanningStatus.Failed || planningState?.status === MessagePlanningStatus.Completed) {
+      const reverseMessageIds = Object.values(state.chats[chatId].messages)
+        .filter((m) => m.role === Role.Assistant)
+        .reverse()
+        .map((m) => m.id as number);
+      const planningMessageId = state.chats[chatId].planningState.messageId;
+
+      for (const messageId of reverseMessageIds) {
+        if (messageId === planningMessageId) {
+          break;
+        }
+
+        const message = state.chats[chatId].messages[messageId];
+
+        if (message?.confirmation?.status === ConfirmationStatus.Pending) {
+          message.confirmation.status = ConfirmationStatus.Canceled;
+        }
+      }
+    }
+
     // Replace the expired planning with the new one
     if (state.chats[chatId].planningState?.status === MessagePlanningStatus.Canceled || state.chats[chatId].planningState?.status === MessagePlanningStatus.Failed || state.chats[chatId].planningState?.status === MessagePlanningStatus.Completed) {
       state.chats[chatId].planningState = {
