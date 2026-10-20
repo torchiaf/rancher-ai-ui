@@ -237,6 +237,7 @@ export interface MessagePlanningTask {
   task: string;
   status?: MessagePlanningStatus;
   agent?: string;
+  tools?: ToolCall[];
 }
 
 export interface MessagePlanning {

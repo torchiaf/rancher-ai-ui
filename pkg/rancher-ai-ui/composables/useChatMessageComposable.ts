@@ -26,8 +26,10 @@ import {
   MessageStopType,
   MessageTag,
   MessageTemplateComponent,
+  PlanningStopType,
   Role,
-  Tag
+  Tag,
+  ToolCall
 } from '../types';
 import { ToolName } from '../components/tools/types';
 import { warn } from '../utils/log';
@@ -404,8 +406,8 @@ export function useChatMessageComposable(
     await addMessage(message);
   }
 
-  async function notifyManualStopMessage() {
-    const content = { message: t('ai.message.system.manualStopMessage.info', {}, true) };
+  async function notifyStopMessage(type: MessageStopType | PlanningStopType) {
+    const content = { message: t(`ai.message.system.${ type }.info`, {}, true) };
 
     const message = buildSystemMessage({ content });
 
@@ -569,8 +571,8 @@ export function useChatMessageComposable(
       currentMsg.value.completed = true;
 
       if (currentMsg.value.stopType) {
-        if (currentMsg.value.stopType === MessageStopType.Manual) {
-          await notifyManualStopMessage();
+        if (currentMsg.value.stopType === MessageStopType.Manual || currentMsg.value.stopType === PlanningStopType.Manual) {
+          await notifyStopMessage(currentMsg.value.stopType);
         }
       } else {
         await ensureSwitchAgentSuggestion(currentMsg.value.agentMetadata?.recommended);
@@ -698,6 +700,26 @@ export function useChatMessageComposable(
               ...planning,
               messageId
             });
+
+            // Pick the tools from the planning status and add them to the current message
+            const hasTools = planning.tasks.some((task) => task.tools?.length);
+
+            if (hasTools) {
+              if (!currentMsg.value.tools) {
+                currentMsg.value.tools = [];
+              }
+
+              currentMsg.value.tools = [
+                ...currentMsg.value.tools,
+                ...planning.tasks.reduce((acc, task) => {
+                  if (task.tools?.length) {
+                    acc.push(...task.tools);
+                  }
+
+                  return acc;
+                }, [] as ToolCall[])
+              ];
+            }
 
             if (planningState.value.messageId === messageId) {
               // New planning state - bound to the current message

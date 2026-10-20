@@ -65,7 +65,7 @@ const getters = {
     }
 
     // If there is a message pending confirmation, enforce AwaitingConfirmation phase
-    if (messages.find((msg) => msg.confirmation?.status === ConfirmationStatus.Pending || msg.planningContent?.status === MessagePlanningStatus.Pending)) {
+    if (messages.find((msg) => msg.confirmation?.status === ConfirmationStatus.Pending)) {
       return { phase: MessagePhase.AwaitingConfirmation };
     }
 

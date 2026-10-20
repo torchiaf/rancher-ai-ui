@@ -289,7 +289,7 @@ function handleToolAction(event: ToolActionEvent) {
         class="mmt-2"
       >
         <RouteButtons
-          :label="t('ai.message.quickActions.label')"
+          :label="t('ai.message.routeActions.label')"
           :actions="props.message.actions"
         />
       </div>

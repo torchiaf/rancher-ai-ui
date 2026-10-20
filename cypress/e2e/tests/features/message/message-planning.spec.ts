@@ -115,6 +115,18 @@ describe('Message Planning', () => {
 
       planningMessage.item(0).icon().should('have.class', 'icon-checkmark');
       planningMessage.item(1).icon().should('have.class', 'icon-error');
+
+      const feedbackMessage = chat.getMessage(3);
+
+      feedbackMessage.tool().selectOption(0).label()
+        .should('be.visible')
+        .and('contain.text', 'Retry');
+      feedbackMessage.tool().selectOption(1).label()
+        .should('be.visible')
+        .and('contain.text', 'Restart');
+      feedbackMessage.tool().selectOption(2).label()
+        .should('be.visible')
+        .and('contain.text', 'Request more');
     });
 
     afterEach(() => {
@@ -237,6 +249,18 @@ describe('Message Planning', () => {
 
       planningMessage.item(0).icon().should('have.class', 'icon-checkmark');
       planningMessage.item(1).icon().should('have.class', 'icon-error');
+
+      const feedbackMessage = chat.getMessage(3);
+
+      feedbackMessage.tool().selectOption(0).label()
+        .should('be.visible')
+        .and('contain.text', 'Retry');
+      feedbackMessage.tool().selectOption(1).label()
+        .should('be.visible')
+        .and('contain.text', 'Restart');
+      feedbackMessage.tool().selectOption(2).label()
+        .should('be.visible')
+        .and('contain.text', 'Request more');
     });
 
     it('Execution cancelled', () => {
@@ -287,8 +311,9 @@ describe('Message Planning', () => {
       planningMessage.item(0).icon().should('have.class', 'icon-spinner');
       planningMessage.item(1).icon().should('have.class', 'icon-spinner');
 
-      // Stopped plans do not show the "You stopped the previous response" message
+      // Ensure that messages indicating the previous response was stopped are not visible
       cy.contains('You stopped the previous response').should('not.exist');
+      cy.contains('The execution of the previous plan has been stopped').should('not.exist');
     });
 
     it('Execution stopped', () => {
@@ -343,8 +368,9 @@ describe('Message Planning', () => {
       planningMessage.item(0).icon().should('have.class', 'icon-spinner');
       planningMessage.item(1).icon().should('have.class', 'icon-spinner');
 
-      // Stopped plans do not show the "You stopped the previous response" message
+      // Ensure that message indicating the previous plan was stopped is correctly displayed
       cy.contains('You stopped the previous response').should('not.exist');
+      cy.contains('The execution of the previous plan has been stopped').should('exist');
     });
 
     afterEach(() => {
