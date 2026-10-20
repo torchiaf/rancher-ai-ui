@@ -60,12 +60,13 @@ const {
   onclose,
   sendMessage,
   updateMessage,
-  confirmMessage,
   stopMessage,
+  confirmMessage,
   downloadMessages,
   loadMessages,
   selectContext,
   clearMessageBox,
+  clearPendingConfirmations,
   notifyPreferencesUpdate,
   chatMetadata,
   isChatInitialized,
@@ -129,7 +130,10 @@ const showHistory = ref(false);
 const chatHistory = ref<HistoryChat[]>([]);
 const deletingChat = ref<HistoryChat | null>(null);
 
-const preferences = computed<Preferences>(() => ({ [StorageKey.ENABLE_AUTO_SCROLL]: storage.get(StorageKey.ENABLE_AUTO_SCROLL) === 'true' || storage.get(StorageKey.ENABLE_AUTO_SCROLL) === true }));
+const preferences = computed<Preferences>(() => ({
+  [StorageKey.ENABLE_AUTO_SCROLL]: storage.get(StorageKey.ENABLE_AUTO_SCROLL) === 'true' || storage.get(StorageKey.ENABLE_AUTO_SCROLL) === true,
+  [StorageKey.PIN_PLANNING]:       storage.get(StorageKey.PIN_PLANNING) === 'true' || storage.get(StorageKey.PIN_PLANNING) === true
+}));
 
 const chatAgents = computed<Agent[]>(() => {
   return agents.value.map((agent) => {
@@ -413,6 +417,10 @@ watch(() => [
   if (!newDisabled && newIsChatInitialized && newMessage) {
     ensureConnectionAndSendMessage(newMessage);
   }
+
+  if (newDisabled && systemErrors.value.length > 0) {
+    clearPendingConfirmations();
+  }
 }, {
   immediate: true,
   deep:      true,
@@ -468,6 +476,7 @@ function unmount() {
         :active-chat-id="chatMetadata.chatId"
         :messages="messages"
         :pending-response="pendingResponse"
+        :agents="chatAgents"
         :system-errors="systemErrors"
         :disabled="hasPermissions && (systemErrors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active)"
         :processing-state="processingMessageState"
@@ -475,6 +484,7 @@ function unmount() {
         @update:message="updateMessage"
         @confirm:message="confirmMessage($event, ws)"
         @send:message="sendMessage($event, ws)"
+        @stop:message="stopMessage(ws)"
       />
       <Processing
         class="connection-processing-label text-label"
