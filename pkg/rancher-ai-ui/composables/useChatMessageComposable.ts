@@ -251,9 +251,9 @@ export function useChatMessageComposable(
     };
   }
 
-  function buildSystemRequestMessage(args: { content: any; component?: MessageTemplateComponent; actions?: MessageAction[] }): Message {
+  function buildSystemMessage(args: { content: any; component?: MessageTemplateComponent; actions?: MessageAction[] }): Message {
     const {
-      component = MessageTemplateComponent.SystemRequest,
+      component = MessageTemplateComponent.SystemMessage,
       content,
       actions
     } = args;
@@ -309,7 +309,7 @@ export function useChatMessageComposable(
         }
       ];
 
-      const message = buildSystemRequestMessage({
+      const message = buildSystemMessage({
         content,
         actions
       });
@@ -359,7 +359,7 @@ export function useChatMessageComposable(
         }
       ];
 
-      const message = buildSystemRequestMessage({
+      const message = buildSystemMessage({
         component: MessageTemplateComponent.McpAuthenticationRequest,
         content,
         actions
@@ -378,15 +378,15 @@ export function useChatMessageComposable(
   async function notifyPreferencesUpdate({ key, value }: { key: string, value: any }) {
     const content = { message: t(`ai.message.system.updatePreferences.info.${ key }.${ value }`, {}, true) };
 
-    const message = buildSystemRequestMessage({ content });
+    const message = buildSystemMessage({ content });
 
     await addMessage(message);
   }
 
-  async function notifyManualStopMessage() {
-    const content = { message: t('ai.message.system.manualStopMessage.info', {}, true) };
+  async function notifyStopMessage(type: MessageStopType | PlanningStopType) {
+    const content = { message: t(`ai.message.system.${ type }.info`, {}, true) };
 
-    const message = buildSystemRequestMessage({ content });
+    const message = buildSystemMessage({ content });
 
     await addMessage(message);
   }
@@ -536,15 +536,20 @@ export function useChatMessageComposable(
       currentMsg.value.thinking = false;
       break;
     }
+    case Tag.ProcessingTools:
+      setProcessingState({ phase: MessagePhase.ProcessingTools });
+
+      break;
     case Tag.MessageEnd:
       setProcessingState({ phase: MessagePhase.Idle });
+
       currentMsg.value.messageContent = currentMsg.value.messageContent?.replace(/[\r\n]+$/, '');
       currentMsg.value.thinking = false;
       currentMsg.value.completed = true;
 
       if (currentMsg.value.stopType) {
         if (currentMsg.value.stopType === MessageStopType.Manual) {
-          await notifyManualStopMessage();
+          await notifyStopMessage(currentMsg.value.stopType);
         }
       } else {
         await ensureSwitchAgentSuggestion(currentMsg.value.agentMetadata?.recommended);
@@ -685,12 +690,6 @@ export function useChatMessageComposable(
           const stop = formatStopMessage(data);
 
           currentMsg.value.stopType = stop?.type || null;
-
-          break;
-        }
-
-        if (data === Tag.ProcessingTools) {
-          setProcessingState({ phase: MessagePhase.ProcessingTools });
 
           break;
         }
