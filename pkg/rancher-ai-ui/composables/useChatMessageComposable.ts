@@ -183,23 +183,25 @@ export function useChatMessageComposable(
     });
   }
 
-  function confirmMessage({ message, result }: { message: Message; result: boolean }, ws: WebSocket) {
+  function confirmMessage({ message, result }: { message?: Message; result: boolean }, ws: WebSocket) {
     wsSend(ws, formatWSInputMessage({
       prompt: result ? ConfirmationResponse.Yes : ConfirmationResponse.No,
-      agent:  message.agentMetadata?.agent?.name || undefined, // This is required when Agent selection is manual
+      agent:  message?.agentMetadata?.agent?.name || undefined, // This is required when Agent selection is manual
       tags:   [MessageTag.Confirmation]
     }));
 
-    updateMessage({
-      id:           message.id,
-      confirmation: {
-        actions: message.confirmation?.actions || null,
-        status:  result ? ConfirmationStatus.Confirmed : ConfirmationStatus.Canceled
-      },
-    });
+    if (message) {
+      updateMessage({
+        id:           message.id,
+        confirmation: {
+          actions: message.confirmation?.actions || null,
+          status:  result ? ConfirmationStatus.Confirmed : ConfirmationStatus.Canceled
+        },
+      });
 
-    if (message.source === MessageInternalSource.MessageBox) {
-      clearMessageBox();
+      if (message.source === MessageInternalSource.MessageBox) {
+        clearMessageBox();
+      }
     }
   }
 
@@ -208,24 +210,6 @@ export function useChatMessageComposable(
       prompt: '',
       tags:   [MessageTag.Stop]
     }));
-  }
-
-  function confirmPlanning({ result }: { result: boolean }, ws: WebSocket) {
-    wsSend(ws, formatWSInputMessage({
-      prompt: result ? ConfirmationResponse.Yes : ConfirmationResponse.No,
-      tags:   [MessageTag.Confirmation]
-    }));
-  }
-
-  function stopPlanning(ws: WebSocket) {
-    stopMessage(ws);
-  }
-
-  function updateMessagePlanning({ messageId, planningContent }: { messageId: string; planningContent: MessagePlanning }) {
-    updateMessage({
-      id: messageId,
-      planningContent
-    });
   }
 
   function getMessage(messageId: string) {
@@ -870,9 +854,6 @@ export function useChatMessageComposable(
     updateMessage,
     confirmMessage,
     stopMessage,
-    confirmPlanning,
-    stopPlanning,
-    updateMessagePlanning,
     selectContext,
     downloadMessages,
     loadMessages,
