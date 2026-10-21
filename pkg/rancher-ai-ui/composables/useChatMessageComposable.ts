@@ -221,6 +221,13 @@ export function useChatMessageComposable(
     stopMessage(ws);
   }
 
+  function updateMessagePlanning({ messageId, planningContent }: { messageId: string; planningContent: MessagePlanning }) {
+    updateMessage({
+      id: messageId,
+      planningContent
+    });
+  }
+
   function getMessage(messageId: string) {
     return store.getters['rancher-ai-ui/chat/message']({
       chatId,
@@ -865,6 +872,7 @@ export function useChatMessageComposable(
     stopMessage,
     confirmPlanning,
     stopPlanning,
+    updateMessagePlanning,
     selectContext,
     downloadMessages,
     loadMessages,
