@@ -28,6 +28,7 @@ import {
   MessageTemplateComponent,
   PlanningStopType,
   Role,
+  StorageKey,
   Tag,
   ToolCall
 } from '../types';
@@ -52,6 +53,7 @@ import { downloadFile } from '@shell/utils/download';
 import { useContextComposable } from './useContextComposable';
 import { useAIAgentApiComposable } from './useAIAgentApiComposable';
 import { useToolsComposable } from './useToolsComposable';
+import { useLocalStorageComposable } from './useLocalStorageComposable';
 import AuthenticationHandler from '../handlers/authentication';
 import Notifications from '../handlers/notification';
 
@@ -80,6 +82,7 @@ export function useChatMessageComposable(
   const store = useStore();
   const { t } = useI18n(store);
 
+  const storage = useLocalStorageComposable();
   const { selectContext, selectedContext } = useContextComposable();
   const { toolsSelector } = useToolsComposable();
   const { refreshMcpAuthenticationToken, fetchUIToolsCalls } = useAIAgentApiComposable();
@@ -570,7 +573,9 @@ export function useChatMessageComposable(
         await ensureSwitchAgentSuggestion(currentMsg.value.agentMetadata?.recommended);
       }
 
-      Notifications.message().send(store, currentMsg.value);
+      if (storage.get(StorageKey.ENABLE_NOTIFICATIONS)) {
+        Notifications.message().send(store, currentMsg.value);
+      }
 
       break;
     default:
