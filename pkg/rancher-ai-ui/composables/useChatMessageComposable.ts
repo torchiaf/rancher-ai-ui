@@ -53,6 +53,7 @@ import { useContextComposable } from './useContextComposable';
 import { useAIAgentApiComposable } from './useAIAgentApiComposable';
 import { useToolsComposable } from './useToolsComposable';
 import AuthenticationHandler from '../handlers/authentication';
+import Notifications from '../handlers/notification';
 
 const EXPAND_THINKING = false;
 
@@ -568,6 +569,8 @@ export function useChatMessageComposable(
       } else {
         await ensureSwitchAgentSuggestion(currentMsg.value.agentMetadata?.recommended);
       }
+
+      Notifications.message().send(store, currentMsg.value);
 
       break;
     default:

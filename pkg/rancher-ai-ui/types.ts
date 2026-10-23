@@ -514,3 +514,7 @@ export interface Preferences {
   [StorageKey.ENABLE_AUTO_SCROLL]?: boolean;
   [StorageKey.PIN_PLANNING]?: boolean;
 }
+
+export const enum NotificationType {
+  MESSAGE = 'message'
+}

@@ -119,6 +119,12 @@ ai:
     resources:
       cluster: Cluster
       namespace: Namespace
+  notification:
+    message:
+      title: Rancher AI Assistant
+      summary:
+        planning: 'Planning ready: {count} tasks'
+        idle: 'Message complete'
   configurations:
     label: Uses AI, running {name} ({model}).
     verifyResults:
