@@ -1,12 +1,12 @@
 {
   "name": "rancher-ai-ui",
-  "version": "1.2.0-dev.1",
+  "version": "1.2.0-dev.4",
   "private": false,
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
-    "@rancher/shell": "3.0.14"
+    "@rancher/shell": "3.0.15-rc.4"
   },
   "resolutions": {
     "@types/node": "25.3.3",
