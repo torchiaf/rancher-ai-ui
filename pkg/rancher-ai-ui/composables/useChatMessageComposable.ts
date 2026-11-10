@@ -565,6 +565,7 @@ export function useChatMessageComposable(
 
     try {
       welcomeMessage.tools = await fetchUIToolsCalls({
+        chatId:  chatMetadata.value.chatId,
         prompt,
         context: selectedContext.value,
         tools:   {

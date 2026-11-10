@@ -464,6 +464,45 @@ export interface HistoryChat {
   createdAt: Date;
 }
 
+export type UsagePeriod = 'day' | 'week' | 'month';
+
+export interface UsageTotals {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  llmCalls: number;
+}
+
+export interface UsageBreakdown extends UsageTotals {
+  byAgent: Record<string, UsageTotals>;
+  bySource: Record<string, UsageTotals>;
+  // Provider -> model -> totals
+  byModel: Record<string, Record<string, UsageTotals>>;
+}
+
+export interface ChatUsage extends UsageBreakdown {
+  chatId: string;
+}
+
+export interface UsageAnalytics extends UsageBreakdown {
+  period: UsagePeriod;
+  from: string;
+  to: string;
+  chatCount: number;
+  byDay: (UsageTotals & { date: string })[];
+  topChats: (UsageTotals & { chatId: string; name?: string | null })[];
+}
+
+export interface AdminUsage extends UsageTotals {
+  period: UsagePeriod;
+  from: string;
+  to: string;
+  userCount: number;
+  byUser: Record<string, UsageTotals>;
+}
+
 export interface HistoryChatMessage {
   chatId: string;
   role: string | Role;

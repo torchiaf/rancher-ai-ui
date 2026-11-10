@@ -7,6 +7,10 @@ import {
   Agent, AgentSettings, AIAgentAPIEvent, Context, HistoryChat, HistoryChatMessage, LLMProvider, Message,
   ToolCall,
   ToolsConfig,
+  UsagePeriod,
+  UsageAnalytics,
+  AdminUsage,
+  ChatUsage,
 } from '../types';
 import { Settings } from '../pages/settings/types';
 import { buildMessageFromHistoryMessage } from '../utils/format';
@@ -38,6 +42,7 @@ interface McpAuthenticationEvent {
 }
 
 interface UIToolsCallsPayload {
+  chatId: string;
   context: Context[];
   prompt: string;
   tools: ToolsConfig
@@ -403,6 +408,54 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     }
   }
 
+  async function fetchChatUsage(chatId: string): Promise<ChatUsage | null> {
+    try {
+      const data = await fetch(`${ apiPath }/chats/${ encodeURIComponent(chatId) }/usage`);
+
+      if (!data.ok) {
+        throw new Error(await data.text());
+      }
+
+      return await data.json() as ChatUsage;
+    } catch (err) {
+      error('Failed to fetch chat usage:', err);
+
+      return null;
+    }
+  }
+
+  async function fetchUsage(period: UsagePeriod, limit = 10): Promise<UsageAnalytics> {
+    const queryParams = new URLSearchParams({
+      period,
+      limit: `${ limit }`
+    });
+    const data = await fetch(`${ apiPath }/usage?${ queryParams.toString() }`);
+
+    if (!data.ok) {
+      throw new Error(await data.text());
+    }
+
+    return await data.json() as UsageAnalytics;
+  }
+
+  /**
+   * Returns null when the current user is not allowed to read the usage of all users.
+   */
+  async function fetchAdminUsage(period: UsagePeriod): Promise<AdminUsage | null> {
+    const queryParams = new URLSearchParams({ period });
+    const data = await fetch(`${ apiPath }/admin/usage?${ queryParams.toString() }`);
+
+    if (data.status === 401 || data.status === 403) {
+      return null;
+    }
+
+    if (!data.ok) {
+      throw new Error(await data.text());
+    }
+
+    return await data.json() as AdminUsage;
+  }
+
   return {
     refreshMcpAuthenticationToken,
     fetchMcpAuthenticationMetadata,
@@ -418,5 +471,8 @@ export function useAIAgentApiComposable(agents?: ComputedRef<Agent[]>) {
     fetchMessages,
     updateChat,
     deleteChat,
+    fetchChatUsage,
+    fetchUsage,
+    fetchAdminUsage,
   };
 }

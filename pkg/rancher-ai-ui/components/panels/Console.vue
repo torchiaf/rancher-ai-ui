@@ -10,12 +10,14 @@ import { useI18n } from '@shell/composables/useI18n';
 import { isMac } from '@shell/utils/platform';
 import RcButton from '@components/RcButton/RcButton.vue';
 import {
-  Agent, FormattedMessage, LLMConfig, Message, Role
+  Agent, ChatUsage, FormattedMessage, LLMConfig, Message, Role
 } from '../../types';
 import SelectAgent from '../agent/SelectAgent.vue';
 import LlmModelLabel from '../console/LlmModelLabel.vue';
+import TokenUsage from '../console/TokenUsage.vue';
 import VerifyResultsDisclaimer from '../console/VerifyResultsDisclaimer.vue';
 import { useInputComposable } from '../../composables/useInputComposable';
+import { useAIAgentApiComposable } from '../../composables/useAIAgentApiComposable';
 import { extractMessageText } from '../../utils/label';
 import { getIconWithFallback } from '../../utils/icon';
 import Chat from '../../handlers/chat';
@@ -80,6 +82,31 @@ const completeText = ref('');
 const stopIconClass = ref('icon-stop');
 const MAX_HEIGHT = 200;
 const historyIndex = ref(-1);
+
+const { fetchChatUsage } = useAIAgentApiComposable();
+
+const chatUsage = ref<ChatUsage | null>(null);
+
+async function loadChatUsage() {
+  const chatId = props.activeChatId;
+
+  if (!chatId) {
+    chatUsage.value = null;
+
+    return;
+  }
+
+  const usage = await fetchChatUsage(chatId);
+
+  // Ignore late responses for a chat that is no longer active
+  if (chatId === props.activeChatId) {
+    chatUsage.value = usage;
+  }
+}
+
+watch(() => props.activeChatId, () => {
+  chatUsage.value = null;
+});
 
 const text = computed(() => {
   if (props.disabled) {
@@ -302,6 +329,12 @@ onMounted(() => {
         @blur="isFocused = false"
       />
       <div class="chat-input-options">
+        <TokenUsage
+          :usage="chatUsage"
+          :agents="props.agents"
+          :disabled="props.disabled"
+          @open="loadChatUsage"
+        />
         <SelectAgent
           v-if="props.agents.length > 1"
           :agents="props.agents"

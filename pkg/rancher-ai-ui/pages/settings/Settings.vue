@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import dayjs from 'dayjs';
 import {
   ref,
+  computed,
   onMounted,
   watch,
 } from 'vue';
@@ -17,7 +18,7 @@ import {
   TOOLS_CONFIG_NAME,
 } from '../../product';
 import { warn } from '../../utils/log';
-import { CONFIG_MAP, SECRET, WORKLOAD_TYPES } from '@shell/config/types';
+import { CONFIG_MAP, NORMAN, SECRET, WORKLOAD_TYPES } from '@shell/config/types';
 import { SECRET_TYPES } from '@shell/config/secret';
 import { useI18n } from '@shell/composables/useI18n';
 import { base64Decode, base64Encode } from '@shell/utils/crypto';
@@ -39,6 +40,7 @@ import AIAgentSettings from './sections/AIAgentSettings.vue';
 import AIAgentConfigs from './sections/ai-agent-configs/index.vue';
 import ChatSettings from './sections/ChatSettings.vue';
 import UIToolsConfig from './sections/ui-tools-config/index.vue';
+import UsageDashboard from './sections/usage/index.vue';
 import ApplySettings from '../../dialog/ApplySettingsCard.vue';
 import { useAIAgentApiComposable } from '../../composables/useAIAgentApiComposable';
 import { useToolsComposable } from '../../composables/useToolsComposable';
@@ -91,6 +93,13 @@ const buttonProps = ref({
 const toolsActionResultBanner = ref<{ color: string; label: string } | null>(null);
 
 const isAiAgentSettingsTouched = ref<boolean | null>(false);
+
+// The agent only serves the usage of all users to the 'admin' user
+const isAdmin = computed(() => {
+  const principal = store.getters['rancher/byId'](NORMAN.PRINCIPAL, store.getters['auth/principalId']);
+
+  return principal?.loginName === 'admin';
+});
 
 /**
  * Fetches the rancher-ai-agent deployment.
@@ -805,6 +814,18 @@ onMounted(async() => {
             :required-action="toolsRequiredAction"
             @update:value="uiToolsSettings = $event"
             @publish:tools="publishToolsDefinitionAndRefetch"
+          />
+        </settings-row>
+
+        <settings-row
+          :section-id="'token-usage'"
+          :title="t('aiConfig.form.section.usage.header')"
+          :description="t(`aiConfig.form.section.usage.description.${ isAdmin ? 'admin' : 'user' }`)"
+          data-testid="rancher-ai-ui-settings-usage"
+        >
+          <UsageDashboard
+            :is-admin="isAdmin"
+            :agents="aiAgentConfigCRDs || []"
           />
         </settings-row>
 

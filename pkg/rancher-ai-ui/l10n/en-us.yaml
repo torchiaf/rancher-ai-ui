@@ -112,6 +112,13 @@ ai:
     actions:
       stop: Stop message
       send: Send message
+    tokenUsage:
+      title: Token usage
+      total: 'Total'
+      input: Input
+      output: Output
+      byAgent: By agent
+      bySource: By source
   context:
     label: CONTEXT
     add: Context
@@ -717,6 +724,59 @@ aiConfig:
           requireApproval:
             label: Require manual approval before executing a multi-step plan
             tooltip: All multi-step plans will require your confirmation before execution
+      usage:
+        header: Token Usage
+        description:
+          admin: Tokens consumed by the AI assistant, by user, chat, model and agent
+          user: Tokens consumed by your chats, by chat, model and agent
+        period:
+          label: Period
+          day: Last 24 hours
+          week: Last 7 days
+          month: Last 30 days
+        refresh: Refresh
+        error: Unable to load the token usage
+        empty: No tokens were used in this period
+        unknown: Unknown
+        summary:
+          totalTokens: Total tokens
+          inputTokens: Input tokens
+          outputTokens: Output tokens
+          cacheReadTokens: Cached tokens
+          llmCalls: LLM calls
+          chatCount: Chats
+          userCount: Users
+        byDay:
+          title: Daily usage
+          bar: '{date}: {count} tokens'
+        allUsers:
+          title: All users
+          description: Usage of every user in the period
+        myChats:
+          title: My chats
+          description: Usage of your own chats in the period
+        tables:
+          byModel: By model
+          byAgent: By agent
+          bySource: By source
+          topChats: Top chats
+          byUser: By user
+        columns:
+          provider: Provider
+          model: Model
+          agent: Agent
+          source: Source
+          chat: Chat
+          user: User
+          llmCalls: Calls
+          inputTokens: Input
+          outputTokens: Output
+          totalTokens: Total
+        sources:
+          agent: Agent
+          ui-tools: UI tools
+          summarization: Summarization
+          planner: Planner
     EMBEDDINGS_MODEL:
       label: Embeddings Model
     ENABLE_RAG:

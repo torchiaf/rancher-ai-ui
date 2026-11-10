@@ -103,6 +103,8 @@ const mockStore = {
     'management/all':        jest.fn(() => []),
     'management/canList':    jest.fn(() => true),
     'management/schemaFor':  jest.fn(() => ({ resourceMethods: ['PUT', 'POST', 'DELETE'] })),
+    'rancher/byId':          jest.fn(() => ({ loginName: 'admin' })),
+    'auth/principalId':      'local://user-admin',
     'i18n/t':                (key: string) => key
   }
 };
@@ -831,6 +833,8 @@ describe('Settings.vue', () => {
           'management/all':        jest.fn(() => []),
           'management/canList':    jest.fn(() => true),
           'management/schemaFor':  jest.fn(() => ({ resourceMethods: ['get'] })),
+          'rancher/byId':          jest.fn(() => ({ loginName: 'admin' })),
+          'auth/principalId':      'local://user-admin',
           'i18n/t':                (key: string) => key
         },
         state: { $router: { push: jest.fn() } }
@@ -882,6 +886,8 @@ describe('Settings.vue', () => {
           'management/all':        jest.fn(() => []),
           'management/canList':    jest.fn(() => false),
           'management/schemaFor':  jest.fn(() => ({ resourceMethods: ['put', 'post', 'delete'] })),
+          'rancher/byId':          jest.fn(() => ({ loginName: 'admin' })),
+          'auth/principalId':      'local://user-admin',
           'i18n/t':                (key: string) => key
         },
         state: { $router: { push: jest.fn() } }
@@ -964,6 +970,8 @@ describe('Settings.vue', () => {
           'management/all':        jest.fn(() => []),
           'management/canList':    jest.fn(() => true),
           'management/schemaFor':  jest.fn(() => ({ resourceMethods: ['GET'] })),
+          'rancher/byId':          jest.fn(() => ({ loginName: 'admin' })),
+          'auth/principalId':      'local://user-admin',
           'i18n/t':                (key: string) => key
         },
         state: { $router: { push: jest.fn() } }
@@ -1021,7 +1029,9 @@ describe('Settings.vue', () => {
 
             return { resourceMethods: ['GET'] };
           }),
-          'i18n/t': (key: string) => key
+          'rancher/byId':     jest.fn(() => ({ loginName: 'admin' })),
+          'auth/principalId': 'local://user-admin',
+          'i18n/t':           (key: string) => key
         },
         state: { $router: { push: jest.fn() } }
       };
@@ -1262,7 +1272,9 @@ describe('Settings.vue', () => {
             // Can create secrets but not CRDs
             return { resourceMethods: ['PUT', 'POST', 'DELETE'] };
           }),
-          'i18n/t': (key: string) => key
+          'rancher/byId':     jest.fn(() => ({ loginName: 'admin' })),
+          'auth/principalId': 'local://user-admin',
+          'i18n/t':           (key: string) => key
         },
         state: { $router: { push: jest.fn() } }
       };
