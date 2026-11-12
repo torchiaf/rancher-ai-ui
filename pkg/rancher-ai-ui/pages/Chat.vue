@@ -6,8 +6,9 @@ import {
 } from 'vue';
 import { PRODUCT_NAME } from '../product';
 import {
-  Agent, AgentState, AIServiceState, ConnectionPhase, FormattedMessage, HistoryChat, Message, MessageInternalSource, MessagePhase, Preferences, Role, StorageKey, StorageType
+  ActionType, Agent, AgentState, AIServiceState, ChatError, ConnectionPhase, FormattedMessage, HistoryChat, Message, MessageInternalSource, MessagePhase, Preferences, Role, StorageKey, StorageType
 } from '../types';
+import { useI18n } from '@shell/composables/useI18n';
 import { extractMessageText } from '../utils/label';
 import Chat from '../handlers/chat';
 import { useConnectionComposable } from '../composables/useConnectionComposable';
@@ -20,6 +21,7 @@ import { useAgentComposable } from '../composables/useAgentComposable';
 import { useInputComposable } from '../composables/useInputComposable';
 import { useKeyboardShortcutsComposable } from '../composables/useKeyboardShortcutsComposable';
 import { useLocalStorageComposable } from '../composables/useLocalStorageComposable';
+import { useAgentInstallerComposable } from '../composables/useAgentInstallerComposable';
 import AppModal from '@shell/components/AppModal.vue';
 import Header from '../components/panels/Header.vue';
 import Messages from '../components/panels/Messages.vue';
@@ -29,6 +31,7 @@ import Console from '../components/panels/Console.vue';
 import History from '../components/panels/History.vue';
 import DeleteChat from '../dialog/DeleteChatCard.vue';
 import KeyboardShortcuts from '../components/header/KeyboardShortcuts.vue';
+import InstallAgent from '../components/install/InstallAgent.vue';
 
 /**
  * Chat panel landing page.
@@ -36,6 +39,7 @@ import KeyboardShortcuts from '../components/header/KeyboardShortcuts.vue';
 
 const CHAT_ID = 'default';
 const store = useStore();
+const { t } = useI18n(store);
 
 const {
   hasPermissions,
@@ -127,6 +131,28 @@ const {
 });
 
 const storage = useLocalStorageComposable();
+
+const installer = useAgentInstallerComposable();
+
+const installMode = computed(() => {
+  if (!hasPermissions.value || !installer.canInstall.value) {
+    return false;
+  }
+
+  return installer.isActive.value || installer.isAgentAppMissing.value;
+});
+
+watch(installer.canInstall, (canInstall) => {
+  if (canInstall) {
+    installer.loadAgentApp();
+  }
+}, { immediate: true });
+
+function reloadAfterInstall() {
+  installer.reset();
+  resetChatErrors();
+  ensureReconnectionAndLoadChat(null);
+}
 
 const showHistory = ref(false);
 const chatHistory = ref<HistoryChat[]>([]);
@@ -471,7 +497,7 @@ function unmount() {
       <Header
         :preferences="preferences"
         :disabled="disabled"
-        :has-permissions="hasPermissions"
+        :readonly="installMode"
         @close:chat="closePanel"
         @config:chat="routeToSettings"
         @download:chat="downloadMessages"
@@ -479,58 +505,64 @@ function unmount() {
         @toggle:history="toggleHistoryPanel"
         @update:preferences="updatePreferences"
       />
-      <Messages
-        :active-chat-id="chatMetadata.chatId"
-        :messages="messages"
-        :pending-response="pendingResponse"
-        :agents="chatAgents"
-        :system-errors="systemErrors"
-        :disabled="hasPermissions && (systemErrors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active)"
-        :processing-state="processingMessageState"
-        v-bind="$attrs"
-        @update:message="updateMessage"
-        @confirm:message="confirmMessage($event, ws)"
-        @send:message="sendMessage($event, ws)"
-        @stop:message="stopMessage(ws)"
+      <InstallAgent
+        v-if="installMode"
+        @reload="reloadAfterInstall"
       />
-      <Processing
-        class="connection-processing-label text-label"
-        data-test-prefix="connection"
-        :phase="connectionPhase"
-        :show-progress="![
-          ConnectionPhase.Connected,
-          ConnectionPhase.Disconnected,
-          ConnectionPhase.ConnectionClosed,
-        ].includes(connectionPhase)"
-      />
-      <Context
-        :value="hasPermissions ? context : []"
-        :disabled="!isChatInitialized || disabled"
-        @select="selectContext"
-      />
-      <Console
-        :active-chat-id="chatMetadata.chatId"
-        :llm-config="llmConfig"
-        :agents="chatAgents"
-        :agent-name="agentName"
-        :disabled="!isChatInitialized || disabled"
-        :messages="messages"
-        :pending-response="pendingResponse"
-        :has-permissions="hasPermissions"
-        @input:content="ensureConnectionAndSendMessage($event)"
-        @stop:content="stopMessage(ws)"
-        @select:agent="selectAgent"
-      />
-      <History
-        :chats="chatHistory"
-        :active-chat-id="chatMetadata.chatId"
-        :open="showHistory && !disabled"
-        @close:panel="showHistory = false"
-        @create:chat="ensureReconnectionAndLoadChat(null)"
-        @open:chat="ensureReconnectionAndLoadChat"
-        @update:chat="updateChat"
-        @confirm:delete:chat="openDeleteChatModal"
-      />
+      <template v-else>
+        <Messages
+          :active-chat-id="chatMetadata.chatId"
+          :messages="messages"
+          :pending-response="pendingResponse"
+          :agents="chatAgents"
+          :system-errors="systemErrors"
+          :disabled="hasPermissions && (systemErrors?.length > 0 || !isChatInitialized || aiAgentDeploymentState !== AIServiceState.Active)"
+          :processing-state="processingMessageState"
+          v-bind="$attrs"
+          @update:message="updateMessage"
+          @confirm:message="confirmMessage($event, ws)"
+          @send:message="sendMessage($event, ws)"
+          @stop:message="stopMessage(ws)"
+        />
+        <Processing
+          class="connection-processing-label text-label"
+          data-test-prefix="connection"
+          :phase="connectionPhase"
+          :show-progress="![
+            ConnectionPhase.Connected,
+            ConnectionPhase.Disconnected,
+            ConnectionPhase.ConnectionClosed,
+          ].includes(connectionPhase)"
+        />
+        <Context
+          :value="hasPermissions ? context : []"
+          :disabled="!isChatInitialized || disabled"
+          @select="selectContext"
+        />
+        <Console
+          :active-chat-id="chatMetadata.chatId"
+          :llm-config="llmConfig"
+          :agents="chatAgents"
+          :agent-name="agentName"
+          :disabled="!isChatInitialized || disabled"
+          :messages="messages"
+          :pending-response="pendingResponse"
+          :has-permissions="hasPermissions"
+          @input:content="ensureConnectionAndSendMessage($event)"
+          @stop:content="stopMessage(ws)"
+          @select:agent="selectAgent"
+        />
+        <History
+          :chats="chatHistory"
+          :active-chat-id="chatMetadata.chatId"
+          :open="showHistory && !disabled"
+          @close:panel="showHistory = false"
+          @create:chat="ensureReconnectionAndLoadChat(null)"
+          @open:chat="ensureReconnectionAndLoadChat"
+          @update:chat="updateChat"
+          @confirm:delete:chat="openDeleteChatModal"
+        />
+      </template>
       <KeyboardShortcuts
         ref="keyboardShortcutsRef"
       />

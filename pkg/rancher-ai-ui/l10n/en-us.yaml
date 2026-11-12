@@ -6,6 +6,41 @@ ai:
     message: The Rancher AI Assistant requires a Rancher Prime subscription. Please upgrade to Prime or uninstall this extension.
   header:
     title: Liz
+  install:
+    title: Set up the AI Assistant
+    notInstalled: The AI Agent is not installed yet. I can install it for you, then you'll only need to choose the model and add your token.
+    applied: The AI Assistant is configured and the AI Agent is up and running. Click Reload to start chatting.
+    verifying: Checking the configuration and waiting for the AI Agent to restart...
+    viewingSettings: You are viewing the AI Assistant settings page.
+    actions:
+      install: Install AI Assistant
+      configure: Configure AI Assistant
+      retry: Retry
+      reload: Reload
+      installChart: Install
+      editValues: Edit Values
+      editedValues: Edit Values (customized)
+    values:
+      title: AI Agent Helm values
+      description: These values are used to install the AI Agent chart.
+      restore: Restore defaults
+      invalid: 'Invalid YAML: {error}'
+      notAnObject: the values must be a YAML object
+    status:
+      pending: Not started
+      inProgress: In progress
+      done: Completed
+      error: Failed
+    steps:
+      repository:
+        label: Add the Rancher AI repository
+        description: The Helm repository containing the AI Agent chart
+      agent:
+        label: Install the AI Agent
+        description: The service that runs the AI Assistant in your cluster
+      configure:
+        label: Configure the AI Assistant
+        description: Select the AI model and add your token in AI Assistant Configuration
   message:
     system:
       welcome:
@@ -299,12 +334,14 @@ ai:
       settings:
         noPermission: You do not have permission to access to Rancher AI Assistant. Please contact your administrator or refer to our documentation.
         missingConfig: Rancher AI Agent configuration is missing, llm-config ConfigMap not found. Please ensure the Rancher AI assistant services are correctly installed.
-        missingActiveLLM: Rancher AI Agent configuration error, active LLM not specified. Please ensure the Rancher AI assistant services are correctly installed and configured.
-        missingModel: Rancher AI Agent configuration error, LLM model not specified. Please ensure the Rancher AI assistant services are correctly installed and configured.
+        missingActiveLLM: Configuration error, AI Provider not specified. Please ensure the Rancher AI assistant services are correctly installed and configured.
+        missingModel: Configuration error, AI model not specified. Please ensure the Rancher AI assistant services are correctly installed and configured.
       deployment:
         noPermission: You do not have permission to access to Rancher AI Assistant. Please contact your administrator or refer to our documentation.
         notFound: Rancher AI Agent pod not found. Please ensure the Rancher AI assistant services are correctly installed and you have the necessary permissions to access it.
       docsLinkLabel: 'AI Assistant Docs'
+      action:
+        goToSettings: 'Go to Settings'
     agent:
       unavailable:
         label: 'This AI agent is currently unavailable.<br>{message}'
@@ -452,6 +489,10 @@ aiConfig:
   form:
     header: AI Assistant Configuration
     description: Configure the AI model and provider for your assistant
+    emptyState:
+      title: The AI Assistant configuration is not ready yet
+      description: The AI Agent is not installed. Let Liz take care of this.
+      action: Install AI Assistant
     warning:
       inMemoryStorage: 'The AI Assistant uses in-memory storage, all messages will be lost after applying the new settings.'
       noDeployment: 'The AI Assistant settings are not available. The AI Agent deployment is not available. Please make sure the deployment is up and running or contact your administrator.'

@@ -2,6 +2,7 @@
 import { cloneDeep } from 'lodash';
 import dayjs from 'dayjs';
 import {
+  computed,
   ref,
   onMounted,
   watch,
@@ -42,6 +43,7 @@ import UIToolsConfig from './sections/ui-tools-config/index.vue';
 import ApplySettings from '../../dialog/ApplySettingsCard.vue';
 import { useAIAgentApiComposable } from '../../composables/useAIAgentApiComposable';
 import { useToolsComposable } from '../../composables/useToolsComposable';
+import { useAgentInstallerComposable, InstallStep, InstallStepStatus } from '../../composables/useAgentInstallerComposable';
 
 /**
  * Settings page for configuring Rancher AI assistant.
@@ -58,6 +60,11 @@ const {
   toolsRequiredAction,
   publishToolsDefinition
 } = useToolsComposable();
+
+const installer = useAgentInstallerComposable();
+
+// Same condition as the chat install form: the AI agent Helm chart is not installed
+const showEmptyState = computed(() => installer.canInstall.value && (installer.isAgentAppMissing.value || !aiAgentDeployment.value));
 
 const isLoading = ref(true);
 const isSaving = ref(false);
@@ -595,6 +602,9 @@ const save = async(btnCB: (arg: boolean) => void) => { // eslint-disable-line no
 
     apiError.value = '';
     btnCB(true);
+
+    // Mark the configuration as applied in the installer
+    installer.markConfigApplied();
   } catch (err) {
     apiError.value = t('aiConfig.form.save.apiError', { error: err }, true);
     btnCB(false);
@@ -669,9 +679,15 @@ function fetchPermissions() {
 }
 
 onMounted(async() => {
+  await loadSettings();
+
+  isLoading.value = false;
+});
+
+async function loadSettings() {
   fetchPermissions();
 
-  await fetchAiAgentDeployment();
+  await Promise.all([fetchAiAgentDeployment(), installer.loadAgentApp()]);
 
   if (!!aiAgentDeployment.value) {
     await fetchChatSettings();
@@ -688,8 +704,15 @@ onMounted(async() => {
       { deep: true }
     );
   }
+}
 
-  isLoading.value = false;
+// The page can be already open while the installer deploys the agent
+watch(() => installer.state.steps[InstallStep.Agent].status, async(status) => {
+  if (status === InstallStepStatus.Done && !aiAgentDeployment.value && !isLoading.value) {
+    isLoading.value = true;
+    await loadSettings();
+    isLoading.value = false;
+  }
 });
 </script>
 
@@ -705,8 +728,29 @@ onMounted(async() => {
         {{ t('aiConfig.form.header') }}
       </h1>
 
+      <!-- Checked before the permissions: the AI agent CRDs don't exist until the agent is installed -->
+      <div
+        v-if="showEmptyState"
+        class="empty-state"
+        data-testid="rancher-ai-ui-settings-empty-state"
+      >
+        <i class="icon icon-ai icon-4x" />
+        <h2>{{ t('aiConfig.form.emptyState.title') }}</h2>
+        <p class="text-muted">
+          {{ t('aiConfig.form.emptyState.description') }}
+        </p>
+        <button
+          type="button"
+          class="btn role-primary"
+          data-testid="rancher-ai-ui-settings-empty-state-open-chat"
+          @click="installer.openChatAndInstall()"
+        >
+          {{ t('aiConfig.form.emptyState.action') }}
+        </button>
+      </div>
+
       <Banner
-        v-if="!permissions?.list?.canListDeployments || !permissions?.list?.canListConfigMaps || !permissions?.list?.canListAiAgentCRDS"
+        v-else-if="!permissions?.list?.canListDeployments || !permissions?.list?.canListConfigMaps || !permissions?.list?.canListAiAgentCRDS"
         class="m-0"
         color="warning"
       >
@@ -853,6 +897,19 @@ onMounted(async() => {
   flex-direction: column;
   gap: 24px;
   padding: 24px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  text-align: center;
+
+  h2, p {
+    margin: 0;
+  }
 }
 
 .form-footer {

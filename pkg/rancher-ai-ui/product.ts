@@ -9,6 +9,18 @@ export const AGENT_NAME = 'rancher-ai-agent';
 export const AGENT_WS_API_PATH = 'v1/ws/messages';
 export const AGENT_REST_API_PATH = 'v1/api';
 
+// Single-click installation of the AI agent
+export const AGENT_REPO_NAME = 'rancher-ai';
+export const AGENT_REPO_URL = 'oci://registry.suse.com/rancher/charts/rancher-ai-agent';
+// Enable when the OCI registry requires credentials; they are stored in a basic-auth secret referenced by the ClusterRepo
+export const AGENT_REPO_AUTH_ENABLED = false;
+export const AGENT_REPO_AUTH_SECRET_NAMESPACE = 'cattle-system';
+export const AGENT_REPO_AUTH_SECRET_GENERATE_NAME = 'clusterrepo-auth-';
+export const AGENT_CHART_NAME = 'rancher-ai-agent';
+export const AGENT_RELEASE_NAME = 'rancher-ai-agent';
+// Used when Rancher's system-default-registry setting is empty
+export const AGENT_DEFAULT_REGISTRY = 'stgregistry.suse.com';
+
 export const RANCHER_AI_SCHEMA = { AI_AGENT_CONFIG: 'ai.cattle.io.aiagentconfig' };
 
 export const RANCHER_AI_UI_LABELS = { UI_TOOLS: 'rancher-ai-ui-tools' };
