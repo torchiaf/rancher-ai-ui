@@ -113,8 +113,7 @@ function toggleHistory() {
 
 <style lang="scss" scoped>
 .chat-header {
-  background: var(--active);
-  color: var(--on-active);
+  background: var(--primary-light-bg);
   padding: 12px;
   display: flex;
   align-items: center;
@@ -134,7 +133,6 @@ function toggleHistory() {
     align-items: center;
     font-weight: 600;
     font-size: 1em;
-    color: var(--on-active);
     margin: 0;
     width: 60px;
 
